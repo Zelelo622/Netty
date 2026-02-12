@@ -39,7 +39,7 @@ function Navbar() {
   };
 
   return (
-    <nav className="h-[5vh] w-full flex items-center border-b px-5 lg:px-14 justify-between bg-background/95 backdrop-blur supports-backdrop-filter:bg-background/60 sticky top-0 z-50">
+    <nav className="h-16 w-full flex items-center border-b px-4 md:px-8 lg:px-14 justify-between bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 sticky top-0 z-50">
       <Link href={ROUTES.HOME} className="flex items-center gap-x-1 h-full">
         <MaskotIcon className="h-14 w-auto" />
         <LogoTextIcon className="h-14 w-fit hidden lg:block" />
