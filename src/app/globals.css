@@ -100,3 +100,17 @@
     @apply bg-background text-foreground;
   }
 }
+
+@keyframes peek {
+  0%,
+  100% {
+    transform: rotate(-5deg) translateX(0);
+  }
+  50% {
+    transform: rotate(5deg) translateX(-5px);
+  }
+}
+
+.animate-peek {
+  animation: peek 4s ease-in-out infinite;
+}

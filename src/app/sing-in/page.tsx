@@ -181,25 +181,31 @@ export default function AuthPage() {
   };
 
   return (
-    <div className="min-h-[95vh] flex flex-col items-center justify-center bg-background p-4">
-      <div className="relative mb-8 group">
-        <div
-          className={`transition-all duration-500 transform ${isPasswordFocused ? "scale-110 -translate-y-2" : "scale-100"}`}
-        >
-          <MaskotIcon className="h-24 w-auto drop-shadow-2xl" />
-        </div>
-        <div
-          className={`absolute -top-5 ${activeTab === "reset" ? "-right-50" : "-right-32"} bg-primary text-primary-foreground px-4 py-1.5 rounded-2xl rounded-bl-none text-xs font-bold shadow-lg shadow-primary/20 transition-all`}
-        >
-          {loading
-            ? "Минутку, проверяю..."
-            : isPasswordFocused
-              ? "Тсс, я всё забуду!"
-              : activeTab === "register"
-                ? "Стань частью Netty!"
-                : activeTab === "reset"
-                  ? "Давай восстановим доступ!"
-                  : "С возвращением!"}
+    <div className="min-h-[calc(100vh-64px)] flex flex-col items-center justify-center bg-background p-4">
+      <div
+        className={`fixed -bottom-12 -left-6 z-10 transition-all duration-500 sm:relative sm:inset-auto sm:mb-8 sm:block ${isPasswordFocused ? "scale-110 -translate-x-2 sm:-translate-y-2" : "scale-100"}
+    `}
+      >
+        <div className="relative group">
+          <div className="animate-peek">
+            <MaskotIcon className="h-28 w-auto drop-shadow-2xl sm:h-24" />
+          </div>
+
+          <div
+            className={`
+          absolute bg-primary text-primary-foreground px-3 py-1.5 rounded-2xl rounded-bl-none text-[10px] font-bold shadow-lg transition-all whitespace-nowrap top-5 -right-27 sm:-top-5 sm:-right-32 sm:left-auto sm:text-xs
+        `}
+          >
+            {loading
+              ? "Минутку..."
+              : isPasswordFocused
+                ? "Тсс, я всё забуду!"
+                : activeTab === "register"
+                  ? "Стань частью Netty!"
+                  : activeTab === "reset"
+                    ? "Давай восстановим?"
+                    : "С возвращением!"}
+          </div>
         </div>
       </div>
 
