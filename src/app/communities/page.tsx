@@ -122,7 +122,7 @@ export default function AllCommunitiesPage() {
                   </Avatar>
                   <div className="flex-1">
                     <CardTitle className="text-lg">
-                      r/{community.name}
+                      n/{community.name}
                     </CardTitle>
                     <CardDescription className="line-clamp-1">
                       {community.title}

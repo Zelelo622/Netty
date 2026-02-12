@@ -19,6 +19,7 @@ import { useAuth } from "@/context/AuthContext";
 import { ICommunity } from "@/types/types";
 import { CommunityService } from "@/services/community";
 import { CreateCommunityModal } from "./Communities/CreateCommunityModal";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 export function AppSidebar() {
   const pathname = usePathname();
@@ -102,16 +103,17 @@ export function AppSidebar() {
                           href={ROUTES.COMMUNITY(sub.name)}
                           className="flex items-center gap-2"
                         >
-                          {sub.imgUrl ? (
-                            <img
+                          <Avatar className="h-4 w-4 border shadow-sm">
+                            <AvatarImage
                               src={sub.imgUrl}
-                              className="h-4 w-4 rounded-full object-cover"
-                              alt=""
+                              alt={sub.name}
+                              className="object-cover"
                             />
-                          ) : (
-                            <span className="text-xs">🏠</span>
-                          )}
-                          <span className="truncate">r/{sub.name}</span>
+                            <AvatarFallback className="bg-muted text-muted-foreground font-bold uppercase text-xs">
+                              {sub.name[0]}
+                            </AvatarFallback>
+                          </Avatar>
+                          <span className="truncate">n/{sub.name}</span>
                         </Link>
                       </SidebarMenuButton>
                     </SidebarMenuItem>

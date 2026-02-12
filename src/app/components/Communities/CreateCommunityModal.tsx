@@ -79,7 +79,7 @@ export function CreateCommunityModal({
             <Label htmlFor="name">Название (ID)</Label>
             <div className="relative">
               <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground font-semibold text-sm">
-                r/
+                n/
               </span>
               <Input
                 id="name"

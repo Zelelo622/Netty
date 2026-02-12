@@ -42,7 +42,7 @@ export const PostCard = ({ post }: IPostCardProps) => {
               href={ROUTES.COMMUNITY(post.community)}
               className="font-bold hover:underline cursor-pointer text-foreground"
             >
-              r/{post.community}
+              n/{post.community}
             </Link>
             <span className="text-muted-foreground">•</span>
             <span className="text-muted-foreground">u/{post.author.name}</span>
