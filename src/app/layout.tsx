@@ -5,6 +5,8 @@ import "./globals.css";
 import { ThemeProvider } from "./components/theme-provider";
 import { Toaster } from "sonner";
 import { AuthProvider } from "@/context/AuthContext";
+import { SidebarProvider } from "@/components/ui/sidebar";
+import { AppSidebar } from "./components/AppSidebar";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -27,7 +29,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html lang="ru" suppressHydrationWarning>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
@@ -38,9 +40,16 @@ export default function RootLayout({
           disableTransitionOnChange
         >
           <AuthProvider>
-            <Navbar />
-            {children}
-            <Toaster position="top-center" theme="system" richColors />
+            <SidebarProvider>
+              <div className="flex flex-col min-h-screen w-full">
+                <Navbar />
+                <div className="flex flex-1">
+                  <AppSidebar />
+                  <main className="flex-1">{children}</main>
+                </div>
+              </div>
+              <Toaster position="top-center" theme="system" richColors />
+            </SidebarProvider>
           </AuthProvider>
         </ThemeProvider>
       </body>
