@@ -22,10 +22,11 @@ import {
   signInWithEmailAndPassword,
   updateProfile,
 } from "firebase/auth";
-import { auth } from "../firebase";
+import { auth } from "../../lib/firebase";
 import { FirebaseError } from "firebase/app";
 import { getFirebaseErrorMessage } from "@/lib/firebase-errors";
 import { toast } from "sonner";
+import { UserCredential } from "firebase/auth";
 
 interface IFormFieldProps {
   id: string;
@@ -102,14 +103,19 @@ export default function AuthPage() {
 
   const handleAuth = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    if (activeTab === "reset") return;
+
     setLoading(true);
 
     const cleanEmail = email.trim();
     const cleanPassword = password.trim();
 
     try {
+      let userCredential: UserCredential;
+
       if (activeTab === "register") {
-        const userCredential = await createUserWithEmailAndPassword(
+        userCredential = await createUserWithEmailAndPassword(
           auth,
           cleanEmail,
           cleanPassword,
@@ -117,10 +123,30 @@ export default function AuthPage() {
         await updateProfile(userCredential.user, { displayName: name });
         toast.success("Аккаунт создан!");
       } else {
-        await signInWithEmailAndPassword(auth, cleanEmail, cleanPassword);
+        userCredential = await signInWithEmailAndPassword(
+          auth,
+          cleanEmail,
+          cleanPassword,
+        );
         toast.success("С возвращением!");
       }
-      router.push("/");
+
+      const token = await userCredential.user.getIdToken();
+
+      const response = await fetch("/api/auth/login", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ token }),
+      });
+
+      if (response.ok) {
+        router.refresh();
+        setTimeout(() => {
+          router.push("/");
+        }, 100);
+      }
     } catch (error) {
       if (error instanceof FirebaseError) {
         const message = getFirebaseErrorMessage(error);
