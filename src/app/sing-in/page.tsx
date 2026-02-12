@@ -193,7 +193,7 @@ export default function AuthPage() {
 
           <div
             className={`
-          absolute bg-primary text-primary-foreground px-3 py-1.5 rounded-2xl rounded-bl-none text-[10px] font-bold shadow-lg transition-all whitespace-nowrap top-5 -right-27 sm:-top-5 sm:-right-32 sm:left-auto sm:text-xs
+          absolute bg-primary text-primary-foreground px-3 py-1.5 rounded-2xl rounded-bl-none text-[10px] font-bold shadow-lg transition-all whitespace-nowrap top-5 left-24 sm:-top-5 sm:left-20 sm:right-auto sm:text-xs
         `}
           >
             {loading
