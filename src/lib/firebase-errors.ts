@@ -23,6 +23,9 @@ export const getFirebaseErrorMessage = (error: FirebaseError): string => {
     case "auth/too-many-requests":
       return "Слишком много попыток. Попробуйте позже";
 
+    case "auth/requires-recent-login":
+      return "Для выполнения этого действия нужно заново войти в систему";
+
     default:
       return "Произошла ошибка. Попробуйте снова";
   }
