@@ -12,6 +12,9 @@ import {
   arrayRemove,
   increment,
   arrayUnion,
+  getDoc,
+  setDoc,
+  serverTimestamp,
 } from "firebase/firestore";
 import { ICommunity } from "@/types/types";
 import { db } from "@/lib/firebase";
@@ -82,5 +85,31 @@ export const CommunityService = {
       console.error("Ошибка при обновлении подписки:", error);
       throw error;
     }
+  },
+
+  async createCommunity(data: {
+    name: string;
+    title: string;
+    creatorId: string;
+  }) {
+    const communityId = data.name.toLowerCase().trim();
+    const communityRef = doc(db, "communities", communityId);
+
+    const docSnap = await getDoc(communityRef);
+    if (docSnap.exists()) {
+      throw new Error("Сообщество с таким названием уже существует");
+    }
+
+    await setDoc(communityRef, {
+      name: communityId,
+      title: data.title,
+      creatorId: data.creatorId,
+      createdAt: serverTimestamp(),
+      membersCount: 1,
+      subscribers: [data.creatorId],
+      imgUrl: "",
+    });
+
+    return communityId;
   },
 };

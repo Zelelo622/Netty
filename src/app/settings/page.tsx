@@ -70,6 +70,12 @@ export default function SettingsPage() {
     }
   };
 
+  const isProfileUnchanged =
+    name === (user?.displayName || "") && photoURL === (user?.photoURL || "");
+
+  const isSecurityUnchanged =
+    email === (user?.email || "") && newPassword === "";
+
   const handleUpdateProfile = async () => {
     if (!auth.currentUser) return;
     setLoading(true);
@@ -166,7 +172,7 @@ export default function SettingsPage() {
             </CardContent>
             <CardFooter>
               <Button
-                disabled={loading}
+                disabled={loading || isProfileUnchanged}
                 onClick={handleUpdateProfile}
                 className="cursor-pointer"
               >
@@ -206,7 +212,7 @@ export default function SettingsPage() {
                 variant="secondary"
                 className="cursor-pointer"
                 onClick={() => setShowConfirmModal(true)}
-                disabled={loading}
+                disabled={loading || isSecurityUnchanged}
               >
                 Применить изменения
               </Button>
