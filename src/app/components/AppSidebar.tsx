@@ -1,7 +1,7 @@
 "use client";
 
-import * as React from "react";
-import { Home, TrendingUp, Globe, Plus } from "lucide-react";
+import { useEffect, useState } from "react";
+import { Home, TrendingUp, Globe, Plus, Loader2 } from "lucide-react";
 import {
   Sidebar,
   SidebarContent,
@@ -15,12 +15,41 @@ import {
 import { ROUTES } from "@/lib/routes";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useAuth } from "@/context/AuthContext";
+import { ICommunity } from "@/types/types";
+import { collection, onSnapshot, query, where } from "firebase/firestore";
+import { db } from "@/lib/firebase";
+import { CommunityService } from "@/services/community";
 
 export function AppSidebar() {
   const pathname = usePathname();
+  const { user } = useAuth();
+
+  const [communities, setCommunities] = useState<ICommunity[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (!user) {
+      setCommunities([]);
+      setLoading(false);
+      return;
+    }
+
+    setLoading(true);
+
+    const unsubscribe = CommunityService.subscribeToUserCommunities(
+      user.uid,
+      (data) => {
+        setCommunities(data);
+        setLoading(false);
+      },
+    );
+
+    return () => unsubscribe();
+  }, [user]);
 
   return (
-    <Sidebar className="sticky top-16 h-[calc(100vh-64px)]">
+    <Sidebar className="sticky top-16 h-[calc(100vh-64px)] border-r">
       <SidebarContent className="bg-background">
         <SidebarGroup>
           <SidebarGroupContent>
@@ -51,23 +80,44 @@ export function AppSidebar() {
             <SidebarGroupLabel className="text-[10px] uppercase">
               Мои сообщества
             </SidebarGroupLabel>
-            <Plus className="h-3 w-3 cursor-pointer" />
+            <Plus className="h-3 w-3 cursor-pointer hover:text-primary transition-colors" />
           </div>
           <SidebarGroupContent>
             <SidebarMenu>
-              {[
-                { name: "programming", icon: "💻" },
-                { name: "reactjs", icon: "⚛️" },
-              ].map((sub) => (
-                <SidebarMenuItem key={sub.name}>
-                  <SidebarMenuButton asChild>
-                    <Link href={ROUTES.COMMUNITY(sub.name)}>
-                      <span>{sub.icon}</span>
-                      <span>r/{sub.name}</span>
-                    </Link>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              ))}
+              {loading ? (
+                <div className="flex items-center justify-center py-4">
+                  <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+                </div>
+              ) : communities.length > 0 ? (
+                communities.map((sub) => (
+                  <SidebarMenuItem key={sub.id}>
+                    <SidebarMenuButton
+                      asChild
+                      isActive={pathname === ROUTES.COMMUNITY(sub.name)}
+                    >
+                      <Link
+                        href={ROUTES.COMMUNITY(sub.name)}
+                        className="flex items-center gap-2"
+                      >
+                        {sub.imgUrl ? (
+                          <img
+                            src={sub.imgUrl}
+                            className="h-4 w-4 rounded-full object-cover"
+                            alt=""
+                          />
+                        ) : (
+                          <span className="text-xs">🏠</span>
+                        )}
+                        <span className="truncate">r/{sub.name}</span>
+                      </Link>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                ))
+              ) : (
+                <p className="px-4 py-2 text-[10px] text-muted-foreground italic">
+                  Вы пока ни на что не подписаны
+                </p>
+              )}
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
