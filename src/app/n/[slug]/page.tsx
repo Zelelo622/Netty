@@ -1,10 +1,10 @@
 "use client";
 
-import { useParams, useRouter } from "next/navigation"; // Добавили useRouter
+import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
-import { Check, Loader2, Plus, Settings, Users } from "lucide-react";
+import { Loader2, Plus, Settings, Users } from "lucide-react";
 import { CommunityService } from "@/services/community";
 import { ICommunity, IPost } from "@/types/types";
 import PostList from "@/app/components/Posts/PostList";

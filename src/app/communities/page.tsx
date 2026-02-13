@@ -11,7 +11,7 @@ import {
   CardDescription,
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Search, Users, Loader2 } from "lucide-react";
+import { Users, Loader2 } from "lucide-react";
 import Link from "next/link";
 import { ROUTES } from "@/lib/routes";
 import { ICommunity } from "@/types/types";
@@ -91,7 +91,6 @@ export default function AllCommunitiesPage() {
       </div>
 
       <div className="relative">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
         <Input
           placeholder="Поиск сообществ..."
           className="pl-10 h-12"
