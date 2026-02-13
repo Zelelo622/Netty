@@ -124,8 +124,12 @@ export const PostsService = {
       createdAt: serverTimestamp(),
       votes: 0,
       commentsCount: 0,
+      content: data.content || "",
       tags: data.tags || [],
     };
+
+    if (!data.imageUrl) delete (newPost as any).imageUrl;
+    if (!data.authorImage) delete (newPost as any).authorImage;
 
     await setDoc(postRef, newPost);
 
