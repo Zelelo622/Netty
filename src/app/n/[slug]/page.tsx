@@ -4,13 +4,14 @@ import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
-import { Check, Loader2, Plus, Users } from "lucide-react";
+import { Check, Loader2, Plus, Settings, Users } from "lucide-react";
 import { CommunityService } from "@/services/community";
 import { ICommunity } from "@/types/types";
 import { MOCK_POSTS } from "@/lib/mock-data";
 import PostList from "@/app/components/Posts/PostList";
 import { useAuth } from "@/context/AuthContext";
 import { toast } from "sonner";
+import { CreateCommunityModal } from "@/app/components/Communities/CreateCommunityModal";
 
 export default function CommunityPage() {
   const { slug } = useParams();
@@ -18,8 +19,10 @@ export default function CommunityPage() {
   const [community, setCommunity] = useState<ICommunity | null>(null);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
 
   const isSubscribed = user && community?.subscribers?.includes(user.uid);
+  const isOwner = user?.uid === community?.creatorId;
 
   useEffect(() => {
     const fetchCommunity = async () => {
@@ -95,6 +98,11 @@ export default function CommunityPage() {
 
   return (
     <div className="flex flex-col w-full min-h-screen bg-muted/20">
+      <CreateCommunityModal
+        isOpen={isEditModalOpen}
+        onClose={() => setIsEditModalOpen(false)}
+        initialData={community}
+      />
       <div className="relative w-full overflow-hidden border-b bg-muted shadow-sm">
         <div className="absolute inset-0 w-full h-full">
           {community.bannerUrl ? (
@@ -139,6 +147,17 @@ export default function CommunityPage() {
               </div>
 
               <div className="flex items-center gap-3 self-center sm:self-end pt-2">
+                {isOwner && (
+                  <Button
+                    variant="outline"
+                    onClick={() => setIsEditModalOpen(true)}
+                    className="cursor-pointer rounded-full font-bold gap-2 bg-white/10 hover:bg-white text-white hover:text-black border-white/20 backdrop-blur-md"
+                  >
+                    <Settings className="h-5 w-5" />
+                    Настроить
+                  </Button>
+                )}
+
                 {user && (
                   <Button
                     variant="secondary"

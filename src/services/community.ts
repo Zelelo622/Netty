@@ -142,4 +142,45 @@ export const CommunityService = {
       throw error;
     }
   },
+
+  async updateCommunity(
+    communityId: string,
+    data: {
+      name: string;
+      description?: string;
+      avatarUrl?: string;
+      bannerUrl?: string;
+    },
+  ) {
+    const nameToSearch = data.name.toLowerCase().trim();
+    const communityRef = doc(db, "communities", communityId);
+
+    try {
+      return await runTransaction(db, async (transaction) => {
+        const q = query(
+          collection(db, "communities"),
+          where("name", "==", nameToSearch),
+        );
+        const querySnapshot = await getDocs(q);
+
+        const isNameTaken = querySnapshot.docs.some(
+          (doc) => doc.id !== communityId,
+        );
+        if (isNameTaken) {
+          throw new Error(`Название n/${nameToSearch} уже занято`);
+        }
+
+        transaction.update(communityRef, {
+          name: nameToSearch,
+          description: data.description || "",
+          avatarUrl: data.avatarUrl || "",
+          bannerUrl: data.bannerUrl || "",
+        });
+
+        return nameToSearch;
+      });
+    } catch (error: any) {
+      throw error;
+    }
+  },
 };

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
 import { CommunityService } from "@/services/community";
@@ -19,18 +19,22 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Loader2 } from "lucide-react";
+import { ICommunity } from "@/types/types";
 
 interface ICreateComminutyModalProps {
   isOpen: boolean;
   onClose: () => void;
+  initialData?: ICommunity | null;
 }
 
 export function CreateCommunityModal({
   isOpen,
   onClose,
+  initialData,
 }: ICreateComminutyModalProps) {
   const { user } = useAuth();
   const router = useRouter();
+  const isEditMode = !!initialData;
 
   const [loading, setLoading] = useState(false);
   const [name, setName] = useState("");
@@ -38,38 +42,59 @@ export function CreateCommunityModal({
   const [avatarUrl, setAvatarUrl] = useState("");
   const [bannerUrl, setBannerUrl] = useState("");
 
+  useEffect(() => {
+    if (initialData) {
+      setName(initialData.name);
+      setDescription(initialData.description || "");
+      setAvatarUrl(initialData.avatarUrl || "");
+      setBannerUrl(initialData.bannerUrl || "");
+    }
+  }, [initialData]);
+
   const handleNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const val = e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, "");
     if (val.length <= 21) setName(val);
   };
 
-  const handleCreate = async (e: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (!user) return toast.error("Нужно войти в аккаунт");
-
     if (name.length < 3) return toast.error("Название слишком короткое");
-    if (name.length > 21) return toast.error("Название слишком длинное");
 
     setLoading(true);
     try {
-      const communityId = await CommunityService.createCommunity({
-        name,
-        description,
-        creatorId: user.uid,
-        avatarUrl,
-        bannerUrl,
-      });
+      let finalSlug: string;
 
-      toast.success(`Сообщество n/${communityId} создано!`);
+      if (isEditMode && initialData?.id) {
+        finalSlug = await CommunityService.updateCommunity(initialData.id, {
+          name,
+          description,
+          avatarUrl,
+          bannerUrl,
+        });
+        toast.success("Сообщество обновлено");
+      } else {
+        finalSlug = await CommunityService.createCommunity({
+          name,
+          description,
+          creatorId: user.uid,
+          avatarUrl,
+          bannerUrl,
+        });
+        toast.success(`Сообщество n/${finalSlug} создано!`);
+      }
+
       onClose();
-      router.push(ROUTES.COMMUNITY(communityId));
+      router.push(ROUTES.COMMUNITY(finalSlug));
 
-      setName("");
-      setDescription("");
-      setAvatarUrl("");
-      setBannerUrl("");
+      if (!isEditMode) {
+        setName("");
+        setDescription("");
+        setAvatarUrl("");
+        setBannerUrl("");
+      }
     } catch (error: any) {
-      toast.error(error.message || "Ошибка при создании");
+      toast.error(error.message || "Ошибка");
     } finally {
       setLoading(false);
     }
@@ -79,13 +104,17 @@ export function CreateCommunityModal({
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-md w-[95vw] rounded-lg max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Создать сообщество</DialogTitle>
+          <DialogTitle>
+            {isEditMode ? "Настройки сообщества" : "Создать сообщество"}
+          </DialogTitle>
           <DialogDescription>
-            Заполните данные для вашего нового дома.
+            {isEditMode
+              ? "Измените данные вашего сообщества"
+              : "Заполните данные для вашего нового дома."}
           </DialogDescription>
         </DialogHeader>
 
-        <form onSubmit={handleCreate} className="space-y-4 pt-4">
+        <form onSubmit={handleSubmit} className="space-y-4 pt-4">
           <div className="space-y-2">
             <Label htmlFor="name">Название (обязательно)</Label>
             <div className="relative">
