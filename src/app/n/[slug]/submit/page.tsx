@@ -18,11 +18,43 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Loader2, Info } from "lucide-react";
+import { Loader2, Info, HelpCircle } from "lucide-react";
 import { toast } from "sonner";
 import { ImageUploader } from "@/app/components/ImageUploader";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { cn } from "@/lib/utils";
+import { LoadingSpinner } from "@/app/components/LoadingSpinner";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+
+const RulesContent = () => (
+  <div className="space-y-4">
+    <Card className="rounded-2xl border-2 shadow-sm border-none md:border-solid shadow-none md:shadow-sm">
+      <CardHeader className="pb-3 flex-row items-center gap-2 space-y-0 font-bold px-0 md:px-6">
+        <div className="h-6 w-1 bg-primary rounded-full" />
+        Правила платформы
+      </CardHeader>
+      <CardContent className="text-sm space-y-4 text-muted-foreground px-0 md:px-6">
+        <div className="flex gap-3">
+          <span className="font-bold text-foreground">1.</span>
+          <p>Будьте вежливы и уважайте других участников.</p>
+        </div>
+        <div className="flex gap-3 border-t pt-3 md:border-t">
+          <span className="font-bold text-foreground">2.</span>
+          <p>Не используйте кликбейтные заголовки.</p>
+        </div>
+      </CardContent>
+    </Card>
+
+    <div className="p-4 bg-muted/30 rounded-2xl flex gap-3 text-xs text-muted-foreground border">
+      <Info className="h-4 w-4 shrink-0" />
+      <p>Ваш пост будет доступен сразу после публикации.</p>
+    </div>
+  </div>
+);
 
 export default function CreatePostPage() {
   const { user, loading: authLoading } = useAuth();
@@ -89,12 +121,7 @@ export default function CreatePostPage() {
     }
   };
 
-  if (authLoading)
-    return (
-      <div className="flex justify-center items-center min-h-[60vh]">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
-      </div>
-    );
+  if (authLoading) return <LoadingSpinner />;
 
   if (!user) {
     router.push(`${ROUTES.AUTH}?mode=login`);
@@ -102,12 +129,32 @@ export default function CreatePostPage() {
   }
 
   return (
-    <div className="max-w-4xl mx-auto py-10 px-4 grid grid-cols-1 md:grid-cols-[1fr_280px] gap-8">
+    <div className="max-w-4xl mx-auto py-10 px-4 grid grid-cols-1 lg:grid-cols-[1fr_280px] gap-8">
       <div className="space-y-6">
         <div className="flex items-center justify-between">
           <h1 className="text-3xl font-bold tracking-tight">
             Создать публикацию
           </h1>
+
+          <div className="lg:hidden">
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button
+                  variant="outline"
+                  size="icon"
+                  className="rounded-full shrink-0"
+                >
+                  <HelpCircle className="h-5 w-5 text-muted-foreground" />
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent
+                align="end"
+                className="w-[calc(100vw-2rem)] sm:w-80 p-6 rounded-2xl shadow-2xl border-2"
+              >
+                <RulesContent />
+              </PopoverContent>
+            </Popover>
+          </div>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-6 flex flex-col">
@@ -194,8 +241,7 @@ export default function CreatePostPage() {
             >
               {isLoading ? (
                 <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Публикация...
+                  <LoadingSpinner description="Публикации..." />
                 </>
               ) : (
                 "Опубликовать"
@@ -205,31 +251,8 @@ export default function CreatePostPage() {
         </form>
       </div>
 
-      <aside className="hidden md:block space-y-4">
-        <Card className="rounded-2xl border-2 shadow-sm">
-          <CardHeader className="pb-3 flex-row items-center gap-2 space-y-0 font-bold">
-            <div className="h-6 w-1 bg-primary rounded-full" />
-            Правила платформы
-          </CardHeader>
-          <CardContent className="text-sm space-y-4 text-muted-foreground">
-            <div className="flex gap-3">
-              <span className="font-bold text-foreground">1.</span>
-              <p>Будьте вежливы и уважайте других участников.</p>
-            </div>
-            <div className="flex gap-3 border-t pt-3">
-              <span className="font-bold text-foreground">2.</span>
-              <p>Не используйте кликбейтные заголовки.</p>
-            </div>
-          </CardContent>
-        </Card>
-
-        <div className="p-4 bg-muted/30 rounded-2xl flex gap-3 text-xs text-muted-foreground border">
-          <Info className="h-4 w-4 shrink-0" />
-          <p>
-            Ваш пост будет доступен в выбранном сообществе сразу после
-            публикации.
-          </p>
-        </div>
+      <aside className="hidden lg:block space-y-4">
+        <RulesContent />
       </aside>
     </div>
   );

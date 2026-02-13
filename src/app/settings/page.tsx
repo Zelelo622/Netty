@@ -38,6 +38,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useRouter } from "next/navigation";
 import { ROUTES } from "@/lib/routes";
 import { ImageUploader } from "../components/ImageUploader";
+import { LoadingSpinner } from "../components/LoadingSpinner";
 
 export default function SettingsPage() {
   const { user, loading: authLoading } = useAuth();
@@ -130,11 +131,7 @@ export default function SettingsPage() {
   };
 
   if (authLoading) {
-    return (
-      <div className="flex h-[80vh] items-center justify-center">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-      </div>
-    );
+    return <LoadingSpinner />;
   }
 
   return (

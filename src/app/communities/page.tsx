@@ -19,6 +19,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { CommunityService } from "@/services/community";
 import { useAuth } from "@/context/AuthContext";
 import { toast } from "sonner";
+import { LoadingSpinner } from "../components/LoadingSpinner";
 
 export default function AllCommunitiesPage() {
   const { user } = useAuth();
@@ -100,39 +101,41 @@ export default function AllCommunitiesPage() {
       </div>
 
       {loading ? (
-        <div className="flex justify-center py-20">
-          <Loader2 className="h-8 w-8 animate-spin text-primary" />
-        </div>
+        <LoadingSpinner description="Ищем сообщества..." />
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {filteredCommunities.map((community) => (
             <Link key={community.id} href={ROUTES.COMMUNITY(community.name)}>
               <Card className="hover:border-primary/50 transition-colors cursor-pointer h-full">
-                <CardHeader className="flex flex-row items-center gap-4 space-y-0">
-                  <Avatar className="h-12 w-12 border shadow-sm">
-                    <AvatarImage
-                      src={community.avatarUrl}
-                      alt={community.name}
-                      className="object-cover"
-                    />
-                    <AvatarFallback className="bg-muted text-muted-foreground font-bold uppercase text-lg">
-                      {community.name[0]}
-                    </AvatarFallback>
-                  </Avatar>
-                  <div className="flex-1">
-                    <CardTitle className="text-lg">
-                      n/{community.name}
-                    </CardTitle>
-                    <CardDescription className="line-clamp-1">
-                      {community.description}
-                    </CardDescription>
-                    <div className="flex items-center gap-1 mt-1 text-xs text-muted-foreground">
-                      <Users className="h-3 w-3" />
-                      {community.membersCount} участников
+                <CardHeader className="flex flex-col sm:flex-row items-start sm:items-center gap-4 space-y-0 p-4 sm:p-6">
+                  <div className="flex items-center gap-4 flex-1 min-w-0 w-full">
+                    <Avatar className="h-12 w-12 border shrink-0 shadow-sm">
+                      <AvatarImage
+                        src={community.avatarUrl}
+                        alt={community.name}
+                        className="object-cover"
+                      />
+                      <AvatarFallback className="bg-muted text-muted-foreground font-bold uppercase text-lg">
+                        {community.name[0]}
+                      </AvatarFallback>
+                    </Avatar>
+
+                    <div className="flex-1 min-w-0">
+                      <CardTitle className="text-lg truncate">
+                        n/{community.name}
+                      </CardTitle>
+                      <CardDescription className="line-clamp-1">
+                        {community.description}
+                      </CardDescription>
+                      <div className="flex items-center gap-1 mt-1 text-xs text-muted-foreground">
+                        <Users className="h-3 w-3" />
+                        {community.membersCount} участников
+                      </div>
                     </div>
                   </div>
+
                   <Button
-                    className="cursor-pointer z-10"
+                    className="w-full sm:w-auto cursor-pointer z-10"
                     variant={
                       community.subscribers.includes(user?.uid || "")
                         ? "secondary"

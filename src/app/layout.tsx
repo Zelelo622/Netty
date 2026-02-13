@@ -7,7 +7,6 @@ import { Toaster } from "sonner";
 import { AuthProvider } from "@/context/AuthContext";
 import { SidebarProvider } from "@/components/ui/sidebar";
 import { AppSidebar } from "./components/AppSidebar";
-import { MobileTrigger } from "./components/MobileTrigger";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -46,7 +45,6 @@ export default function RootLayout({
                 <Navbar />
                 <div className="flex flex-1">
                   <AppSidebar />
-                  <MobileTrigger />
                   <main className="flex-1 w-full">{children}</main>
                 </div>
               </div>

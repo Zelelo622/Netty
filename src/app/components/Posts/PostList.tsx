@@ -6,16 +6,12 @@ import { PostCard } from "./PostCard";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { ROUTES } from "@/lib/routes";
+import { LoadingSpinner } from "../LoadingSpinner";
 
 const PostList = ({ posts, isLoading, activeTab, isAuth }: IPostListProps) => {
   if (isLoading) {
     return (
-      <div className="flex flex-col gap-4 w-full max-w-2xl mx-auto py-10 items-center">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-        <p className="text-sm text-muted-foreground animate-pulse">
-          Ищем интересное...
-        </p>
-      </div>
+      <LoadingSpinner description="Ищем интересное..." />
     );
   }
 

@@ -13,6 +13,7 @@ import { toast } from "sonner";
 import { CreateCommunityModal } from "@/app/components/Communities/CreateCommunityModal";
 import { PostsService } from "@/services/posts";
 import { ROUTES } from "@/lib/routes";
+import { LoadingSpinner } from "@/app/components/LoadingSpinner";
 
 export default function CommunityPage() {
   const { slug } = useParams();
@@ -94,12 +95,7 @@ export default function CommunityPage() {
     }
   };
 
-  if (loading)
-    return (
-      <div className="flex items-center justify-center h-[60vh]">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
-      </div>
-    );
+  if (loading) return <LoadingSpinner />;
 
   if (!community)
     return <div className="p-20 text-center">Сообщество не найдено</div>;
