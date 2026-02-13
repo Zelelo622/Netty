@@ -105,7 +105,7 @@ export function AppSidebar() {
                         >
                           <Avatar className="h-4 w-4 border shadow-sm">
                             <AvatarImage
-                              src={sub.imgUrl}
+                              src={sub.avatarUrl}
                               alt={sub.name}
                               className="object-cover"
                             />

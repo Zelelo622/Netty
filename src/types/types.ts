@@ -1,10 +1,11 @@
 export interface ICommunity {
   id?: string;
   name: string;
-  title: string;
+  description: string;
   creatorId: string;
   createdAt: any;
   membersCount: number;
   subscribers: string[];
-  imgUrl?: string;
+  avatarUrl?: string;
+  bannerUrl?: string;
 }

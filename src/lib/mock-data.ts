@@ -28,7 +28,7 @@ export const MOCK_POSTS = [
   {
     id: "3",
     author: { id: "u3", name: "frontend_dev", image: "" },
-    community: "react_dev",
+    community: "programming",
     createdAt: "5 часов назад",
     title: "Как я перестал бояться CSS и полюбил Tailwind",
     content:
@@ -65,7 +65,7 @@ export const MOCK_POSTS = [
   {
     id: "6",
     author: { id: "u6", name: "cat_person", image: "" },
-    community: "cats",
+    community: "programming",
     createdAt: "Вчера",
     title: "Мой кот научился открывать холодильник. Помогите.",
     content:

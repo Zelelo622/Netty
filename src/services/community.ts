@@ -5,8 +5,6 @@ import {
   orderBy,
   where,
   onSnapshot,
-  QuerySnapshot,
-  DocumentData,
   doc,
   runTransaction,
   arrayRemove,
@@ -89,27 +87,59 @@ export const CommunityService = {
 
   async createCommunity(data: {
     name: string;
-    title: string;
     creatorId: string;
+    description?: string;
+    avatarUrl?: string;
+    bannerUrl?: string;
   }) {
-    const communityId = data.name.toLowerCase().trim();
-    const communityRef = doc(db, "communities", communityId);
+    const nameToSearch = data.name.toLowerCase().trim();
 
-    const docSnap = await getDoc(communityRef);
-    if (docSnap.exists()) {
-      throw new Error("Сообщество с таким названием уже существует");
+    try {
+      return await runTransaction(db, async (transaction) => {
+        const q = query(communitiesRef, where("name", "==", nameToSearch));
+        const querySnapshot = await getDocs(q);
+
+        if (!querySnapshot.empty) {
+          throw new Error(`Название n/${nameToSearch} уже занято`);
+        }
+
+        const newCommunityRef = doc(collection(db, "communities"));
+
+        const newCommunityData = {
+          id: newCommunityRef.id,
+          name: nameToSearch,
+          description: data.description || "",
+          creatorId: data.creatorId,
+          createdAt: serverTimestamp(),
+          membersCount: 1,
+          subscribers: [data.creatorId],
+          avatarUrl: data.avatarUrl || "",
+          bannerUrl: data.bannerUrl || "",
+        };
+
+        transaction.set(newCommunityRef, newCommunityData);
+        return nameToSearch;
+      });
+    } catch (error: any) {
+      console.error("Ошибка при создании:", error);
+      throw error;
     }
+  },
 
-    await setDoc(communityRef, {
-      name: communityId,
-      title: data.title,
-      creatorId: data.creatorId,
-      createdAt: serverTimestamp(),
-      membersCount: 1,
-      subscribers: [data.creatorId],
-      imgUrl: "",
-    });
+  async getCommunityData(communityName: string) {
+    try {
+      const cleanName = communityName.toLowerCase().trim();
+      const q = query(communitiesRef, where("name", "==", cleanName));
+      const querySnapshot = await getDocs(q);
 
-    return communityId;
+      if (!querySnapshot.empty) {
+        const communityDoc = querySnapshot.docs[0];
+        return { id: communityDoc.id, ...communityDoc.data() } as ICommunity;
+      }
+      return null;
+    } catch (error) {
+      console.error("Ошибка при получении данных:", error);
+      throw error;
+    }
   },
 };

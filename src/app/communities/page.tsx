@@ -37,7 +37,7 @@ export default function AllCommunitiesPage() {
   const filteredCommunities = communities.filter(
     (c) =>
       c.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      c.title.toLowerCase().includes(searchQuery.toLowerCase()),
+      c.description.toLowerCase().includes(searchQuery.toLowerCase()),
   );
 
   const handleSubscribe = async (
@@ -112,7 +112,7 @@ export default function AllCommunitiesPage() {
                 <CardHeader className="flex flex-row items-center gap-4 space-y-0">
                   <Avatar className="h-12 w-12 border shadow-sm">
                     <AvatarImage
-                      src={community.imgUrl}
+                      src={community.avatarUrl}
                       alt={community.name}
                       className="object-cover"
                     />
@@ -125,7 +125,7 @@ export default function AllCommunitiesPage() {
                       n/{community.name}
                     </CardTitle>
                     <CardDescription className="line-clamp-1">
-                      {community.title}
+                      {community.description}
                     </CardDescription>
                     <div className="flex items-center gap-1 mt-1 text-xs text-muted-foreground">
                       <Users className="h-3 w-3" />
