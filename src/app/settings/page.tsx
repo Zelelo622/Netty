@@ -37,6 +37,7 @@ import { getFirebaseErrorMessage } from "@/lib/firebase-errors";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useRouter } from "next/navigation";
 import { ROUTES } from "@/lib/routes";
+import { ImageUploader } from "../components/ImageUploader";
 
 export default function SettingsPage() {
   const { user, loading: authLoading } = useAuth();
@@ -162,12 +163,14 @@ export default function SettingsPage() {
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="photo">Ссылка на аватар</Label>
-                <Input
-                  id="photo"
-                  value={photoURL}
-                  onChange={(e) => setPhotoURL(e.target.value)}
+                <Label htmlFor="photo">Аватар профиля</Label>
+                <ImageUploader
+                  url={photoURL}
+                  onChange={(newUrl) => setPhotoURL(newUrl)}
                 />
+                <p className="text-[10px] text-muted-foreground mt-1">
+                  Вставь ссылку на изображение или используй кнопку выше
+                </p>
               </div>
             </CardContent>
             <CardFooter>

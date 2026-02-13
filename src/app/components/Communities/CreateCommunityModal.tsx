@@ -20,6 +20,7 @@ import {
 } from "@/components/ui/dialog";
 import { Loader2 } from "lucide-react";
 import { ICommunity } from "@/types/types";
+import { ImageUploader } from "../ImageUploader";
 
 interface ICreateComminutyModalProps {
   isOpen: boolean;
@@ -102,7 +103,7 @@ export function CreateCommunityModal({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-md w-[95vw] rounded-lg max-h-[90vh] overflow-y-auto">
+      <DialogContent className="sm:max-w-md w-[95vw] rounded-lg max-h-[90vh] overflow-y-auto overflow-x-hidden min-w-0">
         <DialogHeader>
           <DialogTitle>
             {isEditMode ? "Настройки сообщества" : "Создать сообщество"}
@@ -137,33 +138,31 @@ export function CreateCommunityModal({
 
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <div className="space-y-2">
-              <Label htmlFor="avatar">URL Аватарки</Label>
-              <Input
-                id="avatar"
-                value={avatarUrl}
-                onChange={(e) => setAvatarUrl(e.target.value)}
-                placeholder="https://..."
+              <Label htmlFor="avatar">Аватарка сообщества</Label>
+              <ImageUploader
+                url={avatarUrl}
+                onChange={setAvatarUrl}
+                variant="compact"
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="banner">URL Баннера</Label>
-              <Input
-                id="banner"
-                value={bannerUrl}
-                onChange={(e) => setBannerUrl(e.target.value)}
-                placeholder="https://..."
+              <Label htmlFor="banner">Баннер (фон)</Label>
+              <ImageUploader
+                url={bannerUrl}
+                onChange={setBannerUrl}
+                variant="compact"
               />
             </div>
           </div>
 
-          <div className="space-y-2">
+          <div className="space-y-2 min-w-0">
             <Label htmlFor="description">Описание</Label>
             <Textarea
               id="description"
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               placeholder="О чем это сообщество?"
-              className="resize-none h-20"
+              className="resize-none h-20 w-full max-w-full overflow-y-auto wrap-break-word"
             />
           </div>
 
@@ -173,13 +172,14 @@ export function CreateCommunityModal({
               variant="ghost"
               onClick={onClose}
               disabled={loading}
+              className="cursor-pointer"
             >
               Отмена
             </Button>
             <Button
               type="submit"
               disabled={loading || name.length < 3}
-              className="bg-primary rounded-full px-8"
+              className="cursor-pointer bg-primary rounded-full px-8"
             >
               {loading ? (
                 <Loader2 className="animate-spin h-4 w-4" />

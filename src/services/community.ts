@@ -48,7 +48,7 @@ export const CommunityService = {
         callback(data);
       },
       (error) => {
-        console.error("Subscription error:", error);
+        console.error("Ошибка подписки:", error);
       },
     );
   },

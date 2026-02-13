@@ -29,24 +29,31 @@ export const PostCard = ({ post }: IPostCardProps) => {
     null,
   );
 
+  const formattedDate = post.createdAt?.seconds
+    ? new Date(post.createdAt.seconds * 1000).toLocaleDateString("ru-RU", {
+        day: "numeric",
+        month: "short",
+      })
+    : "Только что";
+
   return (
     <Card className="hover:border-primary/20 transition-colors gap-3">
       <div className="px-4 sm:px-6">
         <div className="flex items-center gap-2 mb-3">
           <Avatar className="h-6 w-6">
-            <AvatarImage src={post.author.image} />
-            <AvatarFallback>{post.author.name[0]}</AvatarFallback>
+            <AvatarImage src={post.authorImage} />
+            <AvatarFallback>{post.authorName[0]}</AvatarFallback>
           </Avatar>
           <div className="flex flex-wrap items-center gap-x-2 text-[10px] sm:text-xs">
             <Link
-              href={ROUTES.COMMUNITY(post.community)}
+              href={ROUTES.COMMUNITY(post.communityName)}
               className="font-bold hover:underline cursor-pointer text-foreground"
             >
-              n/{post.community}
+              n/{post.communityName}
             </Link>
             <span className="text-muted-foreground">•</span>
-            <span className="text-muted-foreground">u/{post.author.name}</span>
-            <span className="text-muted-foreground">{post.createdAt}</span>
+            <span className="text-muted-foreground">u/{post.authorName}</span>
+            <span className="text-muted-foreground">{formattedDate}</span>
           </div>
           <div className="ml-auto">
             <DropdownMenu>
@@ -75,7 +82,7 @@ export const PostCard = ({ post }: IPostCardProps) => {
 
         <div className="space-y-2">
           <Link
-            href={ROUTES.POST(post.community, post.id)}
+            href={ROUTES.POST(post.communityName, post.id)}
             className="group block"
           >
             <h2 className="mb-2 text-lg font-bold leading-tight sm:text-2xl group-hover:text-primary transition-colors line-clamp-2">

@@ -9,3 +9,21 @@ export interface ICommunity {
   avatarUrl?: string;
   bannerUrl?: string;
 }
+
+export interface IPost {
+  id: string;
+  title: string;
+  content: string;
+  communityId: string;
+  communityName: string;
+  authorId: string;
+  authorName: string;
+  authorImage?: string;
+  createdAt: any;
+
+  votes: number;
+  commentsCount: number;
+
+  imageUrl?: string;
+  tags?: string[];
+}
