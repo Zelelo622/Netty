@@ -59,6 +59,7 @@ export const CommunityService = {
     isSubscribed: boolean,
   ) {
     const communityRef = doc(db, "communities", communityId);
+    const userRef = doc(db, "users", userId);
 
     try {
       await runTransaction(db, async (transaction) => {
@@ -72,10 +73,16 @@ export const CommunityService = {
             subscribers: arrayRemove(userId),
             membersCount: increment(-1),
           });
+          transaction.update(userRef, {
+            subscribedCommunities: arrayRemove(communityId),
+          });
         } else {
           transaction.update(communityRef, {
             subscribers: arrayUnion(userId),
             membersCount: increment(1),
+          });
+          transaction.update(userRef, {
+            subscribedCommunities: arrayUnion(communityId),
           });
         }
       });
@@ -93,15 +100,11 @@ export const CommunityService = {
     bannerUrl?: string;
   }) {
     const nameToSearch = data.name.toLowerCase().trim();
+    const userRef = doc(db, "users", data.creatorId);
 
     try {
       return await runTransaction(db, async (transaction) => {
         const q = query(communitiesRef, where("name", "==", nameToSearch));
-        const querySnapshot = await getDocs(q);
-
-        if (!querySnapshot.empty) {
-          throw new Error(`Название n/${nameToSearch} уже занято`);
-        }
 
         const newCommunityRef = doc(collection(db, "communities"));
 
@@ -117,7 +120,14 @@ export const CommunityService = {
           bannerUrl: data.bannerUrl || "",
         };
 
+        // Создаем сообщество
         transaction.set(newCommunityRef, newCommunityData);
+
+        // Сразу подписываем создателя в его профиле
+        transaction.update(userRef, {
+          subscribedCommunities: arrayUnion(newCommunityRef.id),
+        });
+
         return nameToSearch;
       });
     } catch (error: any) {

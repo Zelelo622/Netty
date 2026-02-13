@@ -32,7 +32,7 @@ function Navbar() {
       await fetch("/api/auth/logout", { method: "POST" });
 
       router.refresh();
-      router.push("/sing-in?mode=login");
+      router.push(ROUTES.AUTH);
     } catch (error) {
       console.error("Ошибка при выходе:", error);
     }

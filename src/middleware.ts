@@ -5,7 +5,7 @@ export function middleware(request: NextRequest) {
   const session = request.cookies.get("session")?.value;
   const { pathname } = request.nextUrl;
 
-  if (session && session.length > 0 && pathname.startsWith("/sing-in")) {
+  if (session && session.length > 0 && pathname.startsWith("/sign-in")) {
     return NextResponse.redirect(new URL(ROUTES.HOME, request.url));
   }
 

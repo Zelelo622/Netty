@@ -2,6 +2,7 @@ import { db } from "@/lib/firebase";
 import { IPost } from "@/types/types";
 import {
   collection,
+  deleteDoc,
   doc,
   getDoc,
   getDocs,
@@ -17,6 +18,63 @@ import {
 const postsRef = collection(db, "posts");
 
 export const PostsService = {
+  async getAllPosts() {
+    try {
+      const q = query(postsRef, orderBy("createdAt", "desc"));
+      const querySnapshot = await getDocs(q);
+      return querySnapshot.docs.map((doc) => ({
+        ...doc.data(),
+        id: doc.id,
+      })) as IPost[];
+    } catch (error) {
+      console.error("Ошибка при получении всех постов:", error);
+      throw error;
+    }
+  },
+
+  async getFeedPosts(subscribedCommunityIds: string[]) {
+    try {
+      if (!subscribedCommunityIds || subscribedCommunityIds.length === 0)
+        return [];
+
+      const limitedIds = subscribedCommunityIds.slice(0, 30);
+
+      const q = query(
+        postsRef,
+        where("communityId", "in", limitedIds),
+        orderBy("createdAt", "desc"),
+      );
+
+      const querySnapshot = await getDocs(q);
+      return querySnapshot.docs.map((doc) => ({
+        ...doc.data(),
+        id: doc.id,
+      })) as IPost[];
+    } catch (error) {
+      console.error("Ошибка при получении ленты:", error);
+      throw error;
+    }
+  },
+
+  async getUserPosts(userId: string) {
+    try {
+      const q = query(
+        postsRef,
+        where("authorId", "==", userId),
+        orderBy("createdAt", "desc"),
+      );
+
+      const querySnapshot = await getDocs(q);
+      return querySnapshot.docs.map((doc) => ({
+        ...doc.data(),
+        id: doc.id,
+      })) as IPost[];
+    } catch (error) {
+      console.error("Ошибка при получении постов пользователя:", error);
+      throw error;
+    }
+  },
+
   async getCommunityPosts(communityId: string) {
     try {
       const q = query(
@@ -102,5 +160,15 @@ export const PostsService = {
     const voteRef = doc(db, "posts", postId, "userVotes", userId);
     const docSnap = await getDoc(voteRef);
     return docSnap.exists() ? docSnap.data().value : 0;
+  },
+
+  async deletePost(postId: string) {
+    try {
+      const postRef = doc(db, "posts", postId);
+      await deleteDoc(postRef);
+    } catch (error) {
+      console.error("Ошибка при удалении поста:", error);
+      throw error;
+    }
   },
 };
