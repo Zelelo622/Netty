@@ -5,8 +5,10 @@ import {
   doc,
   getDoc,
   getDocs,
+  increment,
   orderBy,
   query,
+  runTransaction,
   serverTimestamp,
   setDoc,
   where,
@@ -70,5 +72,35 @@ export const PostsService = {
     await setDoc(postRef, newPost);
 
     return postRef.id;
+  },
+
+  async votePost(
+    postId: string,
+    userId: string,
+    voteValue: 1 | -1 | 0,
+    previousValue: number,
+  ) {
+    const postRef = doc(db, "posts", postId);
+    const voteRef = doc(db, "posts", postId, "userVotes", userId);
+
+    try {
+      await runTransaction(db, async (transaction) => {
+        const change = voteValue - previousValue;
+
+        transaction.set(voteRef, { value: voteValue });
+        transaction.update(postRef, {
+          votes: increment(change),
+        });
+      });
+    } catch (error) {
+      console.error("Ошибка при голосовании:", error);
+      throw error;
+    }
+  },
+
+  async getUserVoteStatus(postId: string, userId: string) {
+    const voteRef = doc(db, "posts", postId, "userVotes", userId);
+    const docSnap = await getDoc(voteRef);
+    return docSnap.exists() ? docSnap.data().value : 0;
   },
 };

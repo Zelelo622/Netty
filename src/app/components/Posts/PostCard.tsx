@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { IPostCardProps } from "./types";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -23,11 +23,15 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { ROUTES } from "@/lib/routes";
+import { useAuth } from "@/context/AuthContext";
+import { PostsService } from "@/services/posts";
+import { toast } from "sonner";
 
 export const PostCard = ({ post }: IPostCardProps) => {
-  const [voteStatus, setVoteStatus] = useState<"upvoted" | "downvoted" | null>(
-    null,
-  );
+  const { user } = useAuth();
+
+  const [currentVote, setCurrentVote] = useState<number>(0);
+  const [displayVotes, setDisplayVotes] = useState(post.votes);
 
   const formattedDate = post.createdAt?.seconds
     ? new Date(post.createdAt.seconds * 1000).toLocaleDateString("ru-RU", {
@@ -35,6 +39,35 @@ export const PostCard = ({ post }: IPostCardProps) => {
         month: "short",
       })
     : "Только что";
+
+  useEffect(() => {
+    if (user && post.id) {
+      PostsService.getUserVoteStatus(post.id, user.uid).then(setCurrentVote);
+    }
+  }, [user, post.id]);
+
+  const handleVote = async (newValue: number) => {
+    if (!user) return toast.error("Войдите, чтобы голосовать");
+
+    const finalValue = currentVote === newValue ? 0 : newValue;
+
+    const voteDiff = finalValue - currentVote;
+    setCurrentVote(finalValue);
+    setDisplayVotes((prev) => prev + voteDiff);
+
+    try {
+      await PostsService.votePost(
+        post.id,
+        user.uid,
+        finalValue as 1 | -1 | 0,
+        currentVote,
+      );
+    } catch (e) {
+      setCurrentVote(currentVote);
+      setDisplayVotes((prev) => prev - voteDiff);
+      toast.error("не удалось сохранить голос");
+    }
+  };
 
   return (
     <Card className="hover:border-primary/20 transition-colors gap-3">
@@ -100,29 +133,25 @@ export const PostCard = ({ post }: IPostCardProps) => {
       <div className="px-4 flex items-center justify-between">
         <div
           className={cn(
-            "flex items-center gap-0.5 sm:gap-1 px-1 py-0.5 rounded-full transition-colors duration-300",
+            "flex items-center gap-0.5 sm:gap-1 px-1 py-0.5 rounded-full transition-colors",
             "bg-muted/40",
-            voteStatus === "upvoted" && "bg-blue-500/5",
-            voteStatus === "downvoted" && "bg-pink-500/5",
+            currentVote === 1 && "bg-blue-500/10",
+            currentVote === -1 && "bg-pink-500/10",
           )}
         >
           <Button
             variant="ghost"
             size="sm"
             className={cn(
-              "cursor-pointer h-7 w-7 sm:h-8 sm:w-8 p-0 bg-transparent hover:bg-transparent transition-all",
-              "text-muted-foreground hover:text-blue-500",
-              voteStatus === "upvoted" && "text-blue-500",
+              "cursor-pointer h-8 w-8 p-0 hover:bg-transparent",
+              currentVote === 1
+                ? "text-blue-500"
+                : "text-muted-foreground hover:text-blue-500",
             )}
-            onClick={() =>
-              setVoteStatus(voteStatus === "upvoted" ? null : "upvoted")
-            }
+            onClick={() => handleVote(1)}
           >
             <ArrowBigUp
-              className={cn(
-                "h-4 w-4 sm:h-5 sm:w-5",
-                voteStatus === "upvoted" && "fill-current",
-              )}
+              className={cn("h-5 w-5", currentVote === 1 && "fill-current")}
             />
           </Button>
 
@@ -130,36 +159,27 @@ export const PostCard = ({ post }: IPostCardProps) => {
             variant="ghost"
             size="sm"
             className={cn(
-              "cursor-pointer h-7 w-7 sm:h-8 sm:w-8 p-0 bg-transparent hover:bg-transparent transition-all",
-              "text-muted-foreground hover:text-pink-500",
-              voteStatus === "downvoted" && "text-pink-500",
+              "cursor-pointer h-8 w-8 p-0 hover:bg-transparent",
+              currentVote === -1
+                ? "text-pink-500"
+                : "text-muted-foreground hover:text-pink-500",
             )}
-            onClick={() =>
-              setVoteStatus(voteStatus === "downvoted" ? null : "downvoted")
-            }
+            onClick={() => handleVote(-1)}
           >
             <ArrowBigDown
-              className={cn(
-                "h-4 w-4 sm:h-5 sm:w-5",
-                voteStatus === "downvoted" && "fill-current",
-              )}
+              className={cn("h-5 w-5", currentVote === -1 && "fill-current")}
             />
           </Button>
 
           <span
             className={cn(
-              "text-[10px] sm:text-xs font-black min-w-5 sm:min-w-6 text-center pr-2",
-              voteStatus === "upvoted" && "text-blue-500",
-              voteStatus === "downvoted" && "text-pink-500",
-              !voteStatus && "text-muted-foreground",
+              "text-xs font-black min-w-[20px] text-center",
+              currentVote === 1 && "text-blue-500",
+              currentVote === -1 && "text-pink-500",
+              currentVote === 0 && "text-muted-foreground",
             )}
           >
-            {post.votes +
-              (voteStatus === "upvoted"
-                ? 1
-                : voteStatus === "downvoted"
-                  ? -1
-                  : 0)}
+            {displayVotes}
           </span>
         </div>
 
