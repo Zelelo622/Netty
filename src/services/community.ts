@@ -16,6 +16,7 @@ import {
 } from "firebase/firestore";
 import { ICommunity } from "@/types/types";
 import { db } from "@/lib/firebase";
+import { PostsService } from "./posts";
 
 const communitiesRef = collection(db, "communities");
 
@@ -190,6 +191,23 @@ export const CommunityService = {
         return nameToSearch;
       });
     } catch (error: any) {
+      throw error;
+    }
+  },
+
+  async deleteCommunity(communityId: string) {
+    const communityRef = doc(db, "communities", communityId);
+
+    try {
+      await PostsService.deleteAllCommunityPosts(communityId);
+      await runTransaction(db, async (transaction) => {
+        const communityDoc = await transaction.get(communityRef);
+        if (!communityDoc.exists()) throw new Error("Сообщество не найдено");
+
+        transaction.delete(communityRef);
+      });
+    } catch (error: any) {
+      console.error("Ошибка при удалении сообщества:", error);
       throw error;
     }
   },

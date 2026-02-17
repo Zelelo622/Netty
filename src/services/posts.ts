@@ -13,6 +13,7 @@ import {
   serverTimestamp,
   setDoc,
   where,
+  writeBatch,
 } from "firebase/firestore";
 
 const postsRef = collection(db, "posts");
@@ -174,5 +175,18 @@ export const PostsService = {
       console.error("Ошибка при удалении поста:", error);
       throw error;
     }
+  },
+
+  async deleteAllCommunityPosts(communityId: string) {
+    const q = query(postsRef, where("communityId", "==", communityId));
+    const querySnapshot = await getDocs(q);
+
+    const batch = writeBatch(db);
+
+    querySnapshot.forEach((postDoc) => {
+      batch.delete(postDoc.ref);
+    });
+
+    await batch.commit();
   },
 };

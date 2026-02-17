@@ -136,6 +136,9 @@ export default function CommunityPage() {
                 <h1 className="text-3xl sm:text-5xl font-black tracking-tighter">
                   n/{community.name}
                 </h1>
+                <span className="inline-block truncate w-30 s:w-100">
+                  {community.description}
+                </span>
                 <div className="flex items-center justify-center sm:justify-start gap-4 text-white/80 font-semibold">
                   <div className="flex items-center gap-1.5">
                     <Users className="h-5 w-5" />
@@ -146,14 +149,16 @@ export default function CommunityPage() {
                 </div>
               </div>
 
-              <div className="flex items-center gap-3 self-center sm:self-end pt-2">
+              <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2 sm:gap-3 w-full sm:w-auto pt-4 sm:pt-0">
                 {isOwner && (
                   <Button
                     variant="outline"
                     onClick={() => setIsEditModalOpen(true)}
-                    className="cursor-pointer rounded-full font-bold gap-2 bg-white/10 hover:bg-white text-white hover:text-black border-white/20 backdrop-blur-md"
+                    className="cursor-pointer rounded-full font-bold h-10 w-10 sm:w-auto sm:px-4 p-0 bg-white/10 hover:bg-white text-white hover:text-black border-white/20 backdrop-blur-md shrink-0"
+                    title="Настройки"
                   >
-                    <Settings className="h-5 w-5" /> Настроить
+                    <Settings className="h-5 w-5" />
+                    <span className="hidden sm:inline ml-2">Настроить</span>
                   </Button>
                 )}
 
@@ -161,16 +166,17 @@ export default function CommunityPage() {
                   <Button
                     onClick={handleCreatePostRedirect}
                     variant="secondary"
-                    className="cursor-pointer rounded-full font-bold gap-2 bg-white/10 hover:bg-white/20 text-white border-white/20 backdrop-blur-md"
+                    className="cursor-pointer flex-1 sm:flex-none rounded-full font-bold gap-2 bg-white/10 hover:bg-white/20 text-white border-white/20 backdrop-blur-md h-10"
                   >
-                    <Plus className="h-5 w-5" /> Создать пост
+                    <Plus className="h-5 w-5" />
+                    <span className="text-sm sm:text-base">Пост</span>
                   </Button>
                 )}
 
                 <Button
                   onClick={handleJoinLeave}
                   disabled={submitting}
-                  className={`cursor-pointer rounded-full font-bold px-10 transition-all ${
+                  className={`cursor-pointer flex-1 sm:flex-none rounded-full font-bold px-6 sm:px-10 h-10 transition-all ${
                     isSubscribed
                       ? "bg-emerald-500/20 border-2 border-emerald-500/50 text-emerald-400 hover:bg-emerald-500 hover:text-white"
                       : "bg-primary text-white hover:opacity-90"

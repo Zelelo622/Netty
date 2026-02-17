@@ -21,6 +21,7 @@ import {
 import { Loader2 } from "lucide-react";
 import { ICommunity } from "@/types/types";
 import { ImageUploader } from "../ImageUploader";
+import { DeleteConfirmModal } from "../DeleteConfirmModal";
 
 interface ICreateComminutyModalProps {
   isOpen: boolean;
@@ -42,6 +43,7 @@ export function CreateCommunityModal({
   const [description, setDescription] = useState("");
   const [avatarUrl, setAvatarUrl] = useState("");
   const [bannerUrl, setBannerUrl] = useState("");
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
 
   useEffect(() => {
     if (initialData) {
@@ -55,6 +57,22 @@ export function CreateCommunityModal({
   const handleNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const val = e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, "");
     if (val.length <= 21) setName(val);
+  };
+
+  const handleDelete = async () => {
+    if (!initialData?.id) return;
+    setLoading(true);
+    try {
+      await CommunityService.deleteCommunity(initialData.id);
+      toast.success("Сообщество удалено");
+      setIsDeleteModalOpen(false);
+      onClose();
+      router.push(ROUTES.HOME);
+    } catch (error: any) {
+      toast.error(error.message || "Не удалось удалить");
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -102,94 +120,119 @@ export function CreateCommunityModal({
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-md w-[95vw] rounded-lg max-h-[90vh] overflow-y-auto overflow-x-hidden min-w-0">
-        <DialogHeader>
-          <DialogTitle>
-            {isEditMode ? "Настройки сообщества" : "Создать сообщество"}
-          </DialogTitle>
-          <DialogDescription>
-            {isEditMode
-              ? "Измените данные вашего сообщества"
-              : "Заполните данные для вашего нового дома."}
-          </DialogDescription>
-        </DialogHeader>
+    <>
+      <Dialog open={isOpen} onOpenChange={onClose}>
+        <DialogContent className="sm:max-w-md w-[95vw] rounded-lg max-h-[90vh] overflow-y-auto overflow-x-hidden min-w-0">
+          <DialogHeader>
+            <DialogTitle>
+              {isEditMode ? "Настройки сообщества" : "Создать сообщество"}
+            </DialogTitle>
+            <DialogDescription>
+              {isEditMode
+                ? "Измените данные вашего сообщества"
+                : "Заполните данные для вашего нового дома."}
+            </DialogDescription>
+          </DialogHeader>
 
-        <form onSubmit={handleSubmit} className="space-y-4 pt-4">
-          <div className="space-y-2">
-            <Label htmlFor="name">Название (обязательно)</Label>
-            <div className="relative">
-              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground font-bold text-sm">
-                n/
-              </span>
-              <Input
-                id="name"
-                className="pl-8"
-                value={name}
-                onChange={handleNameChange}
-                placeholder="my_community"
-                required
-              />
-            </div>
-            <p className="text-[10px] text-muted-foreground">
-              От 3 до 21 символа. Без пробелов.
-            </p>
-          </div>
-
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+          <form onSubmit={handleSubmit} className="space-y-4 pt-4 min-w-0">
             <div className="space-y-2">
-              <Label htmlFor="avatar">Аватарка сообщества</Label>
-              <ImageUploader
-                url={avatarUrl}
-                onChange={setAvatarUrl}
-                variant="compact"
+              <Label htmlFor="name">Название (обязательно)</Label>
+              <div className="relative">
+                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground font-bold text-sm">
+                  n/
+                </span>
+                <Input
+                  id="name"
+                  className="pl-8"
+                  value={name}
+                  onChange={handleNameChange}
+                  placeholder="my_community"
+                  required
+                />
+              </div>
+              <p className="text-[10px] text-muted-foreground">
+                От 3 до 21 символа. Без пробелов.
+              </p>
+            </div>
+
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+              <div className="space-y-2">
+                <Label htmlFor="avatar">Аватарка сообщества</Label>
+                <ImageUploader
+                  url={avatarUrl}
+                  onChange={setAvatarUrl}
+                  variant="compact"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="banner">Баннер (фон)</Label>
+                <ImageUploader
+                  url={bannerUrl}
+                  onChange={setBannerUrl}
+                  variant="compact"
+                />
+              </div>
+            </div>
+
+            <div className="space-y-2 min-w-0 w-full">
+              <Label htmlFor="description">Описание</Label>
+              <Textarea
+                id="description"
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+                placeholder="О чем это сообщество?"
+                className="resize-none h-32 w-full min-w-0 max-w-full overflow-y-auto whitespace-pre-wrap break-all"
               />
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="banner">Баннер (фон)</Label>
-              <ImageUploader
-                url={bannerUrl}
-                onChange={setBannerUrl}
-                variant="compact"
-              />
-            </div>
-          </div>
 
-          <div className="space-y-2 min-w-0">
-            <Label htmlFor="description">Описание</Label>
-            <Textarea
-              id="description"
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              placeholder="О чем это сообщество?"
-              className="resize-none h-20 w-full max-w-full overflow-y-auto wrap-break-word"
-            />
-          </div>
-
-          <DialogFooter className="pt-4">
-            <Button
-              type="button"
-              variant="ghost"
-              onClick={onClose}
-              disabled={loading}
-              className="cursor-pointer"
-            >
-              Отмена
-            </Button>
-            <Button
-              type="submit"
-              disabled={loading || name.length < 3}
-              className="cursor-pointer bg-primary rounded-full px-8"
-            >
-              {loading ? (
-                <Loader2 className="animate-spin h-4 w-4" />
-              ) : (
-                `Создать n/${name || "..."}`
+            <DialogFooter className="pt-4 flex flex-col sm:flex-row gap-2">
+              {isEditMode && (
+                <Button
+                  type="button"
+                  variant="destructive"
+                  className="sm:mr-auto rounded-full cursor-pointer"
+                  onClick={() => setIsDeleteModalOpen(true)}
+                  disabled={loading}
+                >
+                  Удалить
+                </Button>
               )}
-            </Button>
-          </DialogFooter>
-        </form>
-      </DialogContent>
-    </Dialog>
+
+              <div className="flex gap-2 justify-end">
+                <Button
+                  type="button"
+                  variant="ghost"
+                  onClick={onClose}
+                  disabled={loading}
+                  className="cursor-pointer"
+                >
+                  Отмена
+                </Button>
+                <Button
+                  type="submit"
+                  disabled={loading || name.length < 3}
+                  className="cursor-pointer bg-primary rounded-full px-8"
+                >
+                  {loading ? (
+                    <Loader2 className="animate-spin h-4 w-4" />
+                  ) : isEditMode ? (
+                    "Сохранить"
+                  ) : (
+                    `Создать n/${name || "..."}`
+                  )}
+                </Button>
+              </div>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
+      <DeleteConfirmModal
+        isOpen={isDeleteModalOpen}
+        onClose={() => setIsDeleteModalOpen(false)}
+        onConfirm={handleDelete}
+        loading={loading}
+        name={initialData?.name || ""}
+      />
+    </>
   );
 }
