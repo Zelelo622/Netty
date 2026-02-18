@@ -69,28 +69,28 @@ export default function CreatePostPage() {
   const [communities, setCommunities] = useState<ICommunity[]>([]);
   const [isLoading, setIsLoading] = useState(false);
 
-  useLayoutEffect(() => {
-    const initData = async () => {
+  useEffect(() => {
+    const fetchCommunities = async () => {
       try {
-        const allCommunities = await CommunityService.getAllCommunities();
-        setCommunities(allCommunities);
-
-        if (slug) {
-          const target = allCommunities.find(
-            (c) => c.name.toLowerCase() === slug.toLowerCase(),
-          );
-
-          if (target) {
-            setSelectedCommunity(target.id!);
-          }
-        }
+        const all = await CommunityService.getAllCommunities();
+        setCommunities(all);
       } catch (err) {
-        console.error("Ошибка инициализации:", err);
+        console.error(err);
       }
     };
+    fetchCommunities();
+  }, []);
 
-    initData();
-  }, [slug]);
+  useEffect(() => {
+    if (slug && communities.length > 0) {
+      const target = communities.find(
+        (c) => c.name.toLowerCase() === slug.toLowerCase(),
+      );
+      if (target?.id) {
+        setSelectedCommunity(target.id);
+      }
+    }
+  }, [slug, communities]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -214,12 +214,7 @@ export default function CreatePostPage() {
                 placeholder="Расскажите подробнее..."
                 value={content}
                 onChange={(e) => setContent(e.target.value)}
-                className={cn(
-                  "resize-none h-80 w-full text-lg p-4 rounded-xl border-2",
-                  "focus-visible:ring-0 focus-visible:border-primary transition-all",
-                  "bg-muted/5 placeholder:text-muted-foreground/50",
-                  "overflow-y-auto wrap-break-word",
-                )}
+                className="resize-none h-32 w-full min-w-0 max-w-full overflow-y-auto whitespace-pre-wrap break-all"
               />
             </CardContent>
           </Card>
