@@ -181,7 +181,7 @@ export function CreateCommunityModal({
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
                 placeholder="О чем это сообщество?"
-                className="resize-none h-32 w-full min-w-0 max-w-full overflow-y-auto whitespace-pre-wrap break-all"
+                className="resize-none h-32 w-full min-w-0 max-w-full overflow-y-auto whitespace-pre-wrap break-after-all"
               />
             </div>
 

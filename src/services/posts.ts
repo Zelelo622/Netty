@@ -7,6 +7,7 @@ import {
   getDoc,
   getDocs,
   increment,
+  limit,
   orderBy,
   query,
   runTransaction,
@@ -107,6 +108,7 @@ export const PostsService = {
   },
 
   async createPost(data: {
+    slug: string;
     title: string;
     content: string;
     communityId: string;
@@ -188,5 +190,16 @@ export const PostsService = {
     });
 
     await batch.commit();
+  },
+
+  async getPostBySlug(slug: string): Promise<IPost | null> {
+    const postsRef = collection(db, "posts");
+    const q = query(postsRef, where("slug", "==", slug), limit(1));
+    const querySnapshot = await getDocs(q);
+
+    if (querySnapshot.empty) return null;
+
+    const doc = querySnapshot.docs[0];
+    return { id: doc.id, ...doc.data() } as IPost;
   },
 };

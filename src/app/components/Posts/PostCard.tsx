@@ -154,7 +154,7 @@ export const PostCard = ({ post }: IPostCardProps) => {
 
           <div className="space-y-2">
             <Link
-              href={ROUTES.POST(post.communityName, post.id)}
+              href={ROUTES.POST(post.communityName, post.slug)}
               className="group block"
             >
               <h2 className="mb-2 text-lg font-bold leading-tight sm:text-2xl group-hover:text-primary transition-colors line-clamp-2">

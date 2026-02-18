@@ -6,6 +6,6 @@ export const ROUTES = {
   CREATE_COMMUNITY: "/communities/create",
 
   COMMUNITY: (name: string) => `/n/${name}`,
-  POST: (community: string, id: string) => `/n/${community}/posts/${id}`,
+  POST: (community: string, postSlug: string) => `/n/${community}/post/${postSlug}`,
   CREATE_POST: (community: string) => `/n/${community}/submit`,
 };

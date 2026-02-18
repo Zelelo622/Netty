@@ -22,7 +22,7 @@ import { Loader2, Info, HelpCircle } from "lucide-react";
 import { toast } from "sonner";
 import { ImageUploader } from "@/app/components/ImageUploader";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { cn } from "@/lib/utils";
+import { cn, generateSlug } from "@/lib/utils";
 import { LoadingSpinner } from "@/app/components/LoadingSpinner";
 import {
   Popover,
@@ -100,8 +100,12 @@ export default function CreatePostPage() {
     try {
       const community = communities.find((c) => c.id === selectedCommunity);
 
-      const postId = await PostsService.createPost({
+      const shortId = Math.random().toString(36).substring(2, 8);
+      const postSlug = `${generateSlug(title)}-${shortId}`;
+
+      await PostsService.createPost({
         title: title.trim(),
+        slug: postSlug,
         content: content.trim(),
         communityId: selectedCommunity,
         communityName: community?.name || "unknown",
@@ -111,7 +115,9 @@ export default function CreatePostPage() {
         imageUrl: imageUrl.trim() || undefined,
       });
 
-      router.push(ROUTES.POST(selectedCommunity, postId));
+      const communityIdentifier = community?.name || selectedCommunity;
+
+      router.push(ROUTES.POST(communityIdentifier, postSlug));
       router.refresh();
     } catch (error) {
       console.error(error);
@@ -214,7 +220,7 @@ export default function CreatePostPage() {
                 placeholder="Расскажите подробнее..."
                 value={content}
                 onChange={(e) => setContent(e.target.value)}
-                className="resize-none h-32 w-full min-w-0 max-w-full overflow-y-auto whitespace-pre-wrap break-all"
+                className="resize-none h-32 w-full min-w-0 max-w-full overflow-y-auto whitespace-pre-wrap break-after-all"
               />
             </CardContent>
           </Card>
@@ -223,7 +229,7 @@ export default function CreatePostPage() {
             <Button
               type="button"
               variant="ghost"
-              className="rounded-full"
+              className="rounded-full cursor-pointer"
               onClick={() => router.back()}
               disabled={isLoading}
             >
@@ -231,16 +237,10 @@ export default function CreatePostPage() {
             </Button>
             <Button
               type="submit"
-              className="rounded-full px-10 font-bold"
+              className="rounded-full px-10 font-bold cursor-pointer"
               disabled={isLoading || !selectedCommunity || !title.trim()}
             >
-              {isLoading ? (
-                <>
-                  <LoadingSpinner description="Публикации..." />
-                </>
-              ) : (
-                "Опубликовать"
-              )}
+              {isLoading ? "Публикую..." : "Опубликовать"}
             </Button>
           </div>
         </form>
