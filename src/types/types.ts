@@ -12,6 +12,7 @@ export interface ICommunity {
 
 export interface IPost {
   id: string;
+  slug: string;
   title: string;
   content: string;
   communityId: string;
