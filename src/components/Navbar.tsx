@@ -2,8 +2,8 @@
 
 import Link from "next/link";
 import { ModeToggle } from "./ThemeToggle";
-import { MaskotIcon } from "./MaskotIcon";
-import { LogoTextIcon } from "./LogoTextIcon";
+import { MaskotIcon } from "./icons/MaskotIcon";
+import { LogoTextIcon } from "./icons/LogoTextIcon";
 import { Button } from "@/components/ui/button";
 import { signOut } from "firebase/auth";
 import { auth } from "../lib/firebase";

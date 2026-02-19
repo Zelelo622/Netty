@@ -1,4 +1,4 @@
-import { MaskotIcon } from "@/components/MaskotIcon";
+import { MaskotIcon } from "@/components/icons/MaskotIcon";
 
 interface IAuthMascotProps {
   loading: boolean;

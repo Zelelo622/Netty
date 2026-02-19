@@ -1,7 +1,7 @@
 "use client";
 
 import { IPostListProps } from "./types";
-import { MaskotIcon } from "../../../components/MaskotIcon";
+import { MaskotIcon } from "../../../components/icons/MaskotIcon";
 import { PostCard } from "./PostCard";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react"; // Добавили Suspense
 import { useRouter, useSearchParams } from "next/navigation";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ResetPasswordForm } from "@/features/auth/components/ResetPasswordForm";
@@ -8,7 +8,7 @@ import { AuthMascot } from "@/features/auth/components/AuthMascot";
 import { LoginForm } from "@/features/auth/components/LoginForm";
 import { RegisterForm } from "@/features/auth/components/RegisterForm";
 
-export default function AuthPage() {
+const AuthContent = () => {
   const searchParams = useSearchParams();
   const router = useRouter();
 
@@ -75,5 +75,19 @@ export default function AuthPage() {
         </TabsContent>
       </Tabs>
     </div>
+  );
+};
+
+export default function AuthPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen flex items-center justify-center">
+          <div className="animate-pulse">Загрузка формы...</div>
+        </div>
+      }
+    >
+      <AuthContent />
+    </Suspense>
   );
 }

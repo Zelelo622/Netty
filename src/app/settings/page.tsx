@@ -5,7 +5,7 @@ import { ProfileSettings } from "@/features/settings/components/ProfileSettings"
 import { SecuritySettings } from "@/features/settings/components/SecuritySettings";
 import { ProfilePreview } from "@/features/settings/components/ProfilePreview";
 import { LoadingSpinner } from "@/components/LoadingSpinner";
-import { MaskotIcon } from "@/components/MaskotIcon";
+import { MaskotIcon } from "@/components/icons/MaskotIcon";
 import { useRouter } from "next/navigation";
 import { ROUTES } from "@/lib/routes";
 

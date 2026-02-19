@@ -15,7 +15,7 @@ import { toast } from "sonner";
 import { FirebaseError } from "firebase/app";
 import { getFirebaseErrorMessage } from "@/lib/firebase-errors";
 import { AuthService } from "@/services/auth.service";
-import { LogoTextIcon } from "@/components/LogoTextIcon";
+import { LogoTextIcon } from "@/components/icons/LogoTextIcon";
 import { FormField } from "./FormFieldAuth";
 
 interface ILoginFormProps {
