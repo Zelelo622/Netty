@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { PostsService } from "@/services/posts.service";
-import { IPost } from "@/types/types";
+import { IComment, IPost } from "@/types/types";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
@@ -25,6 +25,9 @@ import { PostVote } from "@/features/posts/components/PostVote";
 import { PostActions } from "@/features/posts/components/PostActions";
 import { DeletePostModal } from "@/components/DeletePostModal";
 import { ROUTES } from "@/lib/routes";
+import { CommentsService } from "@/services/comments.service";
+import { buildCommentTree, findCommentDepth } from "@/lib/utils";
+import { Textarea } from "@/components/ui/textarea";
 
 export default function PostPage() {
   const { postSlug } = useParams();
@@ -36,11 +39,73 @@ export default function PostPage() {
   const [isDeleting, setIsDeleting] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
 
+  const [comments, setComments] = useState<IComment[]>([]);
+  const [rootCommentText, setRootCommentText] = useState("");
+  const [isSubmittingComment, setIsSubmittingComment] = useState(false);
+
   const isAuthor = user?.uid === post?.authorId;
 
   useEffect(() => {
+    if (post?.id) {
+      CommentsService.getPostComments(post.id).then((data) => {
+        setComments(buildCommentTree(data));
+      });
+    }
+  }, [post?.id]);
+
+  const handleSendComment = async (
+    parentId: string | null = null,
+    text: string,
+  ) => {
+    if (!user || !post) {
+      toast.error("Нужно войти в аккаунт");
+      return;
+    }
+
+    try {
+      const depth = parentId ? findCommentDepth(comments, parentId) + 1 : 0;
+
+      if (depth > 3) {
+        toast.error("Достигнута максимальная глубина обсуждения");
+        return;
+      }
+
+      await CommentsService.addComment({
+        postId: post.id,
+        parentId,
+        text,
+        authorId: user.uid,
+        authorName: user.displayName || "Аноним",
+        authorImage: user.photoURL || "",
+        depth,
+      });
+
+      const updatedFlat = await CommentsService.getPostComments(post.id);
+      setComments(buildCommentTree(updatedFlat));
+      toast.success("Комментарий добавлен");
+    } catch (e) {
+      toast.error("Ошибка при отправке");
+    }
+  };
+
+  const handleSendRootComment = async () => {
+    if (!rootCommentText.trim()) {
+      return;
+    }
+    setIsSubmittingComment(true);
+    try {
+      await handleSendComment(null, rootCommentText);
+      setRootCommentText("");
+    } finally {
+      setIsSubmittingComment(false);
+    }
+  };
+
+  useEffect(() => {
     const fetchPostData = async () => {
-      if (!postSlug) return;
+      if (!postSlug) {
+        return;
+      }
       try {
         setIsLoading(true);
         const postData = await PostsService.getPostBySlug(postSlug as string);
@@ -171,28 +236,53 @@ export default function PostPage() {
         isLoading={isDeleting}
       />
 
-      <section id="comments" className="mt-12 space-y-8">
+      <section id="comments" className="mt-12 space-y-8 pb-20">
         <div className="flex flex-col gap-4">
-          <h3 className="text-lg font-bold">Комментарии</h3>
+          <h3 className="text-lg font-bold">
+            Комментарии ({post.commentsCount})
+          </h3>
 
-          {/* Поле ввода нового комментария */}
-          <div className="relative overflow-hidden rounded-2xl border bg-muted/20 focus-within:border-primary/50 transition-all p-4">
-            <textarea
-              placeholder="Что вы об этом думаете?"
-              className="w-full bg-transparent border-none focus:ring-0 resize-none min-h-[100px] text-sm"
+          <div className="group relative overflow-hidden rounded-2xl border bg-muted/20 focus-within:border-primary/50 transition-all p-2">
+            <Textarea
+              placeholder={
+                user
+                  ? "Что вы об этом думаете?"
+                  : "Войдите, чтобы оставить комментарий"
+              }
+              value={rootCommentText}
+              onChange={(e) => setRootCommentText(e.target.value)}
+              disabled={!user || isSubmittingComment}
+              className="min-h-[100px] w-full border-none bg-transparent shadow-none focus-visible:ring-0 resize-none text-sm placeholder:text-muted-foreground/60"
             />
-            <div className="flex justify-end mt-2">
-              <Button size="sm" className="rounded-full px-6 font-bold">
-                Отправить
+            <div className="flex justify-end p-2">
+              <Button
+                size="sm"
+                onClick={handleSendRootComment}
+                disabled={
+                  !user || !rootCommentText.trim() || isSubmittingComment
+                }
+                className="cursor-pointer rounded-full px-6 font-bold transition-all"
+              >
+                {isSubmittingComment ? "Отправка..." : "Отправить"}
               </Button>
             </div>
           </div>
         </div>
 
-        {/* Список комментариев (имитация) */}
-        <div className="space-y-8 pt-4">
-          <CommentItem />
-          <CommentItem />
+        <div className="space-y-6">
+          {comments.length > 0 ? (
+            comments.map((comment) => (
+              <CommentItem
+                key={comment.id}
+                comment={comment}
+                onReply={handleSendComment}
+              />
+            ))
+          ) : (
+            <div className="text-center py-10 text-muted-foreground border rounded-2xl border-dashed">
+              Здесь пока пусто. Станьте первым, кто оставит комментарий!
+            </div>
+          )}
         </div>
       </section>
     </div>

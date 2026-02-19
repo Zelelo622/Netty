@@ -1,82 +1,118 @@
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+"use client";
+
+import { useState } from "react";
+import { IComment } from "@/types/types";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import {
-  ArrowBigDown,
-  ArrowBigUp,
-  MessageSquare,
-  MoreHorizontal,
-} from "lucide-react";
+import { MessageSquare, ArrowBigUp, ArrowBigDown } from "lucide-react";
+import { formatDistanceToNow } from "date-fns";
+import { ru } from "date-fns/locale";
+import { Textarea } from "@/components/ui/textarea";
+import { toast } from "sonner";
+import { CommentsService } from "@/services/comments.service";
+import { CommentVote } from "./CommentVote";
 
-// Компонент одного комментария (рекурсивный)
-export default function CommentItem({ depth = 0 }: { depth?: number }) {
+interface ICommentItemProps {
+  comment: IComment;
+  onReply: (parentId: string, text: string) => Promise<void>;
+}
+
+export default function CommentItem({ comment, onReply }: ICommentItemProps) {
+  const [isReplying, setIsReplying] = useState(false);
+  const [replyText, setReplyText] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const handleSubmitReply = async () => {
+    if (!replyText.trim()) return;
+    setIsSubmitting(true);
+    await onReply(comment.id, replyText);
+    setReplyText("");
+    setIsReplying(false);
+    setIsSubmitting(false);
+  };
+
+  const commentDate = comment.createdAt?.toDate
+    ? comment.createdAt.toDate()
+    : new Date();
+
   return (
     <div
       className={cn(
         "flex flex-col gap-3",
-        depth > 0 &&
-          "mt-4 ml-2 md:ml-6 pl-4 border-l-2 border-muted hover:border-primary/20 transition-colors",
+        comment.depth > 0 &&
+          "mt-4 ml-2 md:ml-6 pl-4 border-l-2 border-muted transition-colors",
       )}
     >
-      {/* Шапка комментария */}
       <div className="flex items-center gap-2">
         <Avatar className="h-6 w-6">
-          <AvatarFallback className="text-[10px]">AI</AvatarFallback>
+          <AvatarImage src={comment.authorImage} />
+          <AvatarFallback>{comment.authorName[0]}</AvatarFallback>
         </Avatar>
-        <span className="text-xs font-bold">u/username</span>
-        <span className="text-[10px] text-muted-foreground">5 ч. назад</span>
+        <span className="text-xs font-bold">u/{comment.authorName}</span>
+        <span className="text-[10px] text-muted-foreground">
+          {formatDistanceToNow(commentDate, { addSuffix: true, locale: ru })}
+        </span>
       </div>
 
-      {/* Текст */}
-      <div className="text-sm leading-relaxed text-foreground/90">
-        Это пример комментария. Здесь может быть много текста, который объясняет
-        суть древовидной структуры.
+      <div className="text-sm leading-relaxed text-foreground/90 whitespace-pre-wrap">
+        {comment.text}
       </div>
 
-      {/* Действия */}
       <div className="flex items-center gap-4">
-        <div className="flex items-center gap-1 bg-muted/30 rounded-full px-2 py-0.5">
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-6 w-6 hover:text-orange-600"
-          >
-            <ArrowBigUp className="h-4 w-4" />
-          </Button>
-          <span className="text-[11px] font-bold">12</span>
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-6 w-6 hover:text-blue-600"
-          >
-            <ArrowBigDown className="h-4 w-4" />
-          </Button>
-        </div>
+        <CommentVote commentId={comment.id} initialVotes={comment.votes} />
 
         <Button
           variant="ghost"
           size="sm"
-          className="h-7 gap-1.5 text-xs text-muted-foreground hover:bg-muted"
+          className="cursor-pointer h-7 gap-1.5 text-xs text-muted-foreground"
+          onClick={() => setIsReplying(!isReplying)}
         >
-          <MessageSquare className="h-3.5 w-3.5" />
-          Ответить
-        </Button>
-
-        <Button
-          variant="ghost"
-          size="icon"
-          className="h-7 w-7 text-muted-foreground"
-        >
-          <MoreHorizontal className="h-4 w-4" />
+          {comment.depth < 3 && (
+            <>
+              <MessageSquare className="h-3.5 w-3.5" />
+              Ответить
+            </>
+          )}
         </Button>
       </div>
 
-      {/* Рекурсивный вызов для вложенных ответов (имитация) */}
-      {depth < 2 && (
+      {isReplying && (
+        <div className="mt-2 space-y-2 pl-4 border-l-2 border-primary/20">
+          <Textarea
+            value={replyText}
+            onChange={(e) => setReplyText(e.target.value)}
+            placeholder="Ваш ответ..."
+            className="min-h-[80px] bg-muted/20 border-none focus-visible:ring-1 focus-visible:ring-primary/50 rounded-xl resize-none text-sm"
+          />
+          <div className="flex justify-end gap-2">
+            <Button
+              size="sm"
+              variant="ghost"
+              className="cursor-pointer rounded-full"
+              onClick={() => setIsReplying(false)}
+            >
+              Отмена
+            </Button>
+            <Button
+              size="sm"
+              className="cursor-pointer rounded-full px-4"
+              onClick={handleSubmitReply}
+              disabled={isSubmitting || !replyText.trim()}
+            >
+              {isSubmitting ? "..." : "Ответить"}
+            </Button>
+          </div>
+        </div>
+      )}
+
+      {comment.replies && comment.replies.length > 0 && (
         <div className="space-y-4">
-          <CommentItem depth={depth + 1} />
+          {comment.replies.map((reply) => (
+            <CommentItem key={reply.id} comment={reply} onReply={onReply} />
+          ))}
         </div>
       )}
     </div>
   );
-};
+}

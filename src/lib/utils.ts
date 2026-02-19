@@ -1,3 +1,4 @@
+import { IComment } from "@/types/types";
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
 
@@ -27,3 +28,50 @@ export const generateSlug = (text: string): string => {
     .replace(/-+/g, "-")
     .replace(/^-|-$/g, "");
 };
+
+export function buildCommentTree(flatComments: IComment[]): IComment[] {
+  const map = new Map<string, IComment>();
+  const roots: IComment[] = [];
+
+  const sorted = [...flatComments].sort((a, b) => {
+    const aTime = a.createdAt?.seconds || 0;
+    const bTime = b.createdAt?.seconds || 0;
+    return aTime - bTime;
+  });
+
+  sorted.forEach((comment) => {
+    map.set(comment.id, { ...comment, replies: [] });
+  });
+
+  sorted.forEach((comment) => {
+    const node = map.get(comment.id)!;
+    if (comment.parentId) {
+      const parent = map.get(comment.parentId);
+      if (parent) {
+        parent.replies?.push(node);
+      }
+    } else {
+      roots.push(node);
+    }
+  });
+
+  return roots.sort((a, b) => b.votes - a.votes);
+}
+
+export function findCommentDepth(
+  comments: IComment[],
+  targetId: string,
+): number {
+  for (const comment of comments) {
+    if (comment.id === targetId) {
+      return comment.depth;
+    }
+    if (comment.replies && comment.replies.length > 0) {
+      const foundDepth = findCommentDepth(comment.replies, targetId);
+      if (foundDepth !== -1) {
+        return foundDepth;
+      }
+    }
+  }
+  return -1;
+}

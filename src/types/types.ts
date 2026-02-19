@@ -28,3 +28,17 @@ export interface IPost {
   imageUrl?: string;
   tags?: string[];
 }
+
+export interface IComment {
+  id: string;
+  postId: string;
+  parentId: string | null;
+  authorId: string;
+  authorName: string;
+  authorImage?: string;
+  text: string;
+  createdAt: any;
+  votes: number;
+  depth: number;
+  replies?: IComment[];
+}
