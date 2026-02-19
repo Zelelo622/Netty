@@ -23,6 +23,7 @@ import {
 } from "@/components/ui/popover";
 import { PostRules } from "@/features/communities/components/PostRules";
 import { CommunitySelect } from "@/features/communities/components/CommunitySelect";
+import { FlairSelect } from "@/features/posts/components/FlairSelect";
 
 export default function CreatePostPage() {
   const { user, loading: authLoading } = useAuth();
@@ -36,6 +37,7 @@ export default function CreatePostPage() {
   const [communities, setCommunities] = useState<ICommunity[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [isDataFetching, setIsDataFetching] = useState(true);
+  const [selectedFlair, setSelectedFlair] = useState<string | null>(null);
 
   useEffect(() => {
     if (!user) return;
@@ -87,6 +89,7 @@ export default function CreatePostPage() {
         authorName: user.displayName || "User",
         authorImage: user.photoURL || "",
         imageUrl: imageUrl.trim() || undefined,
+        tags: selectedFlair ? [selectedFlair] : [],
       });
 
       router.push(ROUTES.POST(community?.name || selectedCommunity, postSlug));
@@ -143,6 +146,13 @@ export default function CreatePostPage() {
           <Card className="rounded-2xl border-2 overflow-hidden">
             <CardContent className="p-4 md:p-6 space-y-6">
               <div className="space-y-2">
+                <label className="text-[10px] font-black uppercase text-muted-foreground tracking-widest ml-1">
+                  Выберите флаер (необязательно)
+                </label>
+                <FlairSelect
+                  selectedFlairId={selectedFlair}
+                  onSelect={setSelectedFlair}
+                />
                 <Input
                   placeholder="Заголовок"
                   value={title}

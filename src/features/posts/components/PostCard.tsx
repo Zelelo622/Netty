@@ -4,16 +4,7 @@ import { useEffect, useState } from "react";
 import { IPostCardProps } from "./types";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { cn } from "@/lib/utils";
-import {
-  ArrowBigDown,
-  ArrowBigUp,
-  Languages,
-  MessageSquare,
-  MoreHorizontal,
-  Share2,
-  Trash2,
-} from "lucide-react";
+import { Languages, MoreHorizontal, Trash2 } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import Link from "next/link";
 import { Separator } from "@/components/ui/separator";
@@ -31,6 +22,9 @@ import { PostVote } from "./PostVote";
 import { PostActions } from "./PostActions";
 import { DeletePostModal } from "@/components/DeletePostModal";
 import { useRouter } from "next/navigation";
+import { POST_FLAIRS } from "@/lib/constants";
+import { Badge } from "@/components/ui/badge";
+import { cn } from "@/lib/utils";
 
 export const PostCard = ({ post }: IPostCardProps) => {
   const { user } = useAuth();
@@ -39,6 +33,8 @@ export const PostCard = ({ post }: IPostCardProps) => {
 
   const [isDeleting, setIsDeleting] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
+
+  const flair = POST_FLAIRS.find((f) => post.tags?.includes(f.id));
 
   const formattedDate = post.createdAt?.seconds
     ? new Date(post.createdAt.seconds * 1000).toLocaleDateString("ru-RU", {
@@ -125,6 +121,17 @@ export const PostCard = ({ post }: IPostCardProps) => {
                 {post.title}
               </h2>
             </Link>
+            {flair && (
+              <Badge
+                className={cn(
+                  "shrink-0 whitespace-nowrap rounded-md",
+                  flair.color,
+                  flair.textColor,
+                )}
+              >
+                {flair.label}
+              </Badge>
+            )}
             <p className="text-sm text-muted-foreground/80 line-clamp-3 leading-relaxed sm:text-base">
               {post.content}
             </p>

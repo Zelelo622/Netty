@@ -55,8 +55,11 @@ export function CreateCommunityModal({
   }, [initialData]);
 
   const handleNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const val = e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, "");
-    if (val.length <= 21) setName(val);
+    const val = e.target.value.replace(/[^a-zA-Z0-9_]/g, "");
+
+    if (val.length <= 21) {
+      setName(val);
+    }
   };
 
   const handleDelete = async () => {

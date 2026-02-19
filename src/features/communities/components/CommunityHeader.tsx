@@ -7,7 +7,10 @@ interface ICommunityHeaderProps {
   children?: React.ReactNode;
 }
 
-export function CommunityHeader({ community, children }: ICommunityHeaderProps) {
+export function CommunityHeader({
+  community,
+  children,
+}: ICommunityHeaderProps) {
   return (
     <div className="relative w-full overflow-hidden border-b bg-muted shadow-sm">
       {/* Banner */}

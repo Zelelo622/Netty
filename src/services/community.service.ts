@@ -33,7 +33,7 @@ const communitiesRef = collection(db, "communities").withConverter(
   communityConverter,
 );
 
-const cleanCommunityName = (name: string) => name.toLowerCase().trim();
+const cleanCommunityName = (name: string) => name.trim();
 const mapSnapshot = (snapshot: QuerySnapshot<ICommunity>) =>
   snapshot.docs.map((doc) => doc.data());
 
@@ -159,7 +159,7 @@ export const CommunityService = {
           membersCount: 1,
           subscribers: [data.creatorId],
           avatarUrl: data.avatarUrl || "",
-          bannerUrl: "",
+          bannerUrl: data.bannerUrl || "",
         };
 
         transaction.set(newCommunityRef, newCommunityData);

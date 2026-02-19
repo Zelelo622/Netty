@@ -26,8 +26,9 @@ import { PostActions } from "@/features/posts/components/PostActions";
 import { DeletePostModal } from "@/components/DeletePostModal";
 import { ROUTES } from "@/lib/routes";
 import { CommentsService } from "@/services/comments.service";
-import { buildCommentTree, findCommentDepth } from "@/lib/utils";
+import { buildCommentTree, cn, findCommentDepth } from "@/lib/utils";
 import { Textarea } from "@/components/ui/textarea";
+import { POST_FLAIRS } from "@/lib/constants";
 
 export default function PostPage() {
   const { postSlug } = useParams();
@@ -44,6 +45,8 @@ export default function PostPage() {
   const [isSubmittingComment, setIsSubmittingComment] = useState(false);
 
   const isAuthor = user?.uid === post?.authorId;
+
+  const flair = POST_FLAIRS.find((f) => post?.tags?.includes(f.id));
 
   useEffect(() => {
     if (post?.id) {
@@ -197,10 +200,22 @@ export default function PostPage() {
           </DropdownMenuContent>
         </DropdownMenu>
       </div>
-
-      <h1 className="text-xl md:text-2xl font-black mb-6 leading-tight">
-        {post.title}
-      </h1>
+      <div className="space-y-3 mb-6">
+        {flair && (
+          <Badge
+            className={cn(
+              "rounded-md px-2 py-0.5 text-[11px] font-bold uppercase tracking-wider border-none",
+              flair.color,
+              flair.textColor,
+            )}
+          >
+            {flair.label}
+          </Badge>
+        )}
+        <h1 className="text-xl md:text-2xl font-black mb-6 leading-tight">
+          {post.title}
+        </h1>
+      </div>
 
       <div className="space-y-6">
         {post.imageUrl && (
