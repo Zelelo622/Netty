@@ -5,13 +5,14 @@ import { IComment } from "@/types/types";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { MessageSquare, ArrowBigUp, ArrowBigDown } from "lucide-react";
+import { MessageSquare } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { ru } from "date-fns/locale";
 import { Textarea } from "@/components/ui/textarea";
-import { toast } from "sonner";
-import { CommentsService } from "@/services/comments.service";
 import { CommentVote } from "./CommentVote";
+import { useAuth } from "@/context/AuthContext";
+import { CommentsService } from "@/services/comments.service";
+import { toast } from "sonner";
 
 interface ICommentItemProps {
   comment: IComment;
@@ -19,9 +20,34 @@ interface ICommentItemProps {
 }
 
 export default function CommentItem({ comment, onReply }: ICommentItemProps) {
+  const { user } = useAuth();
+  const [isEditing, setIsEditing] = useState(false);
+  const [editText, setEditText] = useState(comment.text);
+  const [isUpdating, setIsUpdating] = useState(false);
   const [isReplying, setIsReplying] = useState(false);
   const [replyText, setReplyText] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const isAuthor = user?.uid === comment.authorId;
+
+  const handleUpdate = async () => {
+    if (!editText.trim() || editText === comment.text) {
+      setIsEditing(false);
+      return;
+    }
+    setIsUpdating(true);
+    try {
+      await CommentsService.updateComment(comment.id, editText);
+      comment.text = editText;
+      comment.isEdited = true;
+      setIsEditing(false);
+      toast.success("Изменено");
+    } catch (e) {
+      toast.error("Ошибка при обновлении");
+    } finally {
+      setIsUpdating(false);
+    }
+  };
 
   const handleSubmitReply = async () => {
     if (!replyText.trim()) return;
@@ -79,11 +105,38 @@ export default function CommentItem({ comment, onReply }: ICommentItemProps) {
         <span className="text-[10px] text-muted-foreground">
           {formatDistanceToNow(commentDate, { addSuffix: true, locale: ru })}
         </span>
+        {comment.isEdited && (
+          <span className="text-[10px] text-muted-foreground italic">
+            • Изменено
+          </span>
+        )}
       </div>
 
-      <div className="text-sm leading-relaxed text-foreground/90 whitespace-pre-wrap">
-        {renderText(comment.text)}
-      </div>
+      {isEditing ? (
+        <div className="space-y-2">
+          <Textarea
+            value={editText}
+            onChange={(e) => setEditText(e.target.value)}
+            className="min-h-[80px] bg-muted/20 border-none focus-visible:ring-1 focus-visible:ring-primary/50 rounded-xl resize-none text-sm"
+          />
+          <div className="flex gap-2">
+            <Button
+              size="sm"
+              variant="ghost"
+              onClick={() => setIsEditing(false)}
+            >
+              Отмена
+            </Button>
+            <Button size="sm" onClick={handleUpdate} disabled={isUpdating}>
+              Сохранить
+            </Button>
+          </div>
+        </div>
+      ) : (
+        <div className="text-sm leading-relaxed text-foreground/90 whitespace-pre-wrap">
+          {renderText(comment.text)}
+        </div>
+      )}
 
       <div className="flex items-center gap-4">
         <CommentVote commentId={comment.id} initialVotes={comment.votes} />
@@ -101,6 +154,16 @@ export default function CommentItem({ comment, onReply }: ICommentItemProps) {
             </>
           )}
         </Button>
+        {isAuthor && !isEditing && (
+          <Button
+            variant="ghost"
+            size="sm"
+            className="h-7 text-xs text-muted-foreground hover:text-primary"
+            onClick={() => setIsEditing(true)}
+          >
+            Изменить
+          </Button>
+        )}
       </div>
 
       {isReplying && (

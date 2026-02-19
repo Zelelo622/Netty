@@ -38,6 +38,15 @@ export const CommentsService = {
     return snap.docs.map((doc) => ({ id: doc.id, ...doc.data() }) as IComment);
   },
 
+  async updateComment(commentId: string, text: string) {
+    const commentRef = doc(db, "comments", commentId);
+    await updateDoc(commentRef, {
+      text,
+      isEdited: true,
+      updatedAt: serverTimestamp(),
+    });
+  },
+
   async voteComment(
     commentId: string,
     userId: string,

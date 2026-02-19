@@ -40,5 +40,6 @@ export interface IComment {
   createdAt: any;
   votes: number;
   depth: number;
+  isEdited?: boolean;
   replies?: IComment[];
 }
