@@ -58,7 +58,7 @@ export default function PostPage() {
     text: string,
   ) => {
     if (!user || !post) {
-      toast.error("Нужно войти в аккаунт");
+      toast.info("Нужно войти в аккаунт");
       return;
     }
 

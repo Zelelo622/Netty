@@ -77,7 +77,7 @@ export function CreateCommunityModal({
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    if (!user) return toast.error("Нужно войти в аккаунт");
+    if (!user) return toast.info("Нужно войти в аккаунт");
     if (name.length < 3) return toast.error("Название слишком короткое");
 
     setLoading(true);
