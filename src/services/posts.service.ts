@@ -20,6 +20,7 @@ import {
   DocumentData,
   QueryDocumentSnapshot,
   startAfter,
+  updateDoc,
 } from "firebase/firestore";
 
 const postConverter: FirestoreDataConverter<IPost> = {
@@ -179,6 +180,14 @@ export const PostsService = {
       console.error("Vote error:", error);
       throw error;
     }
+  },
+
+  async updatePost(postId: string, data: Partial<IPost>) {
+    const postRef = doc(db, "posts", postId);
+    await updateDoc(postRef, {
+      ...data,
+      updatedAt: serverTimestamp(),
+    });
   },
 
   async getUserVoteStatus(postId: string, userId: string): Promise<number> {

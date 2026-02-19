@@ -27,6 +27,9 @@ export interface IPost {
 
   imageUrl?: string;
   tags?: string[];
+
+  updatedAt?: any;
+  isEdited?: boolean;
 }
 
 export interface IComment {
@@ -41,6 +44,7 @@ export interface IComment {
   votes: number;
   depth: number;
   isEdited?: boolean;
+  updatedAt?: any;
   replies?: IComment[];
 }
 

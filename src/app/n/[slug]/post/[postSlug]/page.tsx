@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
 import { LoadingSpinner } from "@/components/LoadingSpinner";
-import { MoreHorizontal, Languages, Trash2 } from "lucide-react";
+import { MoreHorizontal, Languages, Trash2, Pencil } from "lucide-react"; // Добавили Pencil
 import { formatDistanceToNow } from "date-fns";
 import { ru } from "date-fns/locale";
 import { useAuth } from "@/context/AuthContext";
@@ -29,6 +29,8 @@ import { CommentsService } from "@/services/comments.service";
 import { buildCommentTree, cn, findCommentDepth } from "@/lib/utils";
 import { Textarea } from "@/components/ui/textarea";
 import { POST_FLAIRS } from "@/lib/constants";
+import { ImageUploader } from "@/components/ImageUploader";
+import { EditPostForm } from "@/features/posts/components/EditPostForm";
 
 export default function PostPage() {
   const { postSlug } = useParams();
@@ -40,12 +42,16 @@ export default function PostPage() {
   const [isDeleting, setIsDeleting] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
 
+  const [isEditing, setIsEditing] = useState(false);
+  const [editContent, setEditContent] = useState("");
+  const [editImageUrl, setEditImageUrl] = useState("");
+  const [isUpdating, setIsUpdating] = useState(false);
+
   const [comments, setComments] = useState<IComment[]>([]);
   const [rootCommentText, setRootCommentText] = useState("");
   const [isSubmittingComment, setIsSubmittingComment] = useState(false);
 
   const isAuthor = user?.uid === post?.authorId;
-
   const flair = POST_FLAIRS.find((f) => post?.tags?.includes(f.id));
 
   useEffect(() => {
@@ -56,6 +62,61 @@ export default function PostPage() {
     }
   }, [post?.id]);
 
+  useEffect(() => {
+    const fetchPostData = async () => {
+      if (!postSlug) return;
+      try {
+        setIsLoading(true);
+        const postData = await PostsService.getPostBySlug(postSlug as string);
+        if (postData) {
+          setPost(postData);
+          if (user) {
+            await PostsService.getUserVoteStatus(postData.id, user.uid);
+          }
+        }
+      } catch (error) {
+        console.error("Ошибка при загрузке поста:", error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    fetchPostData();
+  }, [postSlug, user]);
+
+  const handleEditClick = () => {
+    setEditContent(post?.content || "");
+    setEditImageUrl(post?.imageUrl || "");
+    setIsEditing(true);
+  };
+
+  const handleUpdatePost = async (newContent: string, newImageUrl: string) => {
+    if (!post) return;
+    setIsUpdating(true);
+    try {
+      await PostsService.updatePost(post.id, {
+        content: newContent,
+        imageUrl: newImageUrl,
+      });
+
+      setPost((prev) =>
+        prev
+          ? {
+              ...prev,
+              content: newContent,
+              imageUrl: newImageUrl,
+              updatedAt: new Date(),
+            }
+          : null,
+      );
+      setIsEditing(false);
+      toast.success("Пост обновлен");
+    } catch (error) {
+      toast.error("Ошибка при обновлении поста");
+    } finally {
+      setIsUpdating(false);
+    }
+  };
+
   const handleSendComment = async (
     parentId: string | null = null,
     text: string,
@@ -64,15 +125,12 @@ export default function PostPage() {
       toast.info("Нужно войти в аккаунт");
       return;
     }
-
     try {
       const depth = parentId ? findCommentDepth(comments, parentId) + 1 : 0;
-
       if (depth > 3) {
         toast.error("Достигнута максимальная глубина обсуждения");
         return;
       }
-
       await CommentsService.addComment({
         postId: post.id,
         parentId,
@@ -92,9 +150,7 @@ export default function PostPage() {
   };
 
   const handleSendRootComment = async () => {
-    if (!rootCommentText.trim()) {
-      return;
-    }
+    if (!rootCommentText.trim()) return;
     setIsSubmittingComment(true);
     try {
       await handleSendComment(null, rootCommentText);
@@ -103,29 +159,6 @@ export default function PostPage() {
       setIsSubmittingComment(false);
     }
   };
-
-  useEffect(() => {
-    const fetchPostData = async () => {
-      if (!postSlug) {
-        return;
-      }
-      try {
-        setIsLoading(true);
-        const postData = await PostsService.getPostBySlug(postSlug as string);
-        if (postData) {
-          setPost(postData);
-          if (user) {
-            await PostsService.getUserVoteStatus(postData.id, user.uid);
-          }
-        }
-      } catch (error) {
-        console.error("Ошибка при загрузке поста:", error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-    fetchPostData();
-  }, [postSlug, user]);
 
   const handleDelete = async () => {
     if (!post) return;
@@ -147,6 +180,12 @@ export default function PostPage() {
     ? post.createdAt.toDate()
     : new Date(post.createdAt);
 
+  const updatedDate = post.updatedAt?.toDate
+    ? post.updatedAt.toDate()
+    : post.updatedAt
+      ? new Date(post.updatedAt)
+      : null;
+
   return (
     <div className="max-w-3xl mx-auto px-4 py-8">
       <div className="flex items-center justify-between mb-6">
@@ -162,9 +201,21 @@ export default function PostPage() {
                 Community
               </Badge>
             </div>
-            <span className="text-xs text-muted-foreground">
-              u/{post.authorName} •{" "}
-              {formatDistanceToNow(postDate, { addSuffix: true, locale: ru })}
+            <span className="text-xs text-muted-foreground flex flex-wrap items-center gap-1">
+              <span>u/{post.authorName} •</span>
+              <span>
+                {formatDistanceToNow(postDate, { addSuffix: true, locale: ru })}
+              </span>
+              {updatedDate && (
+                <span className="italic text-muted-foreground/70">
+                  (изм.{" "}
+                  {formatDistanceToNow(updatedDate, {
+                    addSuffix: true,
+                    locale: ru,
+                  })}
+                  )
+                </span>
+              )}
             </span>
           </div>
         </div>
@@ -188,18 +239,29 @@ export default function PostPage() {
               <Languages className="h-4 w-4" />
               <span>Перевести</span>
             </DropdownMenuItem>
+
             {isAuthor && (
-              <DropdownMenuItem
-                className="cursor-pointer gap-2 text-destructive focus:text-destructive focus:bg-destructive/10"
-                onSelect={() => setShowDeleteModal(true)}
-              >
-                <Trash2 className="h-4 w-4" />
-                <span>Удалить пост</span>
-              </DropdownMenuItem>
+              <>
+                <DropdownMenuItem
+                  className="cursor-pointer gap-2"
+                  onSelect={handleEditClick}
+                >
+                  <Pencil className="h-4 w-4" />
+                  <span>Редактировать</span>
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  className="cursor-pointer gap-2 text-destructive focus:text-destructive focus:bg-destructive/10"
+                  onSelect={() => setShowDeleteModal(true)}
+                >
+                  <Trash2 className="h-4 w-4" />
+                  <span>Удалить пост</span>
+                </DropdownMenuItem>
+              </>
             )}
           </DropdownMenuContent>
         </DropdownMenu>
       </div>
+
       <div className="space-y-3 mb-6">
         {flair && (
           <Badge
@@ -217,20 +279,32 @@ export default function PostPage() {
         </h1>
       </div>
 
-      <div className="space-y-6">
-        {post.imageUrl && (
-          <div className="rounded-2xl overflow-hidden border bg-muted shadow-md">
-            <img
-              src={post.imageUrl}
-              alt={post.title}
-              className="w-full h-auto max-h-[700px] object-contain mx-auto"
-            />
-          </div>
-        )}
-        <p className="text-base break-all md:text-lg text-foreground/80 whitespace-pre-wrap leading-relaxed">
-          {post.content}
-        </p>
-      </div>
+      {isEditing ? (
+        <EditPostForm
+          initialContent={post.content}
+          initialImageUrl={post.imageUrl}
+          isUpdating={isUpdating}
+          onSave={handleUpdatePost}
+          onCancel={() => setIsEditing(false)}
+        />
+      ) : (
+        <div className="space-y-6">
+          {post.imageUrl && (
+            <div className="rounded-2xl overflow-hidden border bg-muted shadow-md">
+              <img
+                src={post.imageUrl}
+                alt={post.title}
+                className="w-full h-auto max-h-[700px] object-contain mx-auto"
+              />
+            </div>
+          )}
+          {post.content && (
+            <p className="text-base break-all md:text-lg text-foreground/80 whitespace-pre-wrap leading-relaxed">
+              {post.content}
+            </p>
+          )}
+        </div>
+      )}
 
       <Separator className="my-8" />
 
