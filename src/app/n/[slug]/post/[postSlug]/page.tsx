@@ -9,18 +9,9 @@ import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
 import { LoadingSpinner } from "@/components/LoadingSpinner";
-import {
-  Share2,
-  ArrowBigUp,
-  ArrowBigDown,
-  MessageSquare,
-  MoreHorizontal,
-  Languages,
-  Trash2,
-} from "lucide-react";
+import { MoreHorizontal, Languages, Trash2 } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { ru } from "date-fns/locale";
-import { cn } from "@/lib/utils";
 import { useAuth } from "@/context/AuthContext";
 import { toast } from "sonner";
 import {
@@ -29,16 +20,6 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
 import CommentItem from "@/features/comments/components/CommentItem";
 import { PostVote } from "@/features/posts/components/PostVote";
 import { PostActions } from "@/features/posts/components/PostActions";
@@ -54,8 +35,6 @@ export default function PostPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [isDeleting, setIsDeleting] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
-  const [currentVote, setCurrentVote] = useState<number>(0);
-  const [displayVotes, setDisplayVotes] = useState(0);
 
   const isAuthor = user?.uid === post?.authorId;
 
@@ -67,13 +46,8 @@ export default function PostPage() {
         const postData = await PostsService.getPostBySlug(postSlug as string);
         if (postData) {
           setPost(postData);
-          setDisplayVotes(postData.votes);
           if (user) {
-            const voteStatus = await PostsService.getUserVoteStatus(
-              postData.id,
-              user.uid,
-            );
-            setCurrentVote(voteStatus);
+            await PostsService.getUserVoteStatus(postData.id, user.uid);
           }
         }
       } catch (error) {

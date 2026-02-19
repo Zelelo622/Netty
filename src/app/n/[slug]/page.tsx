@@ -14,8 +14,6 @@ import { CreateCommunityModal } from "@/features/communities/components/CreateCo
 import { CommunityHeader } from "@/features/communities/components/CommunityHeader";
 import { CommunityActions } from "@/features/communities/components/CommunityActions";
 import { DocumentData, QueryDocumentSnapshot } from "firebase/firestore";
-import { Button } from "@/components/ui/button";
-import { Loader2 } from "lucide-react";
 import { LoadingListVirtualizer } from "@/components/LoadingListVirtualizer";
 
 export default function CommunityPage() {
