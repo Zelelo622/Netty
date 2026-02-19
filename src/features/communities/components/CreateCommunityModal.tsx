@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
-import { CommunityService } from "@/services/community";
+import { CommunityService } from "@/services/community.service";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -20,8 +20,8 @@ import {
 } from "@/components/ui/dialog";
 import { Loader2 } from "lucide-react";
 import { ICommunity } from "@/types/types";
-import { ImageUploader } from "../ImageUploader";
-import { DeleteConfirmModal } from "../DeleteConfirmModal";
+import { ImageUploader } from "../../../components/ImageUploader";
+import { DeleteConfirmModal } from "../../../components/DeleteConfirmModal";
 
 interface ICreateComminutyModalProps {
   isOpen: boolean;
@@ -82,7 +82,7 @@ export function CreateCommunityModal({
 
     setLoading(true);
     try {
-      let finalSlug: string;
+      let finalSlug: string | undefined;
 
       if (isEditMode && initialData?.id) {
         finalSlug = await CommunityService.updateCommunity(initialData.id, {
@@ -104,7 +104,9 @@ export function CreateCommunityModal({
       }
 
       onClose();
-      router.push(ROUTES.COMMUNITY(finalSlug));
+      router.push(
+        finalSlug ? ROUTES.COMMUNITY(finalSlug) : ROUTES.ALL_COMMUNITIES,
+      );
 
       if (!isEditMode) {
         setName("");

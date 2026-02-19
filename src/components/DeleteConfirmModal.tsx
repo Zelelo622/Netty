@@ -9,19 +9,21 @@ import {
 } from "@/components/ui/dialog";
 import { Loader2 } from "lucide-react";
 
+interface IDeleteConfirmModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  onConfirm: () => void;
+  loading: boolean;
+  name: string;
+}
+
 export function DeleteConfirmModal({
   isOpen,
   onClose,
   onConfirm,
   loading,
   name,
-}: {
-  isOpen: boolean;
-  onClose: () => void;
-  onConfirm: () => void;
-  loading: boolean;
-  name: string;
-}) {
+}: IDeleteConfirmModalProps) {
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-[400px]">

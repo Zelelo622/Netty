@@ -1,101 +1,163 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import PostList from "./components/Posts/PostList";
+import { useEffect, useState, useRef, useCallback } from "react";
+import PostList from "../features/posts/components/PostList";
 import { useAuth } from "@/context/AuthContext";
 import { IPost } from "@/types/types";
-import { PostsService } from "@/services/posts";
-import { doc, getDoc } from "firebase/firestore";
+import { PostsService } from "@/services/posts.service";
+import {
+  doc,
+  getDoc,
+  DocumentData,
+  QueryDocumentSnapshot,
+} from "firebase/firestore";
 import { db } from "@/lib/firebase";
-import { cn } from "@/lib/utils";
-import { TTabType } from "./components/Posts/types";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { TTabType } from "../features/posts/components/types";
+import { Loader2 } from "lucide-react";
+import { LoadingListVirtualizer } from "@/components/LoadingListVirtualizer";
 
 export default function Home() {
   const { user, loading: authLoading } = useAuth();
+
   const [posts, setPosts] = useState<IPost[]>([]);
+  const [lastVisible, setLastVisible] = useState<
+    QueryDocumentSnapshot<DocumentData> | undefined
+  >(undefined);
+
   const [loading, setLoading] = useState(true);
+  const [isFetchingMore, setIsFetchingMore] = useState(false);
+  const [hasMore, setHasMore] = useState(true);
   const [activeTab, setActiveTab] = useState<TTabType>("all");
 
-  useEffect(() => {
-    const fetchPosts = async () => {
-      setLoading(true);
-      setPosts([]);
+  const observerRef = useRef<HTMLDivElement>(null);
+
+  const fetchPosts = useCallback(
+    async (isFirstPage: boolean = false) => {
+      if (authLoading) return;
+
+      const currentLastVisible = isFirstPage ? undefined : lastVisible;
+      if (!isFirstPage && (!hasMore || isFetchingMore)) return;
+
+      if (isFirstPage) {
+        setLoading(true);
+        setPosts([]);
+      } else {
+        setIsFetchingMore(true);
+      }
 
       try {
-        switch (activeTab) {
-          case "all": {
-            const allPosts = await PostsService.getAllPosts();
-            setPosts(allPosts);
-            break;
-          }
+        let result;
+        const LIMIT = 10;
 
-          case "feed": {
+        switch (activeTab) {
+          case "all":
+            result = await PostsService.getAllPosts(LIMIT, currentLastVisible);
+            break;
+          case "feed":
             if (!user) {
-              setPosts([]);
+              result = { posts: [], lastVisible: null };
               break;
             }
-
             const userDoc = await getDoc(doc(db, "users", user.uid));
             const communityIds = userDoc.data()?.subscribedCommunities || [];
-
-            if (communityIds.length > 0) {
-              const feedPosts = await PostsService.getFeedPosts(communityIds);
-              setPosts(feedPosts);
-            } else {
-              setPosts([]);
-            }
+            result =
+              communityIds.length > 0
+                ? await PostsService.getFeedPosts(
+                    communityIds,
+                    LIMIT,
+                    currentLastVisible,
+                  )
+                : { posts: [], lastVisible: null };
             break;
-          }
-
-          case "mine": {
-            if (!user) break;
-            const myPosts = await PostsService.getUserPosts(user.uid);
-            setPosts(myPosts);
+          case "mine":
+            result = user
+              ? await PostsService.getUserPosts(
+                  user.uid,
+                  LIMIT,
+                  currentLastVisible,
+                )
+              : { posts: [], lastVisible: null };
             break;
-          }
+          default:
+            result = { posts: [], lastVisible: null };
         }
+
+        setPosts((prev) =>
+          isFirstPage ? result.posts : [...prev, ...result.posts],
+        );
+        setLastVisible(result.lastVisible ?? undefined);
+        setHasMore(result.posts.length === LIMIT);
       } catch (error) {
         console.error("Ошибка при загрузке постов:", error);
       } finally {
         setLoading(false);
+        setIsFetchingMore(false);
       }
-    };
+    },
+    [user, activeTab, authLoading, lastVisible, hasMore, isFetchingMore],
+  );
 
-    if (!authLoading) {
-      fetchPosts();
-    }
-  }, [user, activeTab, authLoading]);
+  useEffect(() => {
+    fetchPosts(true);
+  }, [activeTab, authLoading]);
+
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (
+          entries[0].isIntersecting &&
+          hasMore &&
+          !isFetchingMore &&
+          !loading
+        ) {
+          fetchPosts();
+        }
+      },
+      { threshold: 0.5 },
+    );
+
+    if (observerRef.current) observer.observe(observerRef.current);
+    return () => observer.disconnect();
+  }, [fetchPosts, hasMore, isFetchingMore, loading]);
 
   if (authLoading) {
     return (
       <div className="flex items-center justify-center min-h-[50vh]">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
       </div>
     );
   }
 
   return (
     <div className="max-w-4xl mx-auto py-6 px-4">
-      <div className="flex gap-6 mb-6 border-b border-border overflow-x-auto no-scrollbar">
-        {[
-          { id: "all", label: "Все посты" },
-          { id: "feed", label: "Подписки" },
-          { id: "mine", label: "Мои посты" },
-        ].map((tab) => (
-          <button
-            key={tab.id}
-            onClick={() => setActiveTab(tab.id as TTabType)}
-            className={cn(
-              "cursor-pointer pb-2 px-1 text-sm font-medium transition-colors relative whitespace-nowrap",
-              activeTab === tab.id
-                ? "text-primary border-b-2 border-primary"
-                : "text-muted-foreground hover:text-foreground",
-            )}
+      <Tabs
+        defaultValue="all"
+        value={activeTab}
+        onValueChange={(v) => setActiveTab(v as TTabType)}
+        className="mb-8"
+      >
+        <TabsList className="bg-transparent border-b border-border w-full justify-start rounded-none h-auto p-0 gap-6">
+          <TabsTrigger
+            value="all"
+            className="cursor-pointer rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent px-1 pb-2 shadow-none"
           >
-            {tab.label}
-          </button>
-        ))}
-      </div>
+            Все посты
+          </TabsTrigger>
+          <TabsTrigger
+            value="feed"
+            className="cursor-pointer rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent px-1 pb-2 shadow-none"
+          >
+            Подписки
+          </TabsTrigger>
+          <TabsTrigger
+            value="mine"
+            className="cursor-pointer rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent px-1 pb-2 shadow-none"
+          >
+            Мои посты
+          </TabsTrigger>
+        </TabsList>
+      </Tabs>
 
       <PostList
         posts={posts}
@@ -103,6 +165,16 @@ export default function Home() {
         activeTab={activeTab}
         isAuth={!!user}
       />
+
+      <div ref={observerRef} className="py-10 flex justify-center w-full">
+        <LoadingListVirtualizer
+          isFetchingMore={isFetchingMore}
+          hasMore={hasMore}
+          posts={posts}
+          textEnd="Вы посмотрели все публикации"
+          textLoading="Загружаем посты..."
+        />
+      </div>
     </div>
   );
 }

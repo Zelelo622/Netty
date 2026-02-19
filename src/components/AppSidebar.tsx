@@ -17,9 +17,9 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
 import { ICommunity } from "@/types/types";
-import { CommunityService } from "@/services/community";
-import { CreateCommunityModal } from "./Communities/CreateCommunityModal";
+import { CommunityService } from "@/services/community.service";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { CreateCommunityModal } from "@/features/communities/components/CreateCommunityModal";
 
 export function AppSidebar() {
   const pathname = usePathname();

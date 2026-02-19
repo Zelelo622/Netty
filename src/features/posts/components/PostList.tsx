@@ -1,18 +1,34 @@
 "use client";
 
 import { IPostListProps } from "./types";
-import { MaskotIcon } from "../Icons/MaskotIcon";
+import { MaskotIcon } from "../../../components/MaskotIcon";
 import { PostCard } from "./PostCard";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { ROUTES } from "@/lib/routes";
-import { LoadingSpinner } from "../LoadingSpinner";
+import { LoadingSpinner } from "../../../components/LoadingSpinner";
+import { useLayoutEffect, useRef, useState } from "react";
+import { useWindowVirtualizer } from "@tanstack/react-virtual";
 
 const PostList = ({ posts, isLoading, activeTab, isAuth }: IPostListProps) => {
+  const listRef = useRef<HTMLDivElement>(null);
+  const [marginTop, setMarginTop] = useState(0);
+
+  useLayoutEffect(() => {
+    if (listRef.current) {
+      setMarginTop(listRef.current.offsetTop);
+    }
+  }, [isLoading]);
+
+  const virtualizer = useWindowVirtualizer({
+    count: posts.length,
+    estimateSize: () => 280,
+    scrollMargin: marginTop,
+    overscan: 5,
+  });
+
   if (isLoading) {
-    return (
-      <LoadingSpinner description="Ищем интересное..." />
-    );
+    return <LoadingSpinner description="Ищем интересное..." />;
   }
 
   if (!isAuth && (activeTab === "feed" || activeTab === "mine")) {
@@ -77,10 +93,30 @@ const PostList = ({ posts, isLoading, activeTab, isAuth }: IPostListProps) => {
   }
 
   return (
-    <div className="flex flex-col gap-4 w-full max-w-2xl mx-auto py-6 px-4 sm:px-0">
-      {posts.map((post) => (
-        <PostCard key={post.id} post={post} />
-      ))}
+    <div ref={listRef} className="w-full max-w-2xl mx-auto py-6 px-4 sm:px-0">
+      <div
+        style={{
+          height: `${virtualizer.getTotalSize()}px`,
+          width: "100%",
+          position: "relative",
+        }}
+      >
+        {virtualizer.getVirtualItems().map((virtualItem) => (
+          <div
+            key={virtualItem.key}
+            data-index={virtualItem.index}
+            ref={virtualizer.measureElement}
+            className="absolute top-0 left-0 w-full pb-6"
+            style={{
+              transform: `translateY(${
+                virtualItem.start - virtualizer.options.scrollMargin
+              }px)`,
+            }}
+          >
+            <PostCard post={posts[virtualItem.index]} />
+          </div>
+        ))}
+      </div>
     </div>
   );
 };

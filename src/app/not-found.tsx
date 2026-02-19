@@ -1,4 +1,4 @@
-import { MaskotIcon } from "@/app/components/Icons/MaskotIcon";
+import { MaskotIcon } from "@/components/MaskotIcon";
 import { Button } from "@/components/ui/button";
 import { ROUTES } from "@/lib/routes";
 import Link from "next/link";

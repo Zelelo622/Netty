@@ -9,7 +9,7 @@ import {
 } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
 
-interface ImageUploaderProps {
+interface IImageUploaderProps {
   url: string;
   onChange: (v: string) => void;
   variant?: "default" | "compact";
@@ -19,7 +19,7 @@ export function ImageUploader({
   url,
   onChange,
   variant = "default",
-}: ImageUploaderProps) {
+}: IImageUploaderProps) {
   const isCompact = variant === "compact";
 
   return (

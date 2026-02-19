@@ -1,6 +1,6 @@
 import { cn } from "@/lib/utils";
 
-interface LoadingStateProps {
+interface ILoadingStateProps {
   description?: string;
   className?: string;
 }
@@ -8,7 +8,7 @@ interface LoadingStateProps {
 export function LoadingSpinner({
   description = "Загрузка...",
   className,
-}: LoadingStateProps) {
+}: ILoadingStateProps) {
   return (
     <div
       className={cn(

@@ -1,13 +1,12 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import Link from "next/link";
 import { ModeToggle } from "./ThemeToggle";
-import { MaskotIcon } from "./Icons/MaskotIcon";
-import { LogoTextIcon } from "./Icons/LogoTextIcon";
+import { MaskotIcon } from "./MaskotIcon";
+import { LogoTextIcon } from "./LogoTextIcon";
 import { Button } from "@/components/ui/button";
-import { onAuthStateChanged, signOut, User } from "firebase/auth";
-import { auth } from "../../lib/firebase";
+import { signOut } from "firebase/auth";
+import { auth } from "../lib/firebase";
 import {
   DropdownMenu,
   DropdownMenuContent,

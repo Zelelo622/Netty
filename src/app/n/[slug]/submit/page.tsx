@@ -1,66 +1,33 @@
 "use client";
 
-import { useState, useEffect, useLayoutEffect } from "react";
-import { useParams, useRouter, useSearchParams } from "next/navigation";
+import { useState, useEffect } from "react";
+import { useParams, useRouter } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
-import { CommunityService } from "@/services/community";
-import { PostsService } from "@/services/posts";
+import { CommunityService } from "@/services/community.service";
+import { PostsService } from "@/services/posts.service";
 import { ICommunity } from "@/types/types";
 import { ROUTES } from "@/lib/routes";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Card, CardContent, CardHeader } from "@/components/ui/card";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Loader2, Info, HelpCircle } from "lucide-react";
+import { Card, CardContent } from "@/components/ui/card";
+import { HelpCircle } from "lucide-react";
 import { toast } from "sonner";
-import { ImageUploader } from "@/app/components/ImageUploader";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { ImageUploader } from "@/components/ImageUploader";
 import { cn, generateSlug } from "@/lib/utils";
-import { LoadingSpinner } from "@/app/components/LoadingSpinner";
+import { LoadingSpinner } from "@/components/LoadingSpinner";
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-
-const RulesContent = () => (
-  <div className="space-y-4">
-    <Card className="rounded-2xl border-2 shadow-sm border-none md:border-solid shadow-none md:shadow-sm">
-      <CardHeader className="pb-3 flex-row items-center gap-2 space-y-0 font-bold px-0 md:px-6">
-        <div className="h-6 w-1 bg-primary rounded-full" />
-        Правила платформы
-      </CardHeader>
-      <CardContent className="text-sm space-y-4 text-muted-foreground px-0 md:px-6">
-        <div className="flex gap-3">
-          <span className="font-bold text-foreground">1.</span>
-          <p>Будьте вежливы и уважайте других участников.</p>
-        </div>
-        <div className="flex gap-3 border-t pt-3 md:border-t">
-          <span className="font-bold text-foreground">2.</span>
-          <p>Не используйте кликбейтные заголовки.</p>
-        </div>
-      </CardContent>
-    </Card>
-
-    <div className="p-4 bg-muted/30 rounded-2xl flex gap-3 text-xs text-muted-foreground border">
-      <Info className="h-4 w-4 shrink-0" />
-      <p>Ваш пост будет доступен сразу после публикации.</p>
-    </div>
-  </div>
-);
+import { PostRules } from "@/features/communities/components/PostRules";
+import { CommunitySelect } from "@/features/communities/components/CommunitySelect";
 
 export default function CreatePostPage() {
   const { user, loading: authLoading } = useAuth();
   const router = useRouter();
-  const params = useParams();
-  const slug = params.slug as string;
+  const { slug } = useParams() as { slug?: string };
 
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
@@ -68,29 +35,38 @@ export default function CreatePostPage() {
   const [selectedCommunity, setSelectedCommunity] = useState<string>("");
   const [communities, setCommunities] = useState<ICommunity[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [isDataFetching, setIsDataFetching] = useState(true);
 
   useEffect(() => {
-    const fetchCommunities = async () => {
+    if (!user) return;
+
+    const fetchData = async () => {
       try {
-        const all = await CommunityService.getAllCommunities();
-        setCommunities(all);
+        const userSubs = await CommunityService.getUserCommunities(user.uid);
+        setCommunities(userSubs);
+        if (slug) {
+          const target = userSubs.find(
+            (c) => c.name.toLowerCase() === slug.toLowerCase(),
+          );
+          if (target) {
+            setSelectedCommunity(target.id!);
+          } else {
+            const communityData = await CommunityService.getCommunityData(slug);
+            if (communityData) {
+              setCommunities((prev) => [...prev, communityData]);
+              setSelectedCommunity(communityData.id!);
+            }
+          }
+        }
       } catch (err) {
-        console.error(err);
+        toast.error("Ошибка при загрузке сообществ");
+      } finally {
+        setIsDataFetching(false);
       }
     };
-    fetchCommunities();
-  }, []);
 
-  useEffect(() => {
-    if (slug && communities.length > 0) {
-      const target = communities.find(
-        (c) => c.name.toLowerCase() === slug.toLowerCase(),
-      );
-      if (target?.id) {
-        setSelectedCommunity(target.id);
-      }
-    }
-  }, [slug, communities]);
+    fetchData();
+  }, [user, slug]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -99,9 +75,7 @@ export default function CreatePostPage() {
     setIsLoading(true);
     try {
       const community = communities.find((c) => c.id === selectedCommunity);
-
-      const shortId = Math.random().toString(36).substring(2, 8);
-      const postSlug = `${generateSlug(title)}-${shortId}`;
+      const postSlug = `${generateSlug(title)}-${Math.random().toString(36).substring(2, 8)}`;
 
       await PostsService.createPost({
         title: title.trim(),
@@ -110,25 +84,20 @@ export default function CreatePostPage() {
         communityId: selectedCommunity,
         communityName: community?.name || "unknown",
         authorId: user.uid,
-        authorName: user.displayName || user.email?.split("@")[0] || "User",
+        authorName: user.displayName || "User",
         authorImage: user.photoURL || "",
         imageUrl: imageUrl.trim() || undefined,
       });
 
-      const communityIdentifier = community?.name || selectedCommunity;
-
-      router.push(ROUTES.POST(communityIdentifier, postSlug));
-      router.refresh();
+      router.push(ROUTES.POST(community?.name || selectedCommunity, postSlug));
     } catch (error) {
-      console.error(error);
-      toast.error("Не удалось создать пост. Попробуйте снова.");
+      toast.error("Не удалось создать пост");
     } finally {
       setIsLoading(false);
     }
   };
 
   if (authLoading) return <LoadingSpinner />;
-
   if (!user) {
     router.push(`${ROUTES.AUTH}?mode=login`);
     return null;
@@ -136,7 +105,7 @@ export default function CreatePostPage() {
 
   return (
     <div className="max-w-4xl mx-auto py-10 px-4 grid grid-cols-1 lg:grid-cols-[1fr_280px] gap-8">
-      <div className="space-y-6">
+      <div className="space-y-6 min-w-0">
         <div className="flex items-center justify-between">
           <h1 className="text-3xl font-bold tracking-tight">
             Создать публикацию
@@ -157,37 +126,22 @@ export default function CreatePostPage() {
                 align="end"
                 className="w-[calc(100vw-2rem)] sm:w-80 p-6 rounded-2xl shadow-2xl border-2"
               >
-                <RulesContent />
+                <PostRules />
               </PopoverContent>
             </Popover>
           </div>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-6 flex flex-col">
-          <Select
-            value={selectedCommunity}
-            onValueChange={setSelectedCommunity}
-          >
-            <SelectTrigger>
-              <SelectValue placeholder="Выберите сообщество" />
-            </SelectTrigger>
-            <SelectContent position="popper">
-              {communities.map((c) => (
-                <SelectItem key={c.id} value={c.id!} className="flex">
-                  <Avatar className="h-4 w-4 border">
-                    <AvatarImage src={c.avatarUrl} />
-                    <AvatarFallback className="bg-muted">
-                      {c.name[0].toUpperCase()}
-                    </AvatarFallback>
-                  </Avatar>
-                  n/{c.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <CommunitySelect
+            communities={communities}
+            selectedId={selectedCommunity}
+            onSelect={setSelectedCommunity}
+            isLoading={isDataFetching}
+          />
 
-          <Card className="rounded-2xl border-2 overflow-hidden shadow-sm">
-            <CardContent className="p-6 space-y-6">
+          <Card className="rounded-2xl border-2 overflow-hidden">
+            <CardContent className="p-4 md:p-6 space-y-6">
               <div className="space-y-2">
                 <Input
                   placeholder="Заголовок"
@@ -217,10 +171,16 @@ export default function CreatePostPage() {
               </div>
 
               <Textarea
-                placeholder="Расскажите подробнее..."
+                placeholder="Текст поста (необязательно)..."
                 value={content}
                 onChange={(e) => setContent(e.target.value)}
-                className="resize-none h-32 w-full min-w-0 max-w-full overflow-y-auto whitespace-pre-wrap break-after-all"
+                className={cn(
+                  "resize-none w-full p-4",
+                  "min-h-[150px] max-h-[300px]",
+                  "bg-muted/20 border-none focus-visible:ring-1 focus-visible:ring-primary rounded-xl",
+                  "overflow-y-auto whitespace-pre-wrap wrap-break-word",
+                  "field-sizing-content",
+                )}
               />
             </CardContent>
           </Card>
@@ -231,7 +191,6 @@ export default function CreatePostPage() {
               variant="ghost"
               className="rounded-full cursor-pointer"
               onClick={() => router.back()}
-              disabled={isLoading}
             >
               Отмена
             </Button>
@@ -246,8 +205,8 @@ export default function CreatePostPage() {
         </form>
       </div>
 
-      <aside className="hidden lg:block space-y-4">
-        <RulesContent />
+      <aside className="hidden lg:block">
+        <PostRules />
       </aside>
     </div>
   );

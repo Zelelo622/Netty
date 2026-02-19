@@ -1,19 +1,22 @@
 "use client";
 
 import { useParams, useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Button } from "@/components/ui/button";
-import { Loader2, Plus, Settings, Users } from "lucide-react";
-import { CommunityService } from "@/services/community";
+import { useEffect, useRef, useState } from "react";
+import { CommunityService } from "@/services/community.service";
 import { ICommunity, IPost } from "@/types/types";
-import PostList from "@/app/components/Posts/PostList";
+import PostList from "@/features/posts/components/PostList";
 import { useAuth } from "@/context/AuthContext";
 import { toast } from "sonner";
-import { CreateCommunityModal } from "@/app/components/Communities/CreateCommunityModal";
-import { PostsService } from "@/services/posts";
+import { PostsService } from "@/services/posts.service";
 import { ROUTES } from "@/lib/routes";
-import { LoadingSpinner } from "@/app/components/LoadingSpinner";
+import { LoadingSpinner } from "@/components/LoadingSpinner";
+import { CreateCommunityModal } from "@/features/communities/components/CreateCommunityModal";
+import { CommunityHeader } from "@/features/communities/components/CommunityHeader";
+import { CommunityActions } from "@/features/communities/components/CommunityActions";
+import { DocumentData, QueryDocumentSnapshot } from "firebase/firestore";
+import { Button } from "@/components/ui/button";
+import { Loader2 } from "lucide-react";
+import { LoadingListVirtualizer } from "@/components/LoadingListVirtualizer";
 
 export default function CommunityPage() {
   const { slug } = useParams();
@@ -24,28 +27,50 @@ export default function CommunityPage() {
   const [loading, setLoading] = useState(true);
   const [postsLoading, setPostsLoading] = useState(false);
   const [posts, setPosts] = useState<IPost[]>([]);
+  const [lastVisible, setLastVisible] =
+    useState<QueryDocumentSnapshot<DocumentData> | null>(null);
+  const [hasMore, setHasMore] = useState(true);
+  const [isFetchingMore, setIsFetchingMore] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
 
-  const isSubscribed = user && community?.subscribers?.includes(user.uid);
+  const observerRef = useRef<HTMLDivElement>(null);
+
+  const isSubscribed = !!(user && community?.subscribers?.includes(user.uid));
   const isOwner = user?.uid === community?.creatorId;
+
+  useEffect(() => {
+    if (!hasMore || posts.length === 0) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting && !isFetchingMore) {
+          fetchMorePosts();
+        }
+      },
+      { threshold: 0.1 },
+    );
+
+    if (observerRef.current) {
+      observer.observe(observerRef.current);
+    }
+
+    return () => observer.disconnect();
+  }, [hasMore, isFetchingMore, posts.length, lastVisible]);
 
   useEffect(() => {
     const fetchData = async () => {
       if (!slug) return;
       setLoading(true);
-      setPostsLoading(true);
       try {
-        const communityData = await CommunityService.getCommunityData(
-          slug as string,
-        );
-        setCommunity(communityData);
-
-        if (communityData?.id) {
-          const communityPosts = await PostsService.getCommunityPosts(
-            communityData.id,
-          );
-          setPosts(communityPosts);
+        const data = await CommunityService.getCommunityData(slug as string);
+        setCommunity(data);
+        if (data?.id) {
+          setPostsLoading(true);
+          const result = await PostsService.getCommunityPosts(data.id, 10);
+          setPosts(result.posts);
+          setLastVisible(result.lastVisible);
+          setHasMore(result.posts.length === 10);
         }
       } catch (e) {
         toast.error("Ошибка загрузки данных");
@@ -57,31 +82,52 @@ export default function CommunityPage() {
     fetchData();
   }, [slug]);
 
-  const handleJoinLeave = async () => {
-    if (!user) {
-      toast.error("Войдите в аккаунт");
-      return;
+  const fetchMorePosts = async () => {
+    if (!community?.id || !lastVisible || isFetchingMore) return;
+
+    setIsFetchingMore(true);
+    try {
+      const result = await PostsService.getCommunityPosts(
+        community.id,
+        10,
+        lastVisible,
+      );
+
+      setPosts((prev) => [...prev, ...result.posts]);
+      setLastVisible(result.lastVisible);
+      setHasMore(result.posts.length === 10);
+    } catch (e) {
+      toast.error("Не удалось загрузить больше постов");
+    } finally {
+      setIsFetchingMore(false);
     }
-    if (!community) return;
+  };
+
+  const handleJoinLeave = async () => {
+    if (!user || !community) return toast.error("Войдите в аккаунт");
     setSubmitting(true);
     try {
       await CommunityService.toggleSubscription(
         community.id!,
         user.uid,
-        !!isSubscribed,
+        isSubscribed,
       );
       setCommunity((prev) => {
         if (!prev) return null;
-        const isSub = prev.subscribers.includes(user.uid);
+        const newSubs = isSubscribed
+          ? prev.subscribers.filter((id) => id !== user.uid)
+          : [...prev.subscribers, user.uid];
         return {
           ...prev,
-          subscribers: isSub
-            ? prev.subscribers.filter((id) => id !== user.uid)
-            : [...prev.subscribers, user.uid],
-          membersCount: isSub ? prev.membersCount - 1 : prev.membersCount + 1,
+          subscribers: newSubs,
+          membersCount: isSubscribed
+            ? prev.membersCount - 1
+            : prev.membersCount + 1,
         };
       });
-      toast.success(isSubscribed ? "Вы вышли" : "Вы вступили!");
+      toast.success(
+        isSubscribed ? "Вы покинули сообщество" : "Добро пожаловать!",
+      );
     } catch (e) {
       toast.error("Ошибка обновления подписки");
     } finally {
@@ -89,16 +135,11 @@ export default function CommunityPage() {
     }
   };
 
-  const handleCreatePostRedirect = () => {
-    if (community) {
-      router.push(ROUTES.CREATE_POST(community.name));
-    }
-  };
-
   if (loading) return <LoadingSpinner />;
-
   if (!community)
-    return <div className="p-20 text-center">Сообщество не найдено</div>;
+    return (
+      <div className="py-20 text-center font-bold">Сообщество не найдено</div>
+    );
 
   return (
     <div className="flex flex-col w-full min-h-screen bg-muted/20">
@@ -108,101 +149,37 @@ export default function CommunityPage() {
         initialData={community}
       />
 
-      <div className="relative w-full overflow-hidden border-b bg-muted shadow-sm">
-        <div className="absolute inset-0 w-full h-full">
-          {community.bannerUrl ? (
-            <img
-              src={community.bannerUrl}
-              className="w-full h-full object-cover"
-              alt="banner"
+      <CommunityHeader community={community}>
+        <CommunityActions
+          hasUser={!!user}
+          isOwner={isOwner}
+          isSubscribed={isSubscribed}
+          submitting={submitting}
+          onEdit={() => setIsEditModalOpen(true)}
+          onCreatePost={() => router.push(ROUTES.CREATE_POST(community.name))}
+          onJoinLeave={handleJoinLeave}
+        />
+      </CommunityHeader>
+
+      <div className="max-w-5xl mx-auto px-4 py-8 w-full flex flex-col items-center">
+        <div className="w-full max-w-2xl">
+          <h3 className="text-xs font-black uppercase tracking-[0.2em] text-muted-foreground/50 mb-6">
+            Последние публикации
+          </h3>
+          <PostList posts={posts} isLoading={postsLoading} />
+          <div
+            ref={observerRef}
+            className="h-20 flex items-center justify-center mt-4"
+          >
+            <LoadingListVirtualizer
+              isFetchingMore={isFetchingMore}
+              hasMore={hasMore}
+              posts={posts}
+              textEnd="Вы посмотрели все публикации"
+              textLoading="Загружаем посты..."
             />
-          ) : (
-            <div className="w-full h-full bg-linear-to-r from-slate-800 to-slate-900" />
-          )}
-          <div className="absolute inset-0 bg-black/40 backdrop-blur-[2px]" />
-        </div>
-
-        <div className="relative max-w-5xl mx-auto px-4 pt-20 pb-8 sm:pt-32 sm:pb-10">
-          <div className="flex flex-col sm:flex-row items-center sm:items-end gap-6 text-white text-center sm:text-left">
-            <Avatar className="h-32 w-32 sm:h-40 sm:w-40 border-4 border-background shadow-2xl rounded-full shrink-0">
-              <AvatarImage src={community.avatarUrl} className="object-cover" />
-              <AvatarFallback className="text-4xl font-black bg-primary">
-                {community.name[0].toUpperCase()}
-              </AvatarFallback>
-            </Avatar>
-
-            <div className="flex flex-col sm:flex-row justify-between w-full gap-6">
-              <div className="space-y-2">
-                <h1 className="text-3xl sm:text-5xl font-black tracking-tighter">
-                  n/{community.name}
-                </h1>
-                <span className="inline-block truncate w-30 s:w-100">
-                  {community.description}
-                </span>
-                <div className="flex items-center justify-center sm:justify-start gap-4 text-white/80 font-semibold">
-                  <div className="flex items-center gap-1.5">
-                    <Users className="h-5 w-5" />
-                    <span>
-                      {community.membersCount.toLocaleString()} участников
-                    </span>
-                  </div>
-                </div>
-              </div>
-
-              <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2 sm:gap-3 w-full sm:w-auto pt-4 sm:pt-0">
-                {isOwner && (
-                  <Button
-                    variant="outline"
-                    onClick={() => setIsEditModalOpen(true)}
-                    className="cursor-pointer rounded-full font-bold h-10 w-10 sm:w-auto sm:px-4 p-0 bg-white/10 hover:bg-white text-white hover:text-black border-white/20 backdrop-blur-md shrink-0"
-                    title="Настройки"
-                  >
-                    <Settings className="h-5 w-5" />
-                    <span className="hidden sm:inline ml-2">Настроить</span>
-                  </Button>
-                )}
-
-                {user && (
-                  <Button
-                    onClick={handleCreatePostRedirect}
-                    variant="secondary"
-                    className="cursor-pointer flex-1 sm:flex-none rounded-full font-bold gap-2 bg-white/10 hover:bg-white/20 text-white border-white/20 backdrop-blur-md h-10"
-                  >
-                    <Plus className="h-5 w-5" />
-                    <span className="text-sm sm:text-base">Пост</span>
-                  </Button>
-                )}
-
-                <Button
-                  onClick={handleJoinLeave}
-                  disabled={submitting}
-                  className={`cursor-pointer flex-1 sm:flex-none rounded-full font-bold px-6 sm:px-10 h-10 transition-all ${
-                    isSubscribed
-                      ? "bg-emerald-500/20 border-2 border-emerald-500/50 text-emerald-400 hover:bg-emerald-500 hover:text-white"
-                      : "bg-primary text-white hover:opacity-90"
-                  }`}
-                >
-                  {submitting ? (
-                    <Loader2 className="h-5 w-4 animate-spin" />
-                  ) : isSubscribed ? (
-                    "Следите"
-                  ) : (
-                    "Вступить"
-                  )}
-                </Button>
-              </div>
-            </div>
           </div>
         </div>
-      </div>
-
-      <div className="flex justify-center flex-col max-w-5xl mx-auto px-4 py-8 w-full">
-        <div className="max-w-2xl mx-auto">
-          <h3 className="text-xs font-bold uppercase tracking-widest text-muted-foreground/70 mb-4">
-            Лента сообщества
-          </h3>
-        </div>
-        <PostList posts={posts} isLoading={postsLoading} />
       </div>
     </div>
   );

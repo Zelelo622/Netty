@@ -2,13 +2,13 @@
 
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { PostsService } from "@/services/posts";
+import { PostsService } from "@/services/posts.service";
 import { IPost } from "@/types/types";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
-import { LoadingSpinner } from "@/app/components/LoadingSpinner";
+import { LoadingSpinner } from "@/components/LoadingSpinner";
 import {
   Share2,
   ArrowBigUp,
@@ -39,7 +39,11 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import CommentItem from "@/app/components/comments/CommentItem";
+import CommentItem from "@/features/comments/components/CommentItem";
+import { PostVote } from "@/features/posts/components/PostVote";
+import { PostActions } from "@/features/posts/components/PostActions";
+import { DeletePostModal } from "@/components/DeletePostModal";
+import { ROUTES } from "@/lib/routes";
 
 export default function PostPage() {
   const { postSlug } = useParams();
@@ -81,29 +85,6 @@ export default function PostPage() {
     fetchPostData();
   }, [postSlug, user]);
 
-  const handleVote = async (newValue: number) => {
-    if (!user || !post) return toast.error("Войдите, чтобы голосовать");
-
-    const finalValue = currentVote === newValue ? 0 : newValue;
-    const voteDiff = finalValue - currentVote;
-
-    setCurrentVote(finalValue);
-    setDisplayVotes((prev) => prev + voteDiff);
-
-    try {
-      await PostsService.votePost(
-        post.id,
-        user.uid,
-        finalValue as 1 | -1 | 0,
-        currentVote,
-      );
-    } catch (e) {
-      setCurrentVote(currentVote);
-      setDisplayVotes((prev) => prev - voteDiff);
-      toast.error("Не удалось сохранить голос");
-    }
-  };
-
   const handleDelete = async () => {
     if (!post) return;
     setIsDeleting(true);
@@ -125,7 +106,7 @@ export default function PostPage() {
     : new Date(post.createdAt);
 
   return (
-    <div className="max-w-3xl mx-auto py-10 px-4 md:px-0">
+    <div className="max-w-3xl mx-auto px-4 py-8">
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-3">
           <Avatar className="h-10 w-10">
@@ -178,7 +159,7 @@ export default function PostPage() {
         </DropdownMenu>
       </div>
 
-      <h1 className="text-3xl md:text-4xl font-black mb-6 leading-tight">
+      <h1 className="text-xl md:text-2xl font-black mb-6 leading-tight">
         {post.title}
       </h1>
 
@@ -192,7 +173,7 @@ export default function PostPage() {
             />
           </div>
         )}
-        <p className="text-lg md:text-xl text-foreground/80 whitespace-pre-wrap leading-relaxed">
+        <p className="text-base md:text-lg text-foreground/80 whitespace-pre-wrap leading-relaxed">
           {post.content}
         </p>
       </div>
@@ -200,92 +181,23 @@ export default function PostPage() {
       <Separator className="my-8" />
 
       <div className="flex items-center justify-between">
-        <div className="flex items-center bg-muted/50 rounded-full p-1 border shadow-sm">
-          <Button
-            variant="ghost"
-            size="sm"
-            className={cn(
-              "rounded-full h-9 w-9 p-0 cursor-pointer",
-              currentVote === 1
-                ? "text-blue-500 bg-blue-500/10"
-                : "hover:text-blue-500",
-            )}
-            onClick={() => handleVote(1)}
-          >
-            <ArrowBigUp
-              className={cn("h-6 w-6", currentVote === 1 && "fill-current")}
-            />
-          </Button>
-          <span
-            className={cn(
-              "px-3 text-sm font-black min-w-[40px] text-center",
-              currentVote === 1 && "text-blue-500",
-              currentVote === -1 && "text-pink-500",
-            )}
-          >
-            {displayVotes}
-          </span>
-          <Button
-            variant="ghost"
-            size="sm"
-            className={cn(
-              "rounded-full h-9 w-9 p-0 cursor-pointer",
-              currentVote === -1
-                ? "text-pink-500 bg-pink-500/10"
-                : "hover:text-pink-500",
-            )}
-            onClick={() => handleVote(-1)}
-          >
-            <ArrowBigDown
-              className={cn("h-6 w-6", currentVote === -1 && "fill-current")}
-            />
-          </Button>
-        </div>
+        <PostVote postId={post.id} initialVotes={post.votes} />
 
-        <div className="flex items-center gap-2">
-          <Button
-            variant="outline"
-            size="sm"
-            className="rounded-full gap-2 font-bold cursor-pointer"
-          >
-            <MessageSquare className="h-4 w-4" />
-            {post.commentsCount || 0}{" "}
-            <span className="hidden sm:inline">Комментариев</span>
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            className="rounded-full gap-2 font-bold cursor-pointer"
-          >
-            <Share2 className="h-4 w-4" />
-            <span className="hidden sm:inline">Поделиться</span>
-          </Button>
-        </div>
+        <PostActions
+          commentsCount={post.commentsCount}
+          title={post.title}
+          shareUrl={`${window.location.origin}${ROUTES.POST(post.communityName, post.slug)}`}
+        />
       </div>
 
-      <AlertDialog open={showDeleteModal} onOpenChange={setShowDeleteModal}>
-        <AlertDialogContent className="rounded-2xl">
-          <AlertDialogHeader>
-            <AlertDialogTitle>Удалить пост?</AlertDialogTitle>
-            <AlertDialogDescription>
-              Это действие нельзя будет отменить.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel className="rounded-xl cursor-pointer">
-              Отмена
-            </AlertDialogCancel>
-            <AlertDialogAction
-              onClick={handleDelete}
-              className="bg-destructive hover:bg-destructive/90 rounded-xl cursor-pointer"
-            >
-              {isDeleting ? "Удаление..." : "Да, удалить"}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+      <DeletePostModal
+        open={showDeleteModal}
+        onOpenChange={setShowDeleteModal}
+        onConfirm={handleDelete}
+        isLoading={isDeleting}
+      />
 
-      <section className="mt-12 space-y-8">
+      <section id="comments" className="mt-12 space-y-8">
         <div className="flex flex-col gap-4">
           <h3 className="text-lg font-bold">Комментарии</h3>
 
