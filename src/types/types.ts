@@ -43,3 +43,15 @@ export interface IComment {
   isEdited?: boolean;
   replies?: IComment[];
 }
+
+export interface INotification {
+  id: string;
+  recipientId: string; // Кому уведомление
+  issuerId: string; // От кого (кто лайкнул/тэгнул)
+  issuerName: string; // Имя для отображения
+  type: "REPLY" | "TAG" | "POST_VOTE" | "COMMENT_VOTE" | "NEW_COMMENT";
+  postId: string; // Ссылка на пост, где произошло событие
+  commentId?: string; // (Опционально) если это ответ на коммент
+  read: boolean; // Прочитано или нет
+  createdAt: any;
+}
