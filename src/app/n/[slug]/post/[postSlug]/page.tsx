@@ -212,7 +212,7 @@ export default function PostPage() {
             />
           </div>
         )}
-        <p className="text-base md:text-lg text-foreground/80 whitespace-pre-wrap leading-relaxed">
+        <p className="text-base break-all md:text-lg text-foreground/80 whitespace-pre-wrap leading-relaxed">
           {post.content}
         </p>
       </div>
