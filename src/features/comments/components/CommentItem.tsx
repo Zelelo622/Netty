@@ -32,6 +32,32 @@ export default function CommentItem({ comment, onReply }: ICommentItemProps) {
     setIsSubmitting(false);
   };
 
+  const handleReplyClick = () => {
+    setIsReplying(!isReplying);
+    if (!isReplying) {
+      setReplyText(`u/${comment.authorName} `);
+    } else {
+      setReplyText("");
+    }
+  };
+
+  const renderText = (text: string) => {
+    const parts = text.split(/(u\/[a-zA-Z0-9_]+)/g);
+    return parts.map((part, i) => {
+      if (part.startsWith("u/")) {
+        return (
+          <span
+            key={i}
+            className="text-blue-500 font-medium hover:underline cursor-pointer"
+          >
+            {part}
+          </span>
+        );
+      }
+      return part;
+    });
+  };
+
   const commentDate = comment.createdAt?.toDate
     ? comment.createdAt.toDate()
     : new Date();
@@ -56,7 +82,7 @@ export default function CommentItem({ comment, onReply }: ICommentItemProps) {
       </div>
 
       <div className="text-sm leading-relaxed text-foreground/90 whitespace-pre-wrap">
-        {comment.text}
+        {renderText(comment.text)}
       </div>
 
       <div className="flex items-center gap-4">
@@ -66,7 +92,7 @@ export default function CommentItem({ comment, onReply }: ICommentItemProps) {
           variant="ghost"
           size="sm"
           className="cursor-pointer h-7 gap-1.5 text-xs text-muted-foreground"
-          onClick={() => setIsReplying(!isReplying)}
+          onClick={handleReplyClick}
         >
           {comment.depth < 3 && (
             <>
