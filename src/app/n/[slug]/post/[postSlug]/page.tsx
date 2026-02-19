@@ -39,6 +39,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import CommentItem from "@/app/components/comments/CommentItem";
 
 export default function PostPage() {
   const { postSlug } = useParams();
@@ -124,8 +125,7 @@ export default function PostPage() {
     : new Date(post.createdAt);
 
   return (
-    <article className="max-w-3xl mx-auto py-10 px-4 md:px-0">
-      {/* Header */}
+    <div className="max-w-3xl mx-auto py-10 px-4 md:px-0">
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-3">
           <Avatar className="h-10 w-10">
@@ -199,7 +199,6 @@ export default function PostPage() {
 
       <Separator className="my-8" />
 
-      {/* Footer Toolbar */}
       <div className="flex items-center justify-between">
         <div className="flex items-center bg-muted/50 rounded-full p-1 border shadow-sm">
           <Button
@@ -264,7 +263,6 @@ export default function PostPage() {
         </div>
       </div>
 
-      {/* Delete Confirmation */}
       <AlertDialog open={showDeleteModal} onOpenChange={setShowDeleteModal}>
         <AlertDialogContent className="rounded-2xl">
           <AlertDialogHeader>
@@ -286,6 +284,31 @@ export default function PostPage() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-    </article>
+
+      <section className="mt-12 space-y-8">
+        <div className="flex flex-col gap-4">
+          <h3 className="text-lg font-bold">Комментарии</h3>
+
+          {/* Поле ввода нового комментария */}
+          <div className="relative overflow-hidden rounded-2xl border bg-muted/20 focus-within:border-primary/50 transition-all p-4">
+            <textarea
+              placeholder="Что вы об этом думаете?"
+              className="w-full bg-transparent border-none focus:ring-0 resize-none min-h-[100px] text-sm"
+            />
+            <div className="flex justify-end mt-2">
+              <Button size="sm" className="rounded-full px-6 font-bold">
+                Отправить
+              </Button>
+            </div>
+          </div>
+        </div>
+
+        {/* Список комментариев (имитация) */}
+        <div className="space-y-8 pt-4">
+          <CommentItem />
+          <CommentItem />
+        </div>
+      </section>
+    </div>
   );
 }
