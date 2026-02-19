@@ -11,6 +11,7 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
+  useSidebar,
 } from "@/components/ui/sidebar";
 import { ROUTES } from "@/lib/routes";
 import Link from "next/link";
@@ -24,6 +25,8 @@ import { CreateCommunityModal } from "@/features/communities/components/CreateCo
 export function AppSidebar() {
   const pathname = usePathname();
   const { user } = useAuth();
+
+  const { setOpenMobile, isMobile } = useSidebar();
 
   const [communities, setCommunities] = useState<ICommunity[]>([]);
   const [loading, setLoading] = useState(true);
@@ -48,10 +51,16 @@ export function AppSidebar() {
     return () => unsubscribe();
   }, [user]);
 
+  const handleItemClick = () => {
+    if (isMobile) {
+      setOpenMobile(false);
+    }
+  };
+
   return (
     <>
       <Sidebar className="sticky top-16 h-[calc(100vh-64px)] border-r">
-        <SidebarContent className="bg-background">
+        <SidebarContent className="bg-background pt-4">
           <SidebarGroup>
             <SidebarGroupContent>
               <SidebarMenu>
@@ -65,7 +74,7 @@ export function AppSidebar() {
                 ].map((item) => (
                   <SidebarMenuItem key={item.title}>
                     <SidebarMenuButton asChild isActive={pathname === item.url}>
-                      <Link href={item.url}>
+                      <Link href={item.url} onClick={handleItemClick}>
                         <item.icon className="h-4 w-4" />
                         <span>{item.title}</span>
                       </Link>
@@ -83,7 +92,10 @@ export function AppSidebar() {
               </SidebarGroupLabel>
               <Plus
                 className="h-4 w-4 cursor-pointer hover:text-primary transition-colors"
-                onClick={() => setIsModalOpen(true)}
+                onClick={() => {
+                  handleItemClick();
+                  setIsModalOpen(true);
+                }}
               />
             </div>
             <SidebarGroupContent>
@@ -101,6 +113,7 @@ export function AppSidebar() {
                       >
                         <Link
                           href={ROUTES.COMMUNITY(sub.name)}
+                          onClick={handleItemClick}
                           className="flex items-center gap-2"
                         >
                           <Avatar className="h-4 w-4 border shadow-sm">
