@@ -6,6 +6,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react"; // Добавили хуки
 
+import { toast } from "sonner";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import {
@@ -29,7 +30,6 @@ import { ModeToggle } from "./ThemeToggle";
 import { auth } from "../lib/firebase";
 import { ScrollArea } from "./ui/scroll-area";
 import { SidebarTrigger } from "./ui/sidebar";
-import { toast } from "sonner";
 
 function Navbar() {
   const { user, loading } = useAuth();
@@ -47,6 +47,7 @@ function Navbar() {
         if (!newNotify.read) {
           toast.info(`${newNotify.issuerName} ${getNotificationText(newNotify.type)}`, {
             description: "Нажмите, чтобы посмотреть",
+            position: "top-right",
             action: {
               label: "Открыть",
               onClick: () => handleNotificationClick(newNotify),
