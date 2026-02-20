@@ -1,6 +1,0 @@
-{
-  "version": 3,
-  "sources": [],
-  "sections": [
-    {"offset": {"line": 46, "column": 0}, "map": {"version":3,"sources":["file:///C:/Users/egork/projects/lessons/Netty/src/app/api/auth/logout/route.ts"],"sourcesContent":["import { cookies } from \"next/headers\";\r\nimport { NextResponse } from \"next/server\";\r\n\r\nexport async function POST() {\r\n  (await cookies()).delete(\"session\");\r\n  return NextResponse.json({ success: true });\r\n}\r\n"],"names":[],"mappings":";;;;AAAA;AACA;;;AAEO,eAAe;IACpB,CAAC,MAAM,IAAA,4IAAO,GAAE,EAAE,MAAM,CAAC;IACzB,OAAO,gJAAY,CAAC,IAAI,CAAC;QAAE,SAAS;IAAK;AAC3C"}}]
-}
