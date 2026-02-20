@@ -1,0 +1,15 @@
+{
+  "compilerOptions": {
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "allowImportingTsExtensions": true,
+    "noEmit": true,
+    "skipLibCheck": true,
+    "strict": true,
+    "isolatedModules": true,
+    "paths": {
+      "@repo/types": ["./packages/types/index.ts"]
+    }
+  },
+  "exclude": ["node_modules"]
+}

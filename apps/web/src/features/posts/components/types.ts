@@ -1,4 +1,4 @@
-import { IPost } from "@/types/types";
+import { IPost } from "@repo/types";
 
 export interface IPostCardProps {
   post: IPost;
