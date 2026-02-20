@@ -12,7 +12,7 @@ import {
 } from "firebase/firestore";
 
 import { db } from "@/lib/firebase";
-import { INotification } from "@/types/types";
+import { INotification, IPost } from "@/types/types";
 
 export const NotificationService = {
   async createNotification(notificationData: Omit<INotification, "id" | "createdAt" | "read">) {
@@ -31,17 +31,15 @@ export const NotificationService = {
     }
   },
 
-  async processMentions(
-    text: string,
-    postId: string,
-    issuer: { uid: string; displayName: string }
-  ) {
+  async processMentions(text: string, post: IPost, issuer: { uid: string; displayName: string }) {
     const mentions = text.match(/u\/([a-zA-Z0-9_]+)/g);
     if (!mentions) return;
 
     const usernames = [...new Set(mentions.map((m) => m.replace("u/", "")))];
 
     for (const username of usernames) {
+      if (username === issuer.displayName) continue;
+
       const q = query(collection(db, "users"), where("displayName", "==", username));
       const querySnapshot = await getDocs(q);
 
@@ -53,10 +51,10 @@ export const NotificationService = {
           issuerId: issuer.uid,
           issuerName: issuer.displayName,
           type: "TAG",
-          postId,
+          postId: post.id,
+          postSlug: post.slug,
+          communityName: post.communityName,
         });
-      } else {
-        console.warn(`Пользователь с именем ${username} не найден в коллекции users`);
       }
     }
   },

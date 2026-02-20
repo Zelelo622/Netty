@@ -82,6 +82,21 @@ export default function PostPage() {
     fetchPostData();
   }, [postSlug, user]);
 
+  useEffect(() => {
+    const hash = window.location.hash;
+    if (hash && !isLoading && comments.length > 0) {
+      const id = hash.replace("#", "");
+      const element = document.getElementById(id);
+      if (element) {
+        setTimeout(() => {
+          element.scrollIntoView({ behavior: "smooth", block: "center" });
+          element.classList.add("bg-primary/10");
+          setTimeout(() => element.classList.remove("bg-primary/10"), 2000);
+        }, 500);
+      }
+    }
+  }, [isLoading, comments]);
+
   const handleEditClick = () => {
     setIsEditing(true);
   };
@@ -141,7 +156,7 @@ export default function PostPage() {
           authorImage: user.photoURL || "",
           depth,
         },
-        post.authorId,
+        post,
         parentCommentAuthorId
       );
 

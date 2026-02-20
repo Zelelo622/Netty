@@ -13,14 +13,14 @@ import {
 } from "firebase/firestore";
 
 import { db } from "@/lib/firebase";
-import { IComment } from "@/types/types";
+import { IComment, IPost } from "@/types/types";
 
 import { NotificationService } from "./notification.service";
 
 export const CommentsService = {
   async addComment(
     data: Omit<IComment, "id" | "createdAt" | "votes">,
-    postAuthorId: string,
+    post: IPost,
     parentCommentAuthorId?: string
   ) {
     const commentRef = await addDoc(collection(db, "comments"), {
@@ -34,27 +34,31 @@ export const CommentsService = {
       commentsCount: increment(1),
     });
 
-    NotificationService.processMentions(data.text, data.postId, {
+    NotificationService.processMentions(data.text, post, {
       uid: data.authorId,
       displayName: data.authorName,
     });
 
+    const baseNotification = {
+      issuerId: data.authorId,
+      issuerName: data.authorName,
+      postId: post.id,
+      postSlug: post.slug,
+      communityName: post.communityName,
+      commentId: commentRef.id,
+    };
+
     if (data.parentId && parentCommentAuthorId) {
       await NotificationService.createNotification({
+        ...baseNotification,
         recipientId: parentCommentAuthorId,
-        issuerId: data.authorId,
-        issuerName: data.authorName,
         type: "REPLY",
-        postId: data.postId,
-        commentId: commentRef.id,
       });
-    } else if (!data.parentId && postAuthorId !== data.authorId) {
+    } else if (!data.parentId && post.authorId !== data.authorId) {
       await NotificationService.createNotification({
-        recipientId: postAuthorId,
-        issuerId: data.authorId,
-        issuerName: data.authorName,
+        ...baseNotification,
+        recipientId: post.authorId,
         type: "NEW_COMMENT",
-        postId: data.postId,
       });
     }
 

@@ -58,4 +58,6 @@ export interface INotification {
   commentId?: string; // (Опционально) если это ответ на коммент
   read: boolean; // Прочитано или нет
   createdAt: any;
+  communityName: string; // Новое
+  postSlug: string; // Новое
 }

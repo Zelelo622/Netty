@@ -63,7 +63,14 @@ function Navbar() {
     if (!notification.read) {
       await NotificationService.markAsRead(notification.id);
     }
-    router.push(`/post/${notification.postId}`);
+
+    // Строим путь: /n/community/post/slug
+    const postUrl = ROUTES.POST(notification.communityName, notification.postSlug);
+
+    // Если есть commentId, добавляем якорь #id
+    const anchor = notification.commentId ? `#${notification.commentId}` : "";
+
+    router.push(`${postUrl}${anchor}`);
   };
 
   // Вспомогательная функция для текста уведомлений

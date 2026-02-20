@@ -87,8 +87,9 @@ export default function CommentItem({ comment, onReply }: ICommentItemProps) {
 
   return (
     <div
+      id={comment.id}
       className={cn(
-        "flex flex-col gap-3",
+        "scroll-mt-20 flex flex-col gap-3",
         comment.depth > 0 && "mt-4 ml-2 md:ml-6 pl-4 border-l-2 border-muted transition-colors"
       )}
     >
