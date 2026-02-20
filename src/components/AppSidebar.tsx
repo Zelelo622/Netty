@@ -4,6 +4,7 @@ import { Home, Globe, Plus, Loader2 } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
+import { toast } from "sonner";
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
@@ -22,7 +23,6 @@ import { CreateCommunityModal } from "@/features/communities/components/CreateCo
 import { ROUTES } from "@/lib/routes";
 import { CommunityService } from "@/services/community.service";
 import { ICommunity } from "@/types/types";
-import { toast } from "sonner";
 
 export function AppSidebar() {
   const pathname = usePathname();
