@@ -1,2 +1,8 @@
 # dependencies
 node_modules/
+
+# Turbopack cache
+apps/web/dev/
+
+# Turborepo cache
+.turbo/
