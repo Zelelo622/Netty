@@ -99,6 +99,14 @@ export default function CommunityPage() {
 
   const handleJoinLeave = async () => {
     if (!user || !community) return toast.error("Войдите в аккаунт");
+
+    if (isOwner && isSubscribed) {
+      toast.error("Как создатель, вы не можете покинуть это сообщество", {
+        description: "Вы можете управлять им в настройках или удалить целиком.",
+      });
+      return;
+    }
+
     setSubmitting(true);
     try {
       await CommunityService.toggleSubscription(community.id!, user.uid, isSubscribed);

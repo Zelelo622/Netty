@@ -3,6 +3,7 @@
 import { ICommunity } from "@/types/types";
 
 import { CommunityCard } from "./CommunityCard";
+import { useAuth } from "@/context/AuthContext";
 
 interface ICommunityListProps {
   communities: ICommunity[];
@@ -17,6 +18,8 @@ export const CommunityList = ({
   submittingId,
   onToggleSubscription,
 }: ICommunityListProps) => {
+  const { user } = useAuth();
+
   if (communities.length === 0) {
     return (
       <div className="text-center py-20">
@@ -33,6 +36,7 @@ export const CommunityList = ({
           community={community}
           isSubscribed={community.subscribers.includes(currentUserId || "")}
           isSubmitting={submittingId === community.id}
+          isOwner={user?.uid === community.creatorId}
           onToggleSubscription={onToggleSubscription}
         />
       ))}

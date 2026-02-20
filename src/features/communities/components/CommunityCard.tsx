@@ -13,6 +13,7 @@ interface ICommunityCardProps {
   community: ICommunity;
   isSubscribed: boolean;
   isSubmitting: boolean;
+  isOwner: boolean;
   onToggleSubscription: (e: React.MouseEvent, community: ICommunity) => void;
 }
 
@@ -20,8 +21,11 @@ export const CommunityCard = ({
   community,
   isSubscribed,
   isSubmitting,
+  isOwner,
   onToggleSubscription,
 }: ICommunityCardProps) => {
+  const isDisabled = isSubmitting || (isOwner && isSubscribed);
+
   return (
     <Link href={ROUTES.COMMUNITY(community.name)}>
       <Card className="hover:border-primary/50 transition-colors cursor-pointer h-full group">
@@ -49,14 +53,26 @@ export const CommunityCard = ({
           </div>
 
           <Button
-            className="w-full sm:w-auto cursor-pointer relative z-20"
-            variant={isSubscribed ? "secondary" : "outline"}
+            className={`w-full sm:w-auto cursor-pointer relative z-20 font-bold rounded-full transition-all ${
+              isOwner && isSubscribed
+                ? "bg-emerald-500/10 text-emerald-600 border-emerald-200 hover:bg-emerald-500/10 cursor-default"
+                : ""
+            }`}
+            variant={isSubscribed ? "secondary" : "default"}
             size="sm"
-            disabled={isSubmitting}
-            onClick={(e) => onToggleSubscription(e, community)}
+            disabled={isDisabled}
+            onClick={(e) => {
+              if (isOwner && isSubscribed) {
+                e.preventDefault(); // На всякий случай блокируем переход по ссылке
+                return;
+              }
+              onToggleSubscription(e, community);
+            }}
           >
             {isSubmitting ? (
               <Loader2 className="h-4 w-4 animate-spin" />
+            ) : isOwner && isSubscribed ? (
+              "Создатель"
             ) : isSubscribed ? (
               "Вы подписаны"
             ) : (

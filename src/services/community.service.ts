@@ -91,6 +91,14 @@ export const CommunityService = {
         const communityDoc = await transaction.get(communityRef);
         if (!communityDoc.exists()) throw new Error("Сообщество не существует");
 
+        const communityData = communityDoc.data();
+
+        if (communityData.creatorId === userId && isSubscribed) {
+          throw new Error(
+            "Создатель не может покинуть своё сообщество. Вы можете только удалить его."
+          );
+        }
+
         const communityUpdate = isSubscribed
           ? { subscribers: arrayRemove(userId), membersCount: increment(-1) }
           : { subscribers: arrayUnion(userId), membersCount: increment(1) };
