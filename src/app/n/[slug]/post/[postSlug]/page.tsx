@@ -114,26 +114,36 @@ export default function PostPage() {
     }
   };
 
-  const handleSendComment = async (parentId: string | null = null, text: string) => {
+  const handleSendComment = async (
+    parentId: string | null = null,
+    text: string,
+    parentCommentAuthorId?: string
+  ) => {
     if (!user || !post) {
       toast.info("Нужно войти в аккаунт");
       return;
     }
+
     try {
       const depth = parentId ? findCommentDepth(comments, parentId) + 1 : 0;
       if (depth > 3) {
-        toast.error("Достигнута максимальная глубина обсуждения");
+        toast.error("Максимальная глубина обсуждения");
         return;
       }
-      await CommentsService.addComment({
-        postId: post.id,
-        parentId,
-        text,
-        authorId: user.uid,
-        authorName: user.displayName || "Аноним",
-        authorImage: user.photoURL || "",
-        depth,
-      });
+
+      await CommentsService.addComment(
+        {
+          postId: post.id,
+          parentId,
+          text,
+          authorId: user.uid,
+          authorName: user.displayName || "Аноним",
+          authorImage: user.photoURL || "",
+          depth,
+        },
+        post.authorId,
+        parentCommentAuthorId
+      );
 
       const updatedFlat = await CommentsService.getPostComments(post.id);
       setComments(buildCommentTree(updatedFlat));

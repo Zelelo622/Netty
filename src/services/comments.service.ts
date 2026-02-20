@@ -15,8 +15,14 @@ import {
 import { db } from "@/lib/firebase";
 import { IComment } from "@/types/types";
 
+import { NotificationService } from "./notification.service";
+
 export const CommentsService = {
-  async addComment(data: Omit<IComment, "id" | "createdAt" | "votes">) {
+  async addComment(
+    data: Omit<IComment, "id" | "createdAt" | "votes">,
+    postAuthorId: string,
+    parentCommentAuthorId?: string
+  ) {
     const commentRef = await addDoc(collection(db, "comments"), {
       ...data,
       votes: 0,
@@ -27,6 +33,30 @@ export const CommentsService = {
     await updateDoc(postRef, {
       commentsCount: increment(1),
     });
+
+    NotificationService.processMentions(data.text, data.postId, {
+      uid: data.authorId,
+      displayName: data.authorName,
+    });
+
+    if (data.parentId && parentCommentAuthorId) {
+      await NotificationService.createNotification({
+        recipientId: parentCommentAuthorId,
+        issuerId: data.authorId,
+        issuerName: data.authorName,
+        type: "REPLY",
+        postId: data.postId,
+        commentId: commentRef.id,
+      });
+    } else if (!data.parentId && postAuthorId !== data.authorId) {
+      await NotificationService.createNotification({
+        recipientId: postAuthorId,
+        issuerId: data.authorId,
+        issuerName: data.authorName,
+        type: "NEW_COMMENT",
+        postId: data.postId,
+      });
+    }
 
     return commentRef.id;
   },

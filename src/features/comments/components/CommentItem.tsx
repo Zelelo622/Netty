@@ -18,7 +18,7 @@ import { CommentVote } from "./CommentVote";
 
 interface ICommentItemProps {
   comment: IComment;
-  onReply: (parentId: string, text: string) => Promise<void>;
+  onReply: (parentId: string, text: string, authorId: string) => Promise<void>;
 }
 
 export default function CommentItem({ comment, onReply }: ICommentItemProps) {
@@ -54,7 +54,7 @@ export default function CommentItem({ comment, onReply }: ICommentItemProps) {
   const handleSubmitReply = async () => {
     if (!replyText.trim()) return;
     setIsSubmitting(true);
-    await onReply(comment.id, replyText);
+    await onReply(comment.id, replyText, comment.authorId);
     setReplyText("");
     setIsReplying(false);
     setIsSubmitting(false);
