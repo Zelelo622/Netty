@@ -1,7 +1,7 @@
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
 
-import { IComment } from "@/types/types";
+import { IComment, INotification } from "@/types/types";
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -67,3 +67,16 @@ export function findCommentDepth(comments: IComment[], targetId: string): number
   }
   return -1;
 }
+
+export const getNotificationText = (type: INotification["type"]) => {
+  switch (type) {
+    case "REPLY":
+      return "ответил(а) на ваш комментарий";
+    case "POST_VOTE":
+      return "оценил(а) ваш пост";
+    case "COMMENT_VOTE":
+      return "оценил(а) ваш комментарий";
+    default:
+      return "новое уведомление";
+  }
+};

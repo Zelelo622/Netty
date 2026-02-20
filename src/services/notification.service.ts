@@ -9,10 +9,11 @@ import {
   serverTimestamp,
   updateDoc,
   where,
+  writeBatch,
 } from "firebase/firestore";
 
 import { db } from "@/lib/firebase";
-import { INotification, IPost } from "@/types/types";
+import { INotification } from "@/types/types";
 
 export const NotificationService = {
   async createNotification(notificationData: Omit<INotification, "id" | "createdAt" | "read">) {
@@ -28,34 +29,6 @@ export const NotificationService = {
       });
     } catch (e) {
       console.error("Ошибка при записи уведомления:", e);
-    }
-  },
-
-  async processMentions(text: string, post: IPost, issuer: { uid: string; displayName: string }) {
-    const mentions = text.match(/u\/([a-zA-Z0-9_]+)/g);
-    if (!mentions) return;
-
-    const usernames = [...new Set(mentions.map((m) => m.replace("u/", "")))];
-
-    for (const username of usernames) {
-      if (username === issuer.displayName) continue;
-
-      const q = query(collection(db, "users"), where("displayName", "==", username));
-      const querySnapshot = await getDocs(q);
-
-      if (!querySnapshot.empty) {
-        const recipientId = querySnapshot.docs[0].id;
-
-        await this.createNotification({
-          recipientId,
-          issuerId: issuer.uid,
-          issuerName: issuer.displayName,
-          type: "TAG",
-          postId: post.id,
-          postSlug: post.slug,
-          communityName: post.communityName,
-        });
-      }
     }
   },
 
@@ -77,5 +50,17 @@ export const NotificationService = {
 
   async markAsRead(notificationId: string) {
     await updateDoc(doc(db, "notifications", notificationId), { read: true });
+  },
+
+  async clearAllNotifications(userId: string) {
+    const q = query(collection(db, "notifications"), where("recipientId", "==", userId));
+    const snapshot = await getDocs(q);
+
+    const batch = writeBatch(db);
+    snapshot.docs.forEach((doc) => {
+      batch.delete(doc.ref);
+    });
+
+    await batch.commit();
   },
 };

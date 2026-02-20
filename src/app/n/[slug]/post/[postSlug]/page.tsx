@@ -4,7 +4,7 @@ import { formatDistanceToNow } from "date-fns";
 import { ru } from "date-fns/locale";
 import { MoreHorizontal, Languages, Trash2, Pencil } from "lucide-react"; // Добавили Pencil
 import Link from "next/link";
-import { useParams, useRouter } from "next/navigation";
+import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 
@@ -34,6 +34,8 @@ import { PostsService } from "@/services/posts.service";
 import { IComment, IPost } from "@/types/types";
 
 export default function PostPage() {
+  const searchParams = useSearchParams();
+  const highlightId = searchParams.get("highlight");
   const { postSlug } = useParams();
   const router = useRouter();
   const { user } = useAuth();
@@ -83,19 +85,27 @@ export default function PostPage() {
   }, [postSlug, user]);
 
   useEffect(() => {
-    const hash = window.location.hash;
-    if (hash && !isLoading && comments.length > 0) {
-      const id = hash.replace("#", "");
+    const id = highlightId || window.location.hash.replace("#", "");
+
+    if (!id || isLoading || comments.length === 0) return;
+
+    const scrollToTarget = () => {
       const element = document.getElementById(id);
       if (element) {
+        element.scrollIntoView({ behavior: "smooth", block: "center" });
+
+        element.classList.add("bg-primary/10", "ring-2", "ring-primary/20");
+
         setTimeout(() => {
-          element.scrollIntoView({ behavior: "smooth", block: "center" });
-          element.classList.add("bg-primary/10");
-          setTimeout(() => element.classList.remove("bg-primary/10"), 2000);
-        }, 500);
+          element.classList.remove("bg-primary/10", "ring-2", "ring-primary/20");
+          router.replace(window.location.pathname + window.location.hash, { scroll: false });
+        }, 3000);
       }
-    }
-  }, [isLoading, comments]);
+    };
+
+    const timer = setTimeout(scrollToTarget, 100);
+    return () => clearTimeout(timer);
+  }, [highlightId, isLoading, comments.length]);
 
   useEffect(() => {
     if (!post?.id) return;

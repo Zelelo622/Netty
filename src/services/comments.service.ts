@@ -36,11 +36,6 @@ export const CommentsService = {
       commentsCount: increment(1),
     });
 
-    NotificationService.processMentions(data.text, post, {
-      uid: data.authorId,
-      displayName: data.authorName,
-    });
-
     const baseNotification = {
       issuerId: data.authorId,
       issuerName: data.authorName,
@@ -55,12 +50,6 @@ export const CommentsService = {
         ...baseNotification,
         recipientId: parentCommentAuthorId,
         type: "REPLY",
-      });
-    } else if (!data.parentId && post.authorId !== data.authorId) {
-      await NotificationService.createNotification({
-        ...baseNotification,
-        recipientId: post.authorId,
-        type: "NEW_COMMENT",
       });
     }
 

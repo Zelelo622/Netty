@@ -50,14 +50,14 @@ export interface IComment {
 
 export interface INotification {
   id: string;
-  recipientId: string; // Кому уведомление
-  issuerId: string; // От кого (кто лайкнул/тэгнул)
-  issuerName: string; // Имя для отображения
-  type: "REPLY" | "TAG" | "POST_VOTE" | "COMMENT_VOTE" | "NEW_COMMENT";
-  postId: string; // Ссылка на пост, где произошло событие
-  commentId?: string; // (Опционально) если это ответ на коммент
-  read: boolean; // Прочитано или нет
+  recipientId: string;
+  issuerId: string;
+  issuerName: string;
+  type: "REPLY" | "POST_VOTE" | "COMMENT_VOTE";
+  postId: string;
+  commentId?: string;
+  read: boolean;
   createdAt: any;
-  communityName: string; // Новое
-  postSlug: string; // Новое
+  communityName: string;
+  postSlug: string;
 }

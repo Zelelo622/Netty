@@ -1,7 +1,7 @@
 "use client";
 
 import { signOut } from "firebase/auth";
-import { Bell } from "lucide-react"; // Иконка колокольчика
+import { Bell, Trash2 } from "lucide-react"; // Иконка колокольчика
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react"; // Добавили хуки
@@ -19,34 +19,46 @@ import {
 import { Skeleton } from "@/components/ui/skeleton";
 import { useAuth } from "@/context/AuthContext";
 import { ROUTES } from "@/lib/routes";
-import { NotificationService } from "@/services/notification.service"; // Импорт сервиса
+import { getNotificationText } from "@/lib/utils";
+import { NotificationService } from "@/services/notification.service";
 import { INotification } from "@/types/types";
 
 import { LogoTextIcon } from "./icons/LogoTextIcon";
 import { MaskotIcon } from "./icons/MaskotIcon";
 import { ModeToggle } from "./ThemeToggle";
 import { auth } from "../lib/firebase";
-import { ScrollArea } from "./ui/scroll-area"; // Опционально для длинных списков
+import { ScrollArea } from "./ui/scroll-area";
 import { SidebarTrigger } from "./ui/sidebar";
+import { toast } from "sonner";
 
 function Navbar() {
   const { user, loading } = useAuth();
   const router = useRouter();
 
-  // Состояние для уведомлений
   const [notifications, setNotifications] = useState<INotification[]>([]);
   const unreadCount = notifications.filter((n) => !n.read).length;
 
-  // Подписка на уведомления в реальном времени
   useEffect(() => {
     if (!user?.uid) return;
 
-    const unsubscribe = NotificationService.subscribeToNotifications(user.uid, (data) =>
-      setNotifications(data)
-    );
+    const unsubscribe = NotificationService.subscribeToNotifications(user.uid, (data) => {
+      if (notifications.length > 0 && data.length > notifications.length) {
+        const newNotify = data[0];
+        if (!newNotify.read) {
+          toast.info(`${newNotify.issuerName} ${getNotificationText(newNotify.type)}`, {
+            description: "Нажмите, чтобы посмотреть",
+            action: {
+              label: "Открыть",
+              onClick: () => handleNotificationClick(newNotify),
+            },
+          });
+        }
+      }
+      setNotifications(data);
+    });
 
     return () => unsubscribe();
-  }, [user?.uid]);
+  }, [user?.uid, notifications.length]);
 
   const handleSignOut = async () => {
     try {
@@ -59,33 +71,27 @@ function Navbar() {
     }
   };
 
+  const handleClearAll = async () => {
+    if (!user?.uid) return;
+    try {
+      await NotificationService.clearAllNotifications(user.uid);
+      toast.success("Уведомления очищены");
+    } catch (_error) {
+      toast.error("Не удалось очистить уведомления");
+    }
+  };
+
   const handleNotificationClick = async (notification: INotification) => {
     if (!notification.read) {
       await NotificationService.markAsRead(notification.id);
     }
 
-    // Строим путь: /n/community/post/slug
     const postUrl = ROUTES.POST(notification.communityName, notification.postSlug);
 
-    // Если есть commentId, добавляем якорь #id
-    const anchor = notification.commentId ? `#${notification.commentId}` : "";
-
-    router.push(`${postUrl}${anchor}`);
-  };
-
-  // Вспомогательная функция для текста уведомлений
-  const getNotificationText = (type: INotification["type"]) => {
-    switch (type) {
-      case "REPLY":
-        return "ответил(а) на ваш комментарий";
-      case "TAG":
-        return "упомянул(а) вас в посте";
-      case "NEW_COMMENT":
-        return "прокомментировал(а) ваш пост";
-      case "POST_VOTE":
-        return "оценил(а) ваш пост";
-      default:
-        return "новое событие";
+    if (notification.commentId) {
+      router.push(`${postUrl}?highlight=${notification.commentId}#${notification.commentId}`);
+    } else {
+      router.push(postUrl);
     }
   };
 
@@ -106,7 +112,6 @@ function Navbar() {
               <Skeleton className="h-9 w-24 rounded-md" />
             ) : user ? (
               <>
-                {/* --- СЕКЦИЯ УВЕДОМЛЕНИЙ --- */}
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
                     <Button
@@ -130,6 +135,17 @@ function Navbar() {
                           {unreadCount} новых
                         </span>
                       )}
+                      {notifications.length > 0 && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-7 text-[11px] text-muted-foreground hover:text-destructive"
+                          onClick={handleClearAll}
+                        >
+                          <Trash2 className="h-3 w-3 mr-1" />
+                          Очистить всё
+                        </Button>
+                      )}
                     </DropdownMenuLabel>
                     <DropdownMenuSeparator />
                     <ScrollArea className="h-[300px]">
@@ -147,7 +163,6 @@ function Navbar() {
                               </span>
                             </div>
                             <span className="text-[10px] text-muted-foreground uppercase">
-                              {/* Тут можно добавить formatDistanceToNow */}
                               недавно
                             </span>
                           </DropdownMenuItem>
@@ -161,7 +176,6 @@ function Navbar() {
                   </DropdownMenuContent>
                 </DropdownMenu>
 
-                {/* --- МЕНЮ ПРОФИЛЯ --- */}
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
                     <Button
@@ -177,7 +191,6 @@ function Navbar() {
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent className="w-56" align="end" forceMount>
-                    {/* ... (твой существующий код меню профиля) */}
                     <DropdownMenuLabel className="font-normal">
                       <div className="flex flex-col space-y-1">
                         <p className="text-sm font-medium leading-none">
