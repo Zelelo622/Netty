@@ -140,7 +140,7 @@ function Navbar() {
                         <Button
                           variant="ghost"
                           size="sm"
-                          className="h-7 text-[11px] text-muted-foreground hover:text-destructive"
+                          className="cursor-pointer h-7 text-[11px] text-muted-foreground hover:text-destructive"
                           onClick={handleClearAll}
                         >
                           <Trash2 className="h-3 w-3 mr-1" />
