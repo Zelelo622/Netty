@@ -22,6 +22,7 @@ import { CreateCommunityModal } from "@/features/communities/components/CreateCo
 import { ROUTES } from "@/lib/routes";
 import { CommunityService } from "@/services/community.service";
 import { ICommunity } from "@/types/types";
+import { toast } from "sonner";
 
 export function AppSidebar() {
   const pathname = usePathname();
@@ -50,9 +51,15 @@ export function AppSidebar() {
   }, [user]);
 
   const handleItemClick = () => {
+    if (!user) {
+      toast.info("Войдите, чтобы подписываться");
+      return;
+    }
     if (isMobile) {
       setOpenMobile(false);
     }
+
+    setIsModalOpen(true);
   };
 
   return (
@@ -92,7 +99,6 @@ export function AppSidebar() {
                 className="h-4 w-4 cursor-pointer hover:text-primary transition-colors"
                 onClick={() => {
                   handleItemClick();
-                  setIsModalOpen(true);
                 }}
               />
             </div>

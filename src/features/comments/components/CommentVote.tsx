@@ -26,7 +26,7 @@ export const CommentVote = ({ commentId, initialVotes }: CommentVoteProps) => {
   }, [user, commentId]);
 
   const handleVote = async (newValue: number) => {
-    if (!user) return toast.error("Войдите, чтобы голосовать");
+    if (!user) return toast.info("Войдите, чтобы голосовать");
 
     const finalValue = currentVote === newValue ? 0 : newValue;
     const voteDiff = finalValue - currentVote;
