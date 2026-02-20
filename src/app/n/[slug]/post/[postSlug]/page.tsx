@@ -31,6 +31,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { POST_FLAIRS } from "@/lib/constants";
 import { ImageUploader } from "@/components/ImageUploader";
 import { EditPostForm } from "@/features/posts/components/EditPostForm";
+import Link from "next/link";
 
 export default function PostPage() {
   const { postSlug } = useParams();
@@ -196,7 +197,12 @@ export default function PostPage() {
           </Avatar>
           <div className="flex flex-col">
             <div className="flex items-center gap-2">
-              <span className="font-bold text-sm">n/{post.communityName}</span>
+              <Link
+                href={ROUTES.COMMUNITY(post.communityName)}
+                className="font-bold text-sm hover:underline cursor-pointer text-foreground"
+              >
+                n/{post.communityName}
+              </Link>
               <Badge variant="secondary" className="text-[10px] h-5">
                 Community
               </Badge>
@@ -299,7 +305,7 @@ export default function PostPage() {
             </div>
           )}
           {post.content && (
-            <p className="text-base break-all md:text-lg text-foreground/80 whitespace-pre-wrap leading-relaxed">
+            <p className="text-base break-words md:text-lg text-foreground/80 whitespace-pre-wrap leading-relaxed">
               {post.content}
             </p>
           )}
