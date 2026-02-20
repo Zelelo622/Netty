@@ -1,20 +1,21 @@
 "use client";
 
+import { DocumentData, QueryDocumentSnapshot } from "firebase/firestore";
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
-import { CommunityService } from "@/services/community.service";
-import { ICommunity, IPost } from "@/types/types";
-import PostList from "@/features/posts/components/PostList";
-import { useAuth } from "@/context/AuthContext";
 import { toast } from "sonner";
-import { PostsService } from "@/services/posts.service";
-import { ROUTES } from "@/lib/routes";
-import { LoadingSpinner } from "@/components/LoadingSpinner";
-import { CreateCommunityModal } from "@/features/communities/components/CreateCommunityModal";
-import { CommunityHeader } from "@/features/communities/components/CommunityHeader";
-import { CommunityActions } from "@/features/communities/components/CommunityActions";
-import { DocumentData, QueryDocumentSnapshot } from "firebase/firestore";
+
 import { LoadingListVirtualizer } from "@/components/LoadingListVirtualizer";
+import { LoadingSpinner } from "@/components/LoadingSpinner";
+import { useAuth } from "@/context/AuthContext";
+import { CommunityActions } from "@/features/communities/components/CommunityActions";
+import { CommunityHeader } from "@/features/communities/components/CommunityHeader";
+import { CreateCommunityModal } from "@/features/communities/components/CreateCommunityModal";
+import PostList from "@/features/posts/components/PostList";
+import { ROUTES } from "@/lib/routes";
+import { CommunityService } from "@/services/community.service";
+import { PostsService } from "@/services/posts.service";
+import { ICommunity, IPost } from "@/types/types";
 
 export default function CommunityPage() {
   const { slug } = useParams();
@@ -25,8 +26,7 @@ export default function CommunityPage() {
   const [loading, setLoading] = useState(true);
   const [postsLoading, setPostsLoading] = useState(false);
   const [posts, setPosts] = useState<IPost[]>([]);
-  const [lastVisible, setLastVisible] =
-    useState<QueryDocumentSnapshot<DocumentData> | null>(null);
+  const [lastVisible, setLastVisible] = useState<QueryDocumentSnapshot<DocumentData> | null>(null);
   const [hasMore, setHasMore] = useState(true);
   const [isFetchingMore, setIsFetchingMore] = useState(false);
   const [submitting, setSubmitting] = useState(false);
@@ -46,7 +46,7 @@ export default function CommunityPage() {
           fetchMorePosts();
         }
       },
-      { threshold: 0.1 },
+      { threshold: 0.1 }
     );
 
     if (observerRef.current) {
@@ -70,7 +70,7 @@ export default function CommunityPage() {
           setLastVisible(result.lastVisible);
           setHasMore(result.posts.length === 10);
         }
-      } catch (e) {
+      } catch (_error) {
         toast.error("Ошибка загрузки данных");
       } finally {
         setLoading(false);
@@ -85,16 +85,12 @@ export default function CommunityPage() {
 
     setIsFetchingMore(true);
     try {
-      const result = await PostsService.getCommunityPosts(
-        community.id,
-        10,
-        lastVisible,
-      );
+      const result = await PostsService.getCommunityPosts(community.id, 10, lastVisible);
 
       setPosts((prev) => [...prev, ...result.posts]);
       setLastVisible(result.lastVisible);
       setHasMore(result.posts.length === 10);
-    } catch (e) {
+    } catch (_error) {
       toast.error("Не удалось загрузить больше постов");
     } finally {
       setIsFetchingMore(false);
@@ -105,11 +101,7 @@ export default function CommunityPage() {
     if (!user || !community) return toast.error("Войдите в аккаунт");
     setSubmitting(true);
     try {
-      await CommunityService.toggleSubscription(
-        community.id!,
-        user.uid,
-        isSubscribed,
-      );
+      await CommunityService.toggleSubscription(community.id!, user.uid, isSubscribed);
       setCommunity((prev) => {
         if (!prev) return null;
         const newSubs = isSubscribed
@@ -118,15 +110,11 @@ export default function CommunityPage() {
         return {
           ...prev,
           subscribers: newSubs,
-          membersCount: isSubscribed
-            ? prev.membersCount - 1
-            : prev.membersCount + 1,
+          membersCount: isSubscribed ? prev.membersCount - 1 : prev.membersCount + 1,
         };
       });
-      toast.success(
-        isSubscribed ? "Вы покинули сообщество" : "Добро пожаловать!",
-      );
-    } catch (e) {
+      toast.success(isSubscribed ? "Вы покинули сообщество" : "Добро пожаловать!");
+    } catch (_error) {
       toast.error("Ошибка обновления подписки");
     } finally {
       setSubmitting(false);
@@ -134,10 +122,7 @@ export default function CommunityPage() {
   };
 
   if (loading) return <LoadingSpinner />;
-  if (!community)
-    return (
-      <div className="py-20 text-center font-bold">Сообщество не найдено</div>
-    );
+  if (!community) return <div className="py-20 text-center font-bold">Сообщество не найдено</div>;
 
   return (
     <div className="flex flex-col w-full min-h-screen bg-muted/20">
@@ -165,10 +150,7 @@ export default function CommunityPage() {
             Последние публикации
           </h3>
           <PostList posts={posts} isLoading={postsLoading} />
-          <div
-            ref={observerRef}
-            className="h-20 flex items-center justify-center mt-4"
-          >
+          <div ref={observerRef} className="h-20 flex items-center justify-center mt-4">
             <LoadingListVirtualizer
               isFetchingMore={isFetchingMore}
               hasMore={hasMore}

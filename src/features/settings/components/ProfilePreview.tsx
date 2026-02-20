@@ -1,8 +1,9 @@
 "use client";
 
+import { User } from "firebase/auth";
+
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Label } from "@/components/ui/label";
-import { User } from "firebase/auth";
 
 interface IProfilePreviewProps {
   user: User;
@@ -26,9 +27,7 @@ export const ProfilePreview = ({ user }: IProfilePreviewProps) => {
         <p className="font-bold text-sm truncate max-w-[200px]">
           {user.displayName || "Без имени"}
         </p>
-        <p className="text-[10px] text-muted-foreground truncate max-w-[200px]">
-          {user.email}
-        </p>
+        <p className="text-[10px] text-muted-foreground truncate max-w-[200px]">{user.email}</p>
       </div>
     </div>
   );

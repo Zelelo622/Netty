@@ -1,7 +1,8 @@
+import Link from "next/link";
+
 import { MaskotIcon } from "@/components/icons/MaskotIcon";
 import { Button } from "@/components/ui/button";
 import { ROUTES } from "@/lib/routes";
-import Link from "next/link";
 
 export default function NotFound() {
   return (
@@ -13,12 +14,10 @@ export default function NotFound() {
         </div>
       </div>
 
-      <h1 className="text-4xl font-black mb-2 text-primary">
-        Упс! Тут пусто...
-      </h1>
+      <h1 className="text-4xl font-black mb-2 text-primary">Упс! Тут пусто...</h1>
       <p className="text-muted-foreground max-w-[400px] mb-8">
-        Твой маленький помощник обнюхал каждый угол, но так и не смог найти эту
-        страницу. Возможно, она переехала или её никогда не существовало.
+        Твой маленький помощник обнюхал каждый угол, но так и не смог найти эту страницу. Возможно,
+        она переехала или её никогда не существовало.
       </p>
 
       <div className="flex gap-4">

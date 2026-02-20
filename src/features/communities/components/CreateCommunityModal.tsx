@@ -1,15 +1,11 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useAuth } from "@/context/AuthContext";
-import { CommunityService } from "@/services/community.service";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
-import { ROUTES } from "@/lib/routes";
+
+import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
@@ -18,10 +14,16 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Loader2 } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { useAuth } from "@/context/AuthContext";
+import { ROUTES } from "@/lib/routes";
+import { CommunityService } from "@/services/community.service";
 import { ICommunity } from "@/types/types";
-import { ImageUploader } from "../../../components/ImageUploader";
+
 import { DeleteConfirmModal } from "../../../components/DeleteConfirmModal";
+import { ImageUploader } from "../../../components/ImageUploader";
 
 interface ICreateComminutyModalProps {
   isOpen: boolean;
@@ -29,11 +31,7 @@ interface ICreateComminutyModalProps {
   initialData?: ICommunity | null;
 }
 
-export function CreateCommunityModal({
-  isOpen,
-  onClose,
-  initialData,
-}: ICreateComminutyModalProps) {
+export function CreateCommunityModal({ isOpen, onClose, initialData }: ICreateComminutyModalProps) {
   const { user } = useAuth();
   const router = useRouter();
   const isEditMode = !!initialData;
@@ -107,9 +105,7 @@ export function CreateCommunityModal({
       }
 
       onClose();
-      router.push(
-        finalSlug ? ROUTES.COMMUNITY(finalSlug) : ROUTES.ALL_COMMUNITIES,
-      );
+      router.push(finalSlug ? ROUTES.COMMUNITY(finalSlug) : ROUTES.ALL_COMMUNITIES);
 
       if (!isEditMode) {
         setName("");
@@ -129,9 +125,7 @@ export function CreateCommunityModal({
       <Dialog open={isOpen} onOpenChange={onClose}>
         <DialogContent className="sm:max-w-md w-[95vw] rounded-lg max-h-[90vh] overflow-y-auto overflow-x-hidden min-w-0">
           <DialogHeader>
-            <DialogTitle>
-              {isEditMode ? "Настройки сообщества" : "Создать сообщество"}
-            </DialogTitle>
+            <DialogTitle>{isEditMode ? "Настройки сообщества" : "Создать сообщество"}</DialogTitle>
             <DialogDescription>
               {isEditMode
                 ? "Измените данные вашего сообщества"
@@ -155,27 +149,17 @@ export function CreateCommunityModal({
                   required
                 />
               </div>
-              <p className="text-[10px] text-muted-foreground">
-                От 3 до 21 символа. Без пробелов.
-              </p>
+              <p className="text-[10px] text-muted-foreground">От 3 до 21 символа. Без пробелов.</p>
             </div>
 
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               <div className="space-y-2">
                 <Label htmlFor="avatar">Аватарка сообщества</Label>
-                <ImageUploader
-                  url={avatarUrl}
-                  onChange={setAvatarUrl}
-                  variant="compact"
-                />
+                <ImageUploader url={avatarUrl} onChange={setAvatarUrl} variant="compact" />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="banner">Баннер (фон)</Label>
-                <ImageUploader
-                  url={bannerUrl}
-                  onChange={setBannerUrl}
-                  variant="compact"
-                />
+                <ImageUploader url={bannerUrl} onChange={setBannerUrl} variant="compact" />
               </div>
             </div>
 

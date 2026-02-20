@@ -1,15 +1,11 @@
 "use client";
 
-import Link from "next/link";
 import { Users, Loader2 } from "lucide-react";
-import {
-  Card,
-  CardHeader,
-  CardTitle,
-  CardDescription,
-} from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
+import Link from "next/link";
+
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Button } from "@/components/ui/button";
+import { Card, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { ROUTES } from "@/lib/routes";
 import { ICommunity } from "@/types/types";
 
@@ -43,12 +39,8 @@ export const CommunityCard = ({
             </Avatar>
 
             <div className="flex-1 min-w-0">
-              <CardTitle className="text-lg truncate">
-                n/{community.name}
-              </CardTitle>
-              <CardDescription className="line-clamp-1">
-                {community.description}
-              </CardDescription>
+              <CardTitle className="text-lg truncate">n/{community.name}</CardTitle>
+              <CardDescription className="line-clamp-1">{community.description}</CardDescription>
               <div className="flex items-center gap-1 mt-1 text-xs text-muted-foreground">
                 <Users className="h-3 w-3" />
                 {community.membersCount} участников

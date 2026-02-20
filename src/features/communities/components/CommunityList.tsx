@@ -1,6 +1,7 @@
 "use client";
 
 import { ICommunity } from "@/types/types";
+
 import { CommunityCard } from "./CommunityCard";
 
 interface ICommunityListProps {

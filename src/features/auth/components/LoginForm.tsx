@@ -1,6 +1,10 @@
 "use client";
 
+import { FirebaseError } from "firebase/app";
 import { useState } from "react";
+import { toast } from "sonner";
+
+import { LogoTextIcon } from "@/components/icons/LogoTextIcon";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -10,12 +14,9 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-
-import { toast } from "sonner";
-import { FirebaseError } from "firebase/app";
 import { getFirebaseErrorMessage } from "@/lib/firebase-errors";
 import { AuthService } from "@/services/auth.service";
-import { LogoTextIcon } from "@/components/icons/LogoTextIcon";
+
 import { FormField } from "./FormFieldAuth";
 
 interface ILoginFormProps {

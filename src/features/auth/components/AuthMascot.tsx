@@ -6,11 +6,7 @@ interface IAuthMascotProps {
   activeTab: string;
 }
 
-export const AuthMascot = ({
-  loading,
-  isPasswordFocused,
-  activeTab,
-}: IAuthMascotProps) => {
+export const AuthMascot = ({ loading, isPasswordFocused, activeTab }: IAuthMascotProps) => {
   const getMascotText = () => {
     if (loading) return "Минутку...";
     if (isPasswordFocused) return "Тсс, я всё забуду!";
@@ -22,9 +18,7 @@ export const AuthMascot = ({
   return (
     <div
       className={`fixed -bottom-12 -left-6 z-10 transition-all duration-500 sm:relative sm:inset-auto sm:mb-8 sm:block ${
-        isPasswordFocused
-          ? "scale-110 -translate-x-2 sm:-translate-y-2"
-          : "scale-100"
+        isPasswordFocused ? "scale-110 -translate-x-2 sm:-translate-y-2" : "scale-100"
       }`}
     >
       <div className="relative group">

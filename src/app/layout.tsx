@@ -1,12 +1,17 @@
 import type { Metadata } from "next";
+
 import { Geist, Geist_Mono } from "next/font/google";
+
 import Navbar from "../components/Navbar";
+
 import "./globals.css";
-import { ThemeProvider } from "../components/theme-provider";
 import { Toaster } from "sonner";
-import { AuthProvider } from "@/context/AuthContext";
+
 import { SidebarProvider } from "@/components/ui/sidebar";
+import { AuthProvider } from "@/context/AuthContext";
+
 import { AppSidebar } from "../components/AppSidebar";
+import { ThemeProvider } from "../components/theme-provider";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -22,7 +27,7 @@ export const metadata: Metadata = {
   title: "Netty",
   description: "Место для общения и поиска единомышленников",
   icons: {
-    icon: '/favicon.svg',
+    icon: "/favicon.svg",
   },
 };
 
@@ -33,9 +38,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="ru" suppressHydrationWarning>
-      <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
-      >
+      <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
         <ThemeProvider
           attribute="class"
           defaultTheme="system"

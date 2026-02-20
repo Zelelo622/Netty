@@ -1,10 +1,6 @@
+import { updateProfile, updateEmail, updatePassword, signOut } from "firebase/auth";
+
 import { auth } from "@/lib/firebase";
-import {
-  updateProfile,
-  updateEmail,
-  updatePassword,
-  signOut,
-} from "firebase/auth";
 
 export const SettingsService = {
   async updatePublicProfile(name: string, photoURL: string) {

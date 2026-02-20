@@ -1,12 +1,11 @@
 "use client";
 
-import Link from "next/link";
-import { ModeToggle } from "./ThemeToggle";
-import { MaskotIcon } from "./icons/MaskotIcon";
-import { LogoTextIcon } from "./icons/LogoTextIcon";
-import { Button } from "@/components/ui/button";
 import { signOut } from "firebase/auth";
-import { auth } from "../lib/firebase";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -15,11 +14,14 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useAuth } from "@/context/AuthContext";
-import { useRouter } from "next/navigation";
 import { ROUTES } from "@/lib/routes";
+
+import { LogoTextIcon } from "./icons/LogoTextIcon";
+import { MaskotIcon } from "./icons/MaskotIcon";
+import { ModeToggle } from "./ThemeToggle";
+import { auth } from "../lib/firebase";
 import { SidebarTrigger } from "./ui/sidebar";
 
 function Navbar() {
@@ -61,10 +63,7 @@ function Navbar() {
                     className="relative h-10 w-10 rounded-full cursor-pointer focus-visible:ring-0 focus-visible:ring-offset-0"
                   >
                     <Avatar className="h-9 w-9 border border-primary/20 transition-transform hover:scale-105">
-                      <AvatarImage
-                        src={user.photoURL || ""}
-                        alt={user.displayName || "User"}
-                      />
+                      <AvatarImage src={user.photoURL || ""} alt={user.displayName || "User"} />
                       <AvatarFallback className="bg-primary/10 text-primary">
                         {user.displayName?.charAt(0) || user.email?.charAt(0)}
                       </AvatarFallback>

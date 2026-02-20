@@ -1,3 +1,5 @@
+import { Loader2 } from "lucide-react";
+
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -7,7 +9,6 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Loader2 } from "lucide-react";
 
 interface IDeleteConfirmModalProps {
   isOpen: boolean;
@@ -30,8 +31,7 @@ export function DeleteConfirmModal({
         <DialogHeader>
           <DialogTitle>Удалить n/{name}?</DialogTitle>
           <DialogDescription>
-            Это действие необратимо. Все данные сообщества будут безвозвратно
-            удалены.
+            Это действие необратимо. Все данные сообщества будут безвозвратно удалены.
           </DialogDescription>
         </DialogHeader>
         <DialogFooter className="gap-2 sm:gap-0">
@@ -39,11 +39,7 @@ export function DeleteConfirmModal({
             Отмена
           </Button>
           <Button variant="destructive" onClick={onConfirm} disabled={loading}>
-            {loading ? (
-              <Loader2 className="animate-spin h-4 w-4" />
-            ) : (
-              "Да, удалить"
-            )}
+            {loading ? <Loader2 className="animate-spin h-4 w-4" /> : "Да, удалить"}
           </Button>
         </DialogFooter>
       </DialogContent>

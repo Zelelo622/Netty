@@ -1,29 +1,26 @@
 "use client";
 
-import { useEffect, useState, useRef, useCallback } from "react";
-import PostList from "../features/posts/components/PostList";
-import { useAuth } from "@/context/AuthContext";
-import { IPost } from "@/types/types";
-import { PostsService } from "@/services/posts.service";
-import {
-  doc,
-  getDoc,
-  DocumentData,
-  QueryDocumentSnapshot,
-} from "firebase/firestore";
-import { db } from "@/lib/firebase";
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { TTabType } from "../features/posts/components/types";
+import { doc, getDoc, DocumentData, QueryDocumentSnapshot } from "firebase/firestore";
 import { Loader2 } from "lucide-react";
+import { useEffect, useState, useRef, useCallback } from "react";
+
 import { LoadingListVirtualizer } from "@/components/LoadingListVirtualizer";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useAuth } from "@/context/AuthContext";
+import { db } from "@/lib/firebase";
+import { PostsService } from "@/services/posts.service";
+import { IPost } from "@/types/types";
+
+import PostList from "../features/posts/components/PostList";
+import { TTabType } from "../features/posts/components/types";
 
 export default function Home() {
   const { user, loading: authLoading } = useAuth();
 
   const [posts, setPosts] = useState<IPost[]>([]);
-  const [lastVisible, setLastVisible] = useState<
-    QueryDocumentSnapshot<DocumentData> | undefined
-  >(undefined);
+  const [lastVisible, setLastVisible] = useState<QueryDocumentSnapshot<DocumentData> | undefined>(
+    undefined
+  );
 
   const [loading, setLoading] = useState(true);
   const [isFetchingMore, setIsFetchingMore] = useState(false);
@@ -33,7 +30,7 @@ export default function Home() {
   const observerRef = useRef<HTMLDivElement>(null);
 
   const fetchPosts = useCallback(
-    async (isFirstPage: boolean = false) => {
+    async (isFirstPage = false) => {
       if (authLoading) return;
 
       const currentLastVisible = isFirstPage ? undefined : lastVisible;
@@ -54,7 +51,7 @@ export default function Home() {
           case "all":
             result = await PostsService.getAllPosts(LIMIT, currentLastVisible);
             break;
-          case "feed":
+          case "feed": {
             if (!user) {
               result = { posts: [], lastVisible: null };
               break;
@@ -63,29 +60,20 @@ export default function Home() {
             const communityIds = userDoc.data()?.subscribedCommunities || [];
             result =
               communityIds.length > 0
-                ? await PostsService.getFeedPosts(
-                    communityIds,
-                    LIMIT,
-                    currentLastVisible,
-                  )
+                ? await PostsService.getFeedPosts(communityIds, LIMIT, currentLastVisible)
                 : { posts: [], lastVisible: null };
             break;
+          }
           case "mine":
             result = user
-              ? await PostsService.getUserPosts(
-                  user.uid,
-                  LIMIT,
-                  currentLastVisible,
-                )
+              ? await PostsService.getUserPosts(user.uid, LIMIT, currentLastVisible)
               : { posts: [], lastVisible: null };
             break;
           default:
             result = { posts: [], lastVisible: null };
         }
 
-        setPosts((prev) =>
-          isFirstPage ? result.posts : [...prev, ...result.posts],
-        );
+        setPosts((prev) => (isFirstPage ? result.posts : [...prev, ...result.posts]));
         setLastVisible(result.lastVisible ?? undefined);
         setHasMore(result.posts.length === LIMIT);
       } catch (error) {
@@ -95,7 +83,7 @@ export default function Home() {
         setIsFetchingMore(false);
       }
     },
-    [user, activeTab, authLoading, lastVisible, hasMore, isFetchingMore],
+    [user, activeTab, authLoading, lastVisible, hasMore, isFetchingMore]
   );
 
   useEffect(() => {
@@ -105,16 +93,11 @@ export default function Home() {
   useEffect(() => {
     const observer = new IntersectionObserver(
       (entries) => {
-        if (
-          entries[0].isIntersecting &&
-          hasMore &&
-          !isFetchingMore &&
-          !loading
-        ) {
+        if (entries[0].isIntersecting && hasMore && !isFetchingMore && !loading) {
           fetchPosts();
         }
       },
-      { threshold: 0.5 },
+      { threshold: 0.5 }
     );
 
     if (observerRef.current) observer.observe(observerRef.current);
@@ -159,12 +142,7 @@ export default function Home() {
         </TabsList>
       </Tabs>
 
-      <PostList
-        posts={posts}
-        isLoading={loading}
-        activeTab={activeTab}
-        isAuth={!!user}
-      />
+      <PostList posts={posts} isLoading={loading} activeTab={activeTab} isAuth={!!user} />
 
       <div ref={observerRef} className="py-10 flex justify-center w-full">
         <LoadingListVirtualizer

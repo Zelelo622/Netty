@@ -1,30 +1,32 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { IPostCardProps } from "./types";
-import { Card } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import { Languages, MoreHorizontal, Trash2 } from "lucide-react";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import Link from "next/link";
-import { Separator } from "@/components/ui/separator";
+import { useRouter } from "next/navigation";
+import { useState } from "react";
+import { toast } from "sonner";
+
+import { DeletePostModal } from "@/components/DeletePostModal";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { ROUTES } from "@/lib/routes";
+import { Separator } from "@/components/ui/separator";
 import { useAuth } from "@/context/AuthContext";
-import { PostsService } from "@/services/posts.service";
-import { toast } from "sonner";
-import { PostVote } from "./PostVote";
-import { PostActions } from "./PostActions";
-import { DeletePostModal } from "@/components/DeletePostModal";
-import { useRouter } from "next/navigation";
 import { POST_FLAIRS } from "@/lib/constants";
-import { Badge } from "@/components/ui/badge";
+import { ROUTES } from "@/lib/routes";
 import { cn } from "@/lib/utils";
+import { PostsService } from "@/services/posts.service";
+
+import { PostActions } from "./PostActions";
+import { PostVote } from "./PostVote";
+import { IPostCardProps } from "./types";
 
 export const PostCard = ({ post }: IPostCardProps) => {
   const { user } = useAuth();
@@ -49,7 +51,7 @@ export const PostCard = ({ post }: IPostCardProps) => {
       await PostsService.deletePost(post.id);
       toast.success("Пост успешно удален");
       router.refresh();
-    } catch (error) {
+    } catch (_error) {
       toast.error("Ошибка при удалении");
       setIsDeleting(false);
     }
@@ -113,10 +115,7 @@ export const PostCard = ({ post }: IPostCardProps) => {
           </div>
 
           <div className="space-y-2">
-            <Link
-              href={ROUTES.POST(post.communityName, post.slug)}
-              className="group block"
-            >
+            <Link href={ROUTES.POST(post.communityName, post.slug)} className="group block">
               <h2 className="mb-2 text-lg font-bold leading-tight sm:text-2xl group-hover:text-primary transition-colors line-clamp-2">
                 {post.title}
               </h2>
@@ -126,7 +125,7 @@ export const PostCard = ({ post }: IPostCardProps) => {
                 className={cn(
                   "shrink-0 whitespace-nowrap rounded-md",
                   flair.color,
-                  flair.textColor,
+                  flair.textColor
                 )}
               >
                 {flair.label}

@@ -1,12 +1,9 @@
 "use client";
 import { ImageIcon, X, Link as LinkIcon, Check } from "lucide-react";
+
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
 
 interface IImageUploaderProps {
@@ -15,22 +12,14 @@ interface IImageUploaderProps {
   variant?: "default" | "compact";
 }
 
-export function ImageUploader({
-  url,
-  onChange,
-  variant = "default",
-}: IImageUploaderProps) {
+export function ImageUploader({ url, onChange, variant = "default" }: IImageUploaderProps) {
   const isCompact = variant === "compact";
 
   return (
     <div className="w-full">
       {!isCompact && url && (
         <div className="relative group rounded-3xl overflow-hidden border bg-muted/30 mb-4">
-          <img
-            src={url}
-            alt="Preview"
-            className="w-full max-h-125 object-contain mx-auto"
-          />
+          <img src={url} alt="Preview" className="w-full max-h-125 object-contain mx-auto" />
           <div className="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity">
             <Button
               variant="destructive"
@@ -51,9 +40,7 @@ export function ImageUploader({
             variant="outline"
             className={cn(
               "w-full rounded-xl border-2 border-dashed gap-3 text-muted-foreground hover:border-primary/40 transition-all",
-              isCompact
-                ? "h-10 text-sm justify-start px-3"
-                : "h-16 text-lg font-semibold",
+              isCompact ? "h-10 text-sm justify-start px-3" : "h-16 text-lg font-semibold"
             )}
           >
             <ImageIcon className={cn(isCompact ? "h-4 w-4" : "h-6 w-6")} />
@@ -66,9 +53,7 @@ export function ImageUploader({
                   ? "Указать ссылку..."
                   : "Добавить обложку"}
             </span>
-            {isCompact && url && (
-              <Check className="h-4 w-4 ml-auto text-green-500" />
-            )}
+            {isCompact && url && <Check className="h-4 w-4 ml-auto text-green-500" />}
           </Button>
         </PopoverTrigger>
         <PopoverContent

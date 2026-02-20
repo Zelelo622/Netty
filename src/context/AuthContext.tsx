@@ -1,9 +1,10 @@
 "use client";
 
-import { auth, db } from "@/lib/firebase";
 import { onAuthStateChanged, User } from "firebase/auth";
 import { doc, getDoc, setDoc, serverTimestamp } from "firebase/firestore";
 import { createContext, useContext, useEffect, useState } from "react";
+
+import { auth, db } from "@/lib/firebase";
 
 const AuthContext = createContext<{ user: User | null; loading: boolean }>({
   user: null,
@@ -24,8 +25,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           await setDoc(userRef, {
             uid: currentUser.uid,
             email: currentUser.email,
-            displayName:
-              currentUser.displayName || currentUser.email?.split("@")[0],
+            displayName: currentUser.displayName || currentUser.email?.split("@")[0],
             photoURL: currentUser.photoURL || "",
             subscribedCommunities: [],
             createdAt: serverTimestamp(),
@@ -51,11 +51,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     return () => unsubscribe();
   }, []);
 
-  return (
-    <AuthContext.Provider value={{ user, loading }}>
-      {children}
-    </AuthContext.Provider>
-  );
+  return <AuthContext.Provider value={{ user, loading }}>{children}</AuthContext.Provider>;
 };
 
 export const useAuth = () => useContext(AuthContext);

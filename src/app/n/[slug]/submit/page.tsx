@@ -1,29 +1,26 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { HelpCircle } from "lucide-react";
 import { useParams, useRouter } from "next/navigation";
+import { useState, useEffect } from "react";
+import { toast } from "sonner";
+
+import { ImageUploader } from "@/components/ImageUploader";
+import { LoadingSpinner } from "@/components/LoadingSpinner";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Textarea } from "@/components/ui/textarea";
 import { useAuth } from "@/context/AuthContext";
+import { CommunitySelect } from "@/features/communities/components/CommunitySelect";
+import { PostRules } from "@/features/communities/components/PostRules";
+import { FlairSelect } from "@/features/posts/components/FlairSelect";
+import { ROUTES } from "@/lib/routes";
+import { cn, generateSlug } from "@/lib/utils";
 import { CommunityService } from "@/services/community.service";
 import { PostsService } from "@/services/posts.service";
 import { ICommunity } from "@/types/types";
-import { ROUTES } from "@/lib/routes";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { Card, CardContent } from "@/components/ui/card";
-import { HelpCircle } from "lucide-react";
-import { toast } from "sonner";
-import { ImageUploader } from "@/components/ImageUploader";
-import { cn, generateSlug } from "@/lib/utils";
-import { LoadingSpinner } from "@/components/LoadingSpinner";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
-import { PostRules } from "@/features/communities/components/PostRules";
-import { CommunitySelect } from "@/features/communities/components/CommunitySelect";
-import { FlairSelect } from "@/features/posts/components/FlairSelect";
 
 export default function CreatePostPage() {
   const { user, loading: authLoading } = useAuth();
@@ -47,9 +44,7 @@ export default function CreatePostPage() {
         const userSubs = await CommunityService.getUserCommunities(user.uid);
         setCommunities(userSubs);
         if (slug) {
-          const target = userSubs.find(
-            (c) => c.name.toLowerCase() === slug.toLowerCase(),
-          );
+          const target = userSubs.find((c) => c.name.toLowerCase() === slug.toLowerCase());
           if (target) {
             setSelectedCommunity(target.id!);
           } else {
@@ -60,7 +55,7 @@ export default function CreatePostPage() {
             }
           }
         }
-      } catch (err) {
+      } catch (_error) {
         toast.error("Ошибка при загрузке сообществ");
       } finally {
         setIsDataFetching(false);
@@ -93,7 +88,7 @@ export default function CreatePostPage() {
       });
 
       router.push(ROUTES.POST(community?.name || selectedCommunity, postSlug));
-    } catch (error) {
+    } catch (_error) {
       toast.error("Не удалось создать пост");
     } finally {
       setIsLoading(false);
@@ -110,18 +105,12 @@ export default function CreatePostPage() {
     <div className="max-w-4xl mx-auto py-10 px-4 grid grid-cols-1 lg:grid-cols-[1fr_280px] gap-8">
       <div className="space-y-6 min-w-0">
         <div className="flex items-center justify-between">
-          <h1 className="text-3xl font-bold tracking-tight">
-            Создать публикацию
-          </h1>
+          <h1 className="text-3xl font-bold tracking-tight">Создать публикацию</h1>
 
           <div className="lg:hidden">
             <Popover>
               <PopoverTrigger asChild>
-                <Button
-                  variant="outline"
-                  size="icon"
-                  className="rounded-full shrink-0"
-                >
+                <Button variant="outline" size="icon" className="rounded-full shrink-0">
                   <HelpCircle className="h-5 w-5 text-muted-foreground" />
                 </Button>
               </PopoverTrigger>
@@ -149,10 +138,7 @@ export default function CreatePostPage() {
                 <label className="text-[10px] font-black uppercase text-muted-foreground tracking-widest ml-1">
                   Выберите флаер (необязательно)
                 </label>
-                <FlairSelect
-                  selectedFlairId={selectedFlair}
-                  onSelect={setSelectedFlair}
-                />
+                <FlairSelect selectedFlairId={selectedFlair} onSelect={setSelectedFlair} />
                 <Input
                   placeholder="Заголовок"
                   value={title}
@@ -160,7 +146,7 @@ export default function CreatePostPage() {
                   className={cn(
                     "text-lg md:text-xl h-auto py-4 font-extrabold transition-all",
                     "border-2 border-transparent hover:border-border focus-visible:border-primary focus-visible:ring-0 px-4 rounded-xl bg-transparent",
-                    "placeholder:text-muted-foreground/30 tracking-tight",
+                    "placeholder:text-muted-foreground/30 tracking-tight"
                   )}
                   maxLength={300}
                 />
@@ -173,11 +159,7 @@ export default function CreatePostPage() {
               </div>
 
               <div className="py-2">
-                <ImageUploader
-                  url={imageUrl}
-                  onChange={setImageUrl}
-                  variant="compact"
-                />
+                <ImageUploader url={imageUrl} onChange={setImageUrl} variant="compact" />
               </div>
 
               <Textarea
@@ -189,7 +171,7 @@ export default function CreatePostPage() {
                   "min-h-[150px] max-h-[300px]",
                   "bg-muted/20 border-none focus-visible:ring-1 focus-visible:ring-primary rounded-xl",
                   "overflow-y-auto whitespace-pre-wrap wrap-break-word",
-                  "field-sizing-content",
+                  "field-sizing-content"
                 )}
               />
             </CardContent>

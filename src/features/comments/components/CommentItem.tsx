@@ -1,18 +1,20 @@
 "use client";
 
-import { useState } from "react";
-import { IComment } from "@/types/types";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Button } from "@/components/ui/button";
-import { cn } from "@/lib/utils";
-import { MessageSquare } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { ru } from "date-fns/locale";
-import { Textarea } from "@/components/ui/textarea";
-import { CommentVote } from "./CommentVote";
-import { useAuth } from "@/context/AuthContext";
-import { CommentsService } from "@/services/comments.service";
+import { MessageSquare } from "lucide-react";
+import { useState } from "react";
 import { toast } from "sonner";
+
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Button } from "@/components/ui/button";
+import { Textarea } from "@/components/ui/textarea";
+import { useAuth } from "@/context/AuthContext";
+import { cn } from "@/lib/utils";
+import { CommentsService } from "@/services/comments.service";
+import { IComment } from "@/types/types";
+
+import { CommentVote } from "./CommentVote";
 
 interface ICommentItemProps {
   comment: IComment;
@@ -42,7 +44,7 @@ export default function CommentItem({ comment, onReply }: ICommentItemProps) {
       comment.isEdited = true;
       setIsEditing(false);
       toast.success("Изменено");
-    } catch (e) {
+    } catch (_error) {
       toast.error("Ошибка при обновлении");
     } finally {
       setIsUpdating(false);
@@ -72,10 +74,7 @@ export default function CommentItem({ comment, onReply }: ICommentItemProps) {
     return parts.map((part, i) => {
       if (part.startsWith("u/")) {
         return (
-          <span
-            key={i}
-            className="text-blue-500 font-medium hover:underline cursor-pointer"
-          >
+          <span key={i} className="text-blue-500 font-medium hover:underline cursor-pointer">
             {part}
           </span>
         );
@@ -84,16 +83,13 @@ export default function CommentItem({ comment, onReply }: ICommentItemProps) {
     });
   };
 
-  const commentDate = comment.createdAt?.toDate
-    ? comment.createdAt.toDate()
-    : new Date();
+  const commentDate = comment.createdAt?.toDate ? comment.createdAt.toDate() : new Date();
 
   return (
     <div
       className={cn(
         "flex flex-col gap-3",
-        comment.depth > 0 &&
-          "mt-4 ml-2 md:ml-6 pl-4 border-l-2 border-muted transition-colors",
+        comment.depth > 0 && "mt-4 ml-2 md:ml-6 pl-4 border-l-2 border-muted transition-colors"
       )}
     >
       <div className="flex items-center gap-2">
@@ -106,9 +102,7 @@ export default function CommentItem({ comment, onReply }: ICommentItemProps) {
           {formatDistanceToNow(commentDate, { addSuffix: true, locale: ru })}
         </span>
         {comment.isEdited && (
-          <span className="text-[10px] text-muted-foreground italic">
-            • Изменено
-          </span>
+          <span className="text-[10px] text-muted-foreground italic">• Изменено</span>
         )}
       </div>
 
@@ -120,11 +114,7 @@ export default function CommentItem({ comment, onReply }: ICommentItemProps) {
             className="min-h-[80px] bg-muted/20 border-none focus-visible:ring-1 focus-visible:ring-primary/50 rounded-xl resize-none text-sm"
           />
           <div className="flex gap-2">
-            <Button
-              size="sm"
-              variant="ghost"
-              onClick={() => setIsEditing(false)}
-            >
+            <Button size="sm" variant="ghost" onClick={() => setIsEditing(false)}>
               Отмена
             </Button>
             <Button size="sm" onClick={handleUpdate} disabled={isUpdating}>

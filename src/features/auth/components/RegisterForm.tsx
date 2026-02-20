@@ -1,6 +1,8 @@
 "use client";
 
 import { useState } from "react";
+import { toast } from "sonner";
+
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -10,9 +12,9 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { FormField } from "./FormFieldAuth";
-import { toast } from "sonner";
 import { AuthService } from "@/services/auth.service";
+
+import { FormField } from "./FormFieldAuth";
 
 interface IRegisterFormProps {
   setLoading: (loading: boolean) => void;
@@ -46,9 +48,7 @@ export const RegisterForm = ({
   return (
     <Card className="border-border/60 shadow-xl shadow-primary/5">
       <CardHeader>
-        <CardTitle className="text-2xl font-black text-primary">
-          Регистрация
-        </CardTitle>
+        <CardTitle className="text-2xl font-black text-primary">Регистрация</CardTitle>
         <CardDescription>Создай аккаунт, это займет минуту</CardDescription>
       </CardHeader>
       <form onSubmit={handleSubmit}>

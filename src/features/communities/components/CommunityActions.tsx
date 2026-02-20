@@ -1,5 +1,6 @@
-import { Button } from "@/components/ui/button";
 import { Loader2, Plus, Settings } from "lucide-react";
+
+import { Button } from "@/components/ui/button";
 
 interface CommunityActionsProps {
   isOwner: boolean;

@@ -1,5 +1,3 @@
-import { db } from "@/lib/firebase";
-import { IPost } from "@/types/types";
 import {
   collection,
   deleteDoc,
@@ -23,6 +21,9 @@ import {
   updateDoc,
 } from "firebase/firestore";
 
+import { db } from "@/lib/firebase";
+import { IPost } from "@/types/types";
+
 const postConverter: FirestoreDataConverter<IPost> = {
   toFirestore: (post: IPost) => post,
   fromFirestore: (snapshot, options) => {
@@ -34,14 +35,10 @@ const postConverter: FirestoreDataConverter<IPost> = {
 const postsRef = collection(db, "posts").withConverter(postConverter);
 const FIRESTORE_IN_LIMIT = 30;
 
-const mapSnapshot = (snapshot: QuerySnapshot<IPost>) =>
-  snapshot.docs.map((doc) => doc.data());
+const mapSnapshot = (snapshot: QuerySnapshot<IPost>) => snapshot.docs.map((doc) => doc.data());
 
 export const PostsService = {
-  async getAllPosts(
-    limitCount: number = 10,
-    lastDoc?: QueryDocumentSnapshot<DocumentData>,
-  ) {
+  async getAllPosts(limitCount = 10, lastDoc?: QueryDocumentSnapshot<DocumentData>) {
     let q = query(postsRef, orderBy("createdAt", "desc"), limit(limitCount));
 
     if (lastDoc) {
@@ -57,11 +54,10 @@ export const PostsService = {
 
   async getFeedPosts(
     subscribedCommunityIds: string[],
-    limitCount: number = 10,
-    lastDoc?: QueryDocumentSnapshot<DocumentData>,
+    limitCount = 10,
+    lastDoc?: QueryDocumentSnapshot<DocumentData>
   ) {
-    if (!subscribedCommunityIds?.length)
-      return { posts: [], lastVisible: null };
+    if (!subscribedCommunityIds?.length) return { posts: [], lastVisible: null };
 
     const limitedIds = subscribedCommunityIds.slice(0, FIRESTORE_IN_LIMIT);
 
@@ -69,7 +65,7 @@ export const PostsService = {
       postsRef,
       where("communityId", "in", limitedIds),
       orderBy("createdAt", "desc"),
-      limit(limitCount),
+      limit(limitCount)
     );
 
     if (lastDoc) {
@@ -85,14 +81,14 @@ export const PostsService = {
 
   async getUserPosts(
     userId: string,
-    limitCount: number = 10,
-    lastDoc?: QueryDocumentSnapshot<DocumentData>,
+    limitCount = 10,
+    lastDoc?: QueryDocumentSnapshot<DocumentData>
   ) {
     let q = query(
       postsRef,
       where("authorId", "==", userId),
       orderBy("createdAt", "desc"),
-      limit(limitCount),
+      limit(limitCount)
     );
 
     if (lastDoc) {
@@ -108,14 +104,14 @@ export const PostsService = {
 
   async getCommunityPosts(
     communityId: string,
-    limitCount: number = 10,
-    lastDoc?: QueryDocumentSnapshot<DocumentData>,
+    limitCount = 10,
+    lastDoc?: QueryDocumentSnapshot<DocumentData>
   ) {
     let q = query(
       postsRef,
       where("communityId", "==", communityId),
       orderBy("createdAt", "desc"),
-      limit(limitCount),
+      limit(limitCount)
     );
 
     if (lastDoc) {
@@ -144,9 +140,7 @@ export const PostsService = {
   async createPost(data: Partial<IPost>) {
     const postRef = doc(postsRef);
 
-    const cleanData = Object.fromEntries(
-      Object.entries(data).filter(([_, v]) => v !== undefined),
-    );
+    const cleanData = Object.fromEntries(Object.entries(data).filter(([_, v]) => v !== undefined));
 
     const newPost = {
       ...cleanData,
@@ -161,12 +155,7 @@ export const PostsService = {
     return postRef.id;
   },
 
-  async votePost(
-    postId: string,
-    userId: string,
-    voteValue: 1 | -1 | 0,
-    previousValue: number,
-  ) {
+  async votePost(postId: string, userId: string, voteValue: 1 | -1 | 0, previousValue: number) {
     const postRef = doc(db, "posts", postId);
     const voteRef = doc(db, "posts", postId, "userVotes", userId);
 

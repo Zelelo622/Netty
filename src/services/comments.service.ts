@@ -1,4 +1,3 @@
-import { db } from "@/lib/firebase";
 import {
   collection,
   addDoc,
@@ -8,11 +7,12 @@ import {
   updateDoc,
   query,
   where,
-  orderBy,
   getDocs,
   runTransaction,
   getDoc,
 } from "firebase/firestore";
+
+import { db } from "@/lib/firebase";
 import { IComment } from "@/types/types";
 
 export const CommentsService = {
@@ -51,7 +51,7 @@ export const CommentsService = {
     commentId: string,
     userId: string,
     voteValue: 1 | -1 | 0,
-    previousValue: number,
+    previousValue: number
   ) {
     const commentRef = doc(db, "comments", commentId);
     const voteRef = doc(db, "comments", commentId, "userVotes", userId);
@@ -70,10 +70,7 @@ export const CommentsService = {
     }
   },
 
-  async getCommentVoteStatus(
-    commentId: string,
-    userId: string,
-  ): Promise<number> {
+  async getCommentVoteStatus(commentId: string, userId: string): Promise<number> {
     const voteRef = doc(db, "comments", commentId, "userVotes", userId);
     const docSnap = await getDoc(voteRef);
     return docSnap.exists() ? docSnap.data().value : 0;

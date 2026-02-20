@@ -1,7 +1,11 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import { Home, Globe, Plus, Loader2 } from "lucide-react";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
+import { useEffect, useState } from "react";
+
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   Sidebar,
   SidebarContent,
@@ -13,14 +17,11 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from "@/components/ui/sidebar";
-import { ROUTES } from "@/lib/routes";
-import Link from "next/link";
-import { usePathname } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
-import { ICommunity } from "@/types/types";
-import { CommunityService } from "@/services/community.service";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { CreateCommunityModal } from "@/features/communities/components/CreateCommunityModal";
+import { ROUTES } from "@/lib/routes";
+import { CommunityService } from "@/services/community.service";
+import { ICommunity } from "@/types/types";
 
 export function AppSidebar() {
   const pathname = usePathname();
@@ -40,13 +41,10 @@ export function AppSidebar() {
     }
 
     setLoading(true);
-    const unsubscribe = CommunityService.subscribeToUserCommunities(
-      user.uid,
-      (data) => {
-        setCommunities(data);
-        setLoading(false);
-      },
-    );
+    const unsubscribe = CommunityService.subscribeToUserCommunities(user.uid, (data) => {
+      setCommunities(data);
+      setLoading(false);
+    });
 
     return () => unsubscribe();
   }, [user]);
@@ -107,10 +105,7 @@ export function AppSidebar() {
                 ) : communities.length > 0 ? (
                   communities.map((sub) => (
                     <SidebarMenuItem key={sub.id}>
-                      <SidebarMenuButton
-                        asChild
-                        isActive={pathname === ROUTES.COMMUNITY(sub.name)}
-                      >
+                      <SidebarMenuButton asChild isActive={pathname === ROUTES.COMMUNITY(sub.name)}>
                         <Link
                           href={ROUTES.COMMUNITY(sub.name)}
                           onClick={handleItemClick}
@@ -142,10 +137,7 @@ export function AppSidebar() {
         </SidebarContent>
       </Sidebar>
 
-      <CreateCommunityModal
-        isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
-      />
+      <CreateCommunityModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} />
     </>
   );
 }

@@ -1,6 +1,9 @@
 "use client";
 
+import { FirebaseError } from "firebase/app";
 import { useState } from "react";
+import { toast } from "sonner";
+
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -10,21 +13,17 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { FormField } from "./FormFieldAuth";
-import { toast } from "sonner";
-import { FirebaseError } from "firebase/app";
 import { getFirebaseErrorMessage } from "@/lib/firebase-errors";
 import { AuthService } from "@/services/auth.service";
+
+import { FormField } from "./FormFieldAuth";
 
 interface IResetPasswordFormProps {
   setLoading: (loading: boolean) => void;
   onBackToLogin: () => void;
 }
 
-export const ResetPasswordForm = ({
-  setLoading,
-  onBackToLogin,
-}: IResetPasswordFormProps) => {
+export const ResetPasswordForm = ({ setLoading, onBackToLogin }: IResetPasswordFormProps) => {
   const [email, setEmail] = useState("");
 
   const handleReset = async (e: React.FormEvent) => {
@@ -54,12 +53,8 @@ export const ResetPasswordForm = ({
   return (
     <Card className="border-border/60 shadow-xl shadow-primary/5">
       <CardHeader>
-        <CardTitle className="text-2xl font-black text-primary">
-          Восстановление
-        </CardTitle>
-        <CardDescription>
-          Введи почту, и мы пришлем ссылку для сброса пароля
-        </CardDescription>
+        <CardTitle className="text-2xl font-black text-primary">Восстановление</CardTitle>
+        <CardDescription>Введи почту, и мы пришлем ссылку для сброса пароля</CardDescription>
       </CardHeader>
       <form onSubmit={handleReset}>
         <CardContent className="space-y-4 mb-4">

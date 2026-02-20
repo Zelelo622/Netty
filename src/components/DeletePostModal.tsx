@@ -38,9 +38,7 @@ export const DeletePostModal = ({
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
-          <AlertDialogCancel className="cursor-pointer rounded-xl">
-            Отмена
-          </AlertDialogCancel>
+          <AlertDialogCancel className="cursor-pointer rounded-xl">Отмена</AlertDialogCancel>
           <AlertDialogAction
             onClick={(e) => {
               e.preventDefault();

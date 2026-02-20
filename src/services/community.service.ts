@@ -17,8 +17,10 @@ import {
   limit,
   startAfter,
 } from "firebase/firestore";
-import { ICommunity } from "@/types/types";
+
 import { db } from "@/lib/firebase";
+import { ICommunity } from "@/types/types";
+
 import { PostsService } from "./posts.service";
 
 const communityConverter: FirestoreDataConverter<ICommunity> = {
@@ -29,24 +31,17 @@ const communityConverter: FirestoreDataConverter<ICommunity> = {
   },
 };
 
-const communitiesRef = collection(db, "communities").withConverter(
-  communityConverter,
-);
+const communitiesRef = collection(db, "communities").withConverter(communityConverter);
 
 const cleanCommunityName = (name: string) => name.trim();
-const mapSnapshot = (snapshot: QuerySnapshot<ICommunity>) =>
-  snapshot.docs.map((doc) => doc.data());
+const mapSnapshot = (snapshot: QuerySnapshot<ICommunity>) => snapshot.docs.map((doc) => doc.data());
 
 export const CommunityService = {
   async getCommunitiesBatch(
-    limitCount: number = 10,
-    lastVisibleDoc: QueryDocumentSnapshot<ICommunity> | null = null,
+    limitCount = 10,
+    lastVisibleDoc: QueryDocumentSnapshot<ICommunity> | null = null
   ) {
-    let q = query(
-      communitiesRef,
-      orderBy("membersCount", "desc"),
-      limit(limitCount),
-    );
+    let q = query(communitiesRef, orderBy("membersCount", "desc"), limit(limitCount));
 
     if (lastVisibleDoc) {
       q = query(q, startAfter(lastVisibleDoc));
@@ -54,9 +49,7 @@ export const CommunityService = {
 
     const snapshot = await getDocs(q);
 
-    const lastDoc = snapshot.docs[
-      snapshot.docs.length - 1
-    ] as QueryDocumentSnapshot<ICommunity>;
+    const lastDoc = snapshot.docs[snapshot.docs.length - 1] as QueryDocumentSnapshot<ICommunity>;
 
     return {
       communities: mapSnapshot(snapshot),
@@ -65,14 +58,8 @@ export const CommunityService = {
     };
   },
 
-  subscribeToUserCommunities(
-    userId: string,
-    callback: (communities: ICommunity[]) => void,
-  ) {
-    const q = query(
-      communitiesRef,
-      where("subscribers", "array-contains", userId),
-    );
+  subscribeToUserCommunities(userId: string, callback: (communities: ICommunity[]) => void) {
+    const q = query(communitiesRef, where("subscribers", "array-contains", userId));
 
     return onSnapshot(
       q,
@@ -81,25 +68,21 @@ export const CommunityService = {
       },
       (error) => {
         console.error("Subscription error:", error);
-      },
+      }
     );
   },
 
-  async getUserCommunities(userId: string, limitCount: number = 100) {
+  async getUserCommunities(userId: string, limitCount = 100) {
     const q = query(
       communitiesRef,
       where("subscribers", "array-contains", userId),
-      limit(limitCount),
+      limit(limitCount)
     );
     const snapshot = await getDocs(q);
     return mapSnapshot(snapshot);
   },
 
-  async toggleSubscription(
-    communityId: string,
-    userId: string,
-    isSubscribed: boolean,
-  ) {
+  async toggleSubscription(communityId: string, userId: string, isSubscribed: boolean) {
     const communityRef = doc(communitiesRef, communityId);
     const userRef = doc(db, "users", userId);
 
@@ -113,9 +96,7 @@ export const CommunityService = {
           : { subscribers: arrayUnion(userId), membersCount: increment(1) };
 
         const userUpdate = {
-          subscribedCommunities: isSubscribed
-            ? arrayRemove(communityId)
-            : arrayUnion(communityId),
+          subscribedCommunities: isSubscribed ? arrayRemove(communityId) : arrayUnion(communityId),
         };
 
         transaction.update(communityRef, communityUpdate);
@@ -140,10 +121,7 @@ export const CommunityService = {
 
     try {
       return await runTransaction(db, async (transaction) => {
-        const nameQuery = query(
-          communitiesRef,
-          where("name", "==", nameToSearch),
-        );
+        const nameQuery = query(communitiesRef, where("name", "==", nameToSearch));
         const nameCheck = await getDocs(nameQuery);
 
         if (!nameCheck.empty) {

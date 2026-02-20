@@ -1,20 +1,19 @@
 "use client";
 
-import { useState, useEffect, Suspense } from "react"; // Добавили Suspense
 import { useRouter, useSearchParams } from "next/navigation";
+import { useState, useEffect, Suspense } from "react"; // Добавили Suspense
+
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ResetPasswordForm } from "@/features/auth/components/ResetPasswordForm";
 import { AuthMascot } from "@/features/auth/components/AuthMascot";
 import { LoginForm } from "@/features/auth/components/LoginForm";
 import { RegisterForm } from "@/features/auth/components/RegisterForm";
+import { ResetPasswordForm } from "@/features/auth/components/ResetPasswordForm";
 
 const AuthContent = () => {
   const searchParams = useSearchParams();
   const router = useRouter();
 
-  const [activeTab, setActiveTab] = useState(
-    searchParams.get("mode") || "login",
-  );
+  const [activeTab, setActiveTab] = useState(searchParams.get("mode") || "login");
   const [loading, setLoading] = useState(false);
   const [isPasswordFocused, setIsPasswordFocused] = useState(false);
 
@@ -30,17 +29,9 @@ const AuthContent = () => {
 
   return (
     <div className="min-h-[calc(100vh-64px)] flex flex-col items-center justify-center bg-background p-4">
-      <AuthMascot
-        loading={loading}
-        isPasswordFocused={isPasswordFocused}
-        activeTab={activeTab}
-      />
+      <AuthMascot loading={loading} isPasswordFocused={isPasswordFocused} activeTab={activeTab} />
 
-      <Tabs
-        value={activeTab}
-        onValueChange={setActiveTab}
-        className="w-full max-w-100"
-      >
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full max-w-100">
         <TabsList className="grid w-full grid-cols-2 mb-4">
           <TabsTrigger className="cursor-pointer" value="login">
             Вход
@@ -68,10 +59,7 @@ const AuthContent = () => {
         </TabsContent>
 
         <TabsContent value="reset">
-          <ResetPasswordForm
-            setLoading={setLoading}
-            onBackToLogin={() => setActiveTab("login")}
-          />
+          <ResetPasswordForm setLoading={setLoading} onBackToLogin={() => setActiveTab("login")} />
         </TabsContent>
       </Tabs>
     </div>

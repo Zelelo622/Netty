@@ -1,4 +1,5 @@
 import { NextResponse, NextRequest } from "next/server";
+
 import { ROUTES } from "./lib/routes";
 
 export function middleware(request: NextRequest) {
@@ -13,9 +14,7 @@ export function middleware(request: NextRequest) {
   const isProtected = protectedPaths.some((path) => pathname.startsWith(path));
 
   if ((!session || session.length === 0) && isProtected) {
-    return NextResponse.redirect(
-      new URL(`${ROUTES.AUTH}?mode=login`, request.url),
-    );
+    return NextResponse.redirect(new URL(`${ROUTES.AUTH}?mode=login`, request.url));
   }
 
   return NextResponse.next();

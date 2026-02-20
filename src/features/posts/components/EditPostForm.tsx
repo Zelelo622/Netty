@@ -1,9 +1,10 @@
 "use client";
 
 import { useState } from "react";
+
+import { ImageUploader } from "@/components/ImageUploader";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { ImageUploader } from "@/components/ImageUploader";
 
 interface EditPostFormProps {
   initialContent: string;
@@ -29,11 +30,7 @@ export function EditPostForm({
         <label className="text-xs font-bold uppercase text-muted-foreground ml-1">
           Картинка (необязательно)
         </label>
-        <ImageUploader
-          url={imageUrl}
-          onChange={setImageUrl}
-          variant="compact"
-        />
+        <ImageUploader url={imageUrl} onChange={setImageUrl} variant="compact" />
       </div>
 
       <div className="space-y-2">

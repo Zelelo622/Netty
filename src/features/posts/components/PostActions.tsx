@@ -1,9 +1,9 @@
 "use client";
 
-import { Button } from "@/components/ui/button";
 import { MessageSquare, Share2 } from "lucide-react";
-import { useRouter } from "next/router";
 import { toast } from "sonner";
+
+import { Button } from "@/components/ui/button";
 
 interface IPostActionsProps {
   commentsCount: number;
@@ -12,11 +12,7 @@ interface IPostActionsProps {
   title: string;
 }
 
-export const PostActions = ({
-  commentsCount,
-  shareUrl,
-  title,
-}: IPostActionsProps) => {
+export const PostActions = ({ commentsCount, shareUrl, title }: IPostActionsProps) => {
   const handleShare = async (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();

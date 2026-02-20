@@ -1,37 +1,37 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { useParams, useRouter } from "next/navigation";
-import { PostsService } from "@/services/posts.service";
-import { IComment, IPost } from "@/types/types";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Button } from "@/components/ui/button";
-import { Separator } from "@/components/ui/separator";
-import { Badge } from "@/components/ui/badge";
-import { LoadingSpinner } from "@/components/LoadingSpinner";
-import { MoreHorizontal, Languages, Trash2, Pencil } from "lucide-react"; // Добавили Pencil
 import { formatDistanceToNow } from "date-fns";
 import { ru } from "date-fns/locale";
-import { useAuth } from "@/context/AuthContext";
+import { MoreHorizontal, Languages, Trash2, Pencil } from "lucide-react"; // Добавили Pencil
+import Link from "next/link";
+import { useParams, useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
+
+import { DeletePostModal } from "@/components/DeletePostModal";
+import { LoadingSpinner } from "@/components/LoadingSpinner";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import CommentItem from "@/features/comments/components/CommentItem";
-import { PostVote } from "@/features/posts/components/PostVote";
-import { PostActions } from "@/features/posts/components/PostActions";
-import { DeletePostModal } from "@/components/DeletePostModal";
-import { ROUTES } from "@/lib/routes";
-import { CommentsService } from "@/services/comments.service";
-import { buildCommentTree, cn, findCommentDepth } from "@/lib/utils";
+import { Separator } from "@/components/ui/separator";
 import { Textarea } from "@/components/ui/textarea";
-import { POST_FLAIRS } from "@/lib/constants";
-import { ImageUploader } from "@/components/ImageUploader";
+import { useAuth } from "@/context/AuthContext";
+import CommentItem from "@/features/comments/components/CommentItem";
 import { EditPostForm } from "@/features/posts/components/EditPostForm";
-import Link from "next/link";
+import { PostActions } from "@/features/posts/components/PostActions";
+import { PostVote } from "@/features/posts/components/PostVote";
+import { POST_FLAIRS } from "@/lib/constants";
+import { ROUTES } from "@/lib/routes";
+import { buildCommentTree, cn, findCommentDepth } from "@/lib/utils";
+import { CommentsService } from "@/services/comments.service";
+import { PostsService } from "@/services/posts.service";
+import { IComment, IPost } from "@/types/types";
 
 export default function PostPage() {
   const { postSlug } = useParams();
@@ -44,8 +44,6 @@ export default function PostPage() {
   const [showDeleteModal, setShowDeleteModal] = useState(false);
 
   const [isEditing, setIsEditing] = useState(false);
-  const [editContent, setEditContent] = useState("");
-  const [editImageUrl, setEditImageUrl] = useState("");
   const [isUpdating, setIsUpdating] = useState(false);
 
   const [comments, setComments] = useState<IComment[]>([]);
@@ -85,8 +83,6 @@ export default function PostPage() {
   }, [postSlug, user]);
 
   const handleEditClick = () => {
-    setEditContent(post?.content || "");
-    setEditImageUrl(post?.imageUrl || "");
     setIsEditing(true);
   };
 
@@ -107,21 +103,18 @@ export default function PostPage() {
               imageUrl: newImageUrl,
               updatedAt: new Date(),
             }
-          : null,
+          : null
       );
       setIsEditing(false);
       toast.success("Пост обновлен");
-    } catch (error) {
+    } catch (_error) {
       toast.error("Ошибка при обновлении поста");
     } finally {
       setIsUpdating(false);
     }
   };
 
-  const handleSendComment = async (
-    parentId: string | null = null,
-    text: string,
-  ) => {
+  const handleSendComment = async (parentId: string | null = null, text: string) => {
     if (!user || !post) {
       toast.info("Нужно войти в аккаунт");
       return;
@@ -145,7 +138,7 @@ export default function PostPage() {
       const updatedFlat = await CommentsService.getPostComments(post.id);
       setComments(buildCommentTree(updatedFlat));
       toast.success("Комментарий добавлен");
-    } catch (e) {
+    } catch (_error) {
       toast.error("Ошибка при отправке");
     }
   };
@@ -168,7 +161,7 @@ export default function PostPage() {
       await PostsService.deletePost(post.id);
       toast.success("Пост удален");
       router.push(`/n/${post.communityName}`);
-    } catch (error) {
+    } catch (_error) {
       toast.error("Ошибка при удалении");
       setIsDeleting(false);
     }
@@ -177,9 +170,7 @@ export default function PostPage() {
   if (isLoading) return <LoadingSpinner />;
   if (!post) return <div className="text-center py-20">Пост не найден</div>;
 
-  const postDate = post.createdAt?.toDate
-    ? post.createdAt.toDate()
-    : new Date(post.createdAt);
+  const postDate = post.createdAt?.toDate ? post.createdAt.toDate() : new Date(post.createdAt);
 
   const updatedDate = post.updatedAt?.toDate
     ? post.updatedAt.toDate()
@@ -209,9 +200,7 @@ export default function PostPage() {
             </div>
             <span className="text-xs text-muted-foreground flex flex-wrap items-center gap-1">
               <span>u/{post.authorName} •</span>
-              <span>
-                {formatDistanceToNow(postDate, { addSuffix: true, locale: ru })}
-              </span>
+              <span>{formatDistanceToNow(postDate, { addSuffix: true, locale: ru })}</span>
               {updatedDate && (
                 <span className="italic text-muted-foreground/70">
                   (изм.{" "}
@@ -228,11 +217,7 @@ export default function PostPage() {
 
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button
-              variant="ghost"
-              size="icon"
-              className="rounded-full cursor-pointer"
-            >
+            <Button variant="ghost" size="icon" className="rounded-full cursor-pointer">
               <MoreHorizontal className="h-5 w-5" />
             </Button>
           </DropdownMenuTrigger>
@@ -248,10 +233,7 @@ export default function PostPage() {
 
             {isAuthor && (
               <>
-                <DropdownMenuItem
-                  className="cursor-pointer gap-2"
-                  onSelect={handleEditClick}
-                >
+                <DropdownMenuItem className="cursor-pointer gap-2" onSelect={handleEditClick}>
                   <Pencil className="h-4 w-4" />
                   <span>Редактировать</span>
                 </DropdownMenuItem>
@@ -274,15 +256,13 @@ export default function PostPage() {
             className={cn(
               "rounded-md px-2 py-0.5 text-[11px] font-bold uppercase tracking-wider border-none",
               flair.color,
-              flair.textColor,
+              flair.textColor
             )}
           >
             {flair.label}
           </Badge>
         )}
-        <h1 className="text-xl md:text-2xl font-black mb-6 leading-tight">
-          {post.title}
-        </h1>
+        <h1 className="text-xl md:text-2xl font-black mb-6 leading-tight">{post.title}</h1>
       </div>
 
       {isEditing ? (
@@ -300,7 +280,7 @@ export default function PostPage() {
               <img
                 src={post.imageUrl}
                 alt={post.title}
-                className="w-full h-auto max-h-[700px] object-contain mx-auto"
+                className="w-full h-auto max-h-175 object-contain mx-auto"
               />
             </div>
           )}
@@ -333,17 +313,11 @@ export default function PostPage() {
 
       <section id="comments" className="mt-12 space-y-8 pb-20">
         <div className="flex flex-col gap-4">
-          <h3 className="text-lg font-bold">
-            Комментарии ({post.commentsCount})
-          </h3>
+          <h3 className="text-lg font-bold">Комментарии ({post.commentsCount})</h3>
 
           <div className="group relative overflow-hidden rounded-2xl border bg-muted/20 focus-within:border-primary/50 transition-all p-2">
             <Textarea
-              placeholder={
-                user
-                  ? "Что вы об этом думаете?"
-                  : "Войдите, чтобы оставить комментарий"
-              }
+              placeholder={user ? "Что вы об этом думаете?" : "Войдите, чтобы оставить комментарий"}
               value={rootCommentText}
               onChange={(e) => setRootCommentText(e.target.value)}
               disabled={!user || isSubmittingComment}
@@ -353,9 +327,7 @@ export default function PostPage() {
               <Button
                 size="sm"
                 onClick={handleSendRootComment}
-                disabled={
-                  !user || !rootCommentText.trim() || isSubmittingComment
-                }
+                disabled={!user || !rootCommentText.trim() || isSubmittingComment}
                 className="cursor-pointer rounded-full px-6 font-bold transition-all"
               >
                 {isSubmittingComment ? "Отправка..." : "Отправить"}
@@ -367,11 +339,7 @@ export default function PostPage() {
         <div className="space-y-6">
           {comments.length > 0 ? (
             comments.map((comment) => (
-              <CommentItem
-                key={comment.id}
-                comment={comment}
-                onReply={handleSendComment}
-              />
+              <CommentItem key={comment.id} comment={comment} onReply={handleSendComment} />
             ))
           ) : (
             <div className="text-center py-10 text-muted-foreground border rounded-2xl border-dashed">

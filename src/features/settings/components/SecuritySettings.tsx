@@ -1,18 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { FirebaseError } from "firebase/app";
 import { useRouter } from "next/navigation";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { Label } from "@/components/ui/label";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
+import { useState } from "react";
+import { toast } from "sonner";
+
 import {
   AlertDialog,
   AlertDialogAction,
@@ -23,8 +15,17 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { toast } from "sonner";
-import { FirebaseError } from "firebase/app";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { getFirebaseErrorMessage } from "@/lib/firebase-errors";
 import { ROUTES } from "@/lib/routes";
 import { SettingsService } from "@/services/settings.service";
@@ -53,17 +54,10 @@ export const SecuritySettings = ({ initialEmail }: ISecuritySettingsProps) => {
       toast.success("Данные безопасности обновлены!");
       setNewPassword("");
     } catch (error) {
-      if (
-        error instanceof FirebaseError &&
-        error.code === "auth/requires-recent-login"
-      ) {
+      if (error instanceof FirebaseError && error.code === "auth/requires-recent-login") {
         setShowReauthModal(true);
       } else {
-        toast.error(
-          error instanceof FirebaseError
-            ? getFirebaseErrorMessage(error)
-            : "Ошибка",
-        );
+        toast.error(error instanceof FirebaseError ? getFirebaseErrorMessage(error) : "Ошибка");
       }
     } finally {
       setLoading(false);
@@ -120,16 +114,12 @@ export const SecuritySettings = ({ initialEmail }: ISecuritySettingsProps) => {
           <AlertDialogHeader>
             <AlertDialogTitle>Вы уверены?</AlertDialogTitle>
             <AlertDialogDescription>
-              Изменение Email или пароля — серьезный шаг. Убедитесь в доступе к
-              новой почте.
+              Изменение Email или пароля — серьезный шаг. Убедитесь в доступе к новой почте.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Отмена</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={handleUpdate}
-              className="cursor-pointer bg-primary"
-            >
+            <AlertDialogAction onClick={handleUpdate} className="cursor-pointer bg-primary">
               Подтвердить
             </AlertDialogAction>
           </AlertDialogFooter>
@@ -143,15 +133,12 @@ export const SecuritySettings = ({ initialEmail }: ISecuritySettingsProps) => {
               Нужно подтвердить личность
             </AlertDialogTitle>
             <AlertDialogDescription>
-              Это мера безопасности Netty. Вам нужно перезайти в аккаунт, чтобы
-              изменить критические данные.
+              Это мера безопасности Netty. Вам нужно перезайти в аккаунт, чтобы изменить критические
+              данные.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel
-              className="cursor-pointer"
-              onClick={() => setShowReauthModal(false)}
-            >
+            <AlertDialogCancel className="cursor-pointer" onClick={() => setShowReauthModal(false)}>
               Позже
             </AlertDialogCancel>
             <AlertDialogAction

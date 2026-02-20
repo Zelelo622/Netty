@@ -1,5 +1,6 @@
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Users } from "lucide-react";
+
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { ICommunity } from "@/types/types";
 
 interface ICommunityHeaderProps {
@@ -7,20 +8,12 @@ interface ICommunityHeaderProps {
   children?: React.ReactNode;
 }
 
-export function CommunityHeader({
-  community,
-  children,
-}: ICommunityHeaderProps) {
+export function CommunityHeader({ community, children }: ICommunityHeaderProps) {
   return (
     <div className="relative w-full overflow-hidden border-b bg-muted shadow-sm">
-      {/* Banner */}
       <div className="absolute inset-0 w-full h-full">
         {community.bannerUrl ? (
-          <img
-            src={community.bannerUrl}
-            className="w-full h-full object-cover"
-            alt="banner"
-          />
+          <img src={community.bannerUrl} className="w-full h-full object-cover" alt="banner" />
         ) : (
           <div className="w-full h-full bg-linear-to-r from-slate-800 to-slate-900" />
         )}
@@ -42,15 +35,12 @@ export function CommunityHeader({
                 n/{community.name}
               </h1>
               <p className="text-white/90 max-w-xl line-clamp-2 italic">
-                {community.description ||
-                  "У этого сообщества пока нет описания."}
+                {community.description || "У этого сообщества пока нет описания."}
               </p>
               <div className="flex items-center justify-center sm:justify-start gap-4 text-white/80 font-semibold">
                 <div className="flex items-center gap-1.5">
                   <Users className="h-5 w-5" />
-                  <span>
-                    {community.membersCount.toLocaleString()} участников
-                  </span>
+                  <span>{community.membersCount.toLocaleString()} участников</span>
                 </div>
               </div>
             </div>

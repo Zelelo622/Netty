@@ -1,3 +1,6 @@
+import { Loader2 } from "lucide-react";
+
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   Select,
   SelectContent,
@@ -5,9 +8,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { ICommunity } from "@/types/types";
-import { Loader2 } from "lucide-react";
 
 interface CommunitySelectProps {
   communities: ICommunity[];
@@ -40,9 +41,7 @@ export function CommunitySelect({
             <div className="flex items-center gap-2">
               <Avatar className="h-5 w-5 border">
                 <AvatarImage src={c.avatarUrl} />
-                <AvatarFallback className="text-[10px] uppercase">
-                  {c.name[0]}
-                </AvatarFallback>
+                <AvatarFallback className="text-[10px] uppercase">{c.name[0]}</AvatarFallback>
               </Avatar>
               <span className="font-medium text-sm">n/{c.name}</span>
             </div>

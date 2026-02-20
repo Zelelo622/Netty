@@ -1,5 +1,5 @@
-import { POST_FLAIRS } from "@/lib/constants";
 import { Badge } from "@/components/ui/badge";
+import { POST_FLAIRS } from "@/lib/constants";
 import { cn } from "@/lib/utils";
 
 interface FlairSelectProps {
@@ -20,7 +20,7 @@ export function FlairSelect({ selectedFlairId, onSelect }: FlairSelectProps) {
               "cursor-pointer px-3 py-1 transition-all border-2",
               isSelected
                 ? `${flair.color} ${flair.textColor} border-transparent shadow-md scale-105`
-                : "bg-muted/50 hover:bg-muted border-transparent",
+                : "bg-muted/50 hover:bg-muted border-transparent"
             )}
             onClick={() => onSelect(isSelected ? null : flair.id)}
           >
