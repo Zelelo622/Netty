@@ -10,6 +10,8 @@ import {
   getDocs,
   runTransaction,
   getDoc,
+  orderBy,
+  onSnapshot,
 } from "firebase/firestore";
 
 import { db } from "@/lib/firebase";
@@ -108,5 +110,22 @@ export const CommentsService = {
     const voteRef = doc(db, "comments", commentId, "userVotes", userId);
     const docSnap = await getDoc(voteRef);
     return docSnap.exists() ? docSnap.data().value : 0;
+  },
+
+  subscribeToPostComments(postId: string, callback: (comments: IComment[]) => void) {
+    const q = query(
+      collection(db, "comments"),
+      where("postId", "==", postId),
+      orderBy("createdAt", "asc")
+    );
+
+    return onSnapshot(q, (snapshot) => {
+      const comments = snapshot.docs.map((doc) => ({
+        id: doc.id,
+        ...doc.data(),
+      })) as IComment[];
+
+      callback(comments);
+    });
   },
 };

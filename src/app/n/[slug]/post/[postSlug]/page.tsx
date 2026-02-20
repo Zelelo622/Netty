@@ -97,6 +97,18 @@ export default function PostPage() {
     }
   }, [isLoading, comments]);
 
+  useEffect(() => {
+    if (!post?.id) return;
+
+    const unsubscribe = CommentsService.subscribeToPostComments(post.id, (flatComments) => {
+      const tree = buildCommentTree(flatComments);
+      setComments(tree);
+      setIsLoading(false);
+    });
+
+    return () => unsubscribe();
+  }, [post?.id]);
+
   const handleEditClick = () => {
     setIsEditing(true);
   };
@@ -145,7 +157,6 @@ export default function PostPage() {
         toast.error("Максимальная глубина обсуждения");
         return;
       }
-
       await CommentsService.addComment(
         {
           postId: post.id,
@@ -160,8 +171,6 @@ export default function PostPage() {
         parentCommentAuthorId
       );
 
-      const updatedFlat = await CommentsService.getPostComments(post.id);
-      setComments(buildCommentTree(updatedFlat));
       toast.success("Комментарий добавлен");
     } catch (_error) {
       toast.error("Ошибка при отправке");
