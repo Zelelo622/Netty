@@ -17,6 +17,7 @@ export default ts.config(
     rules: {
       ...nextPlugin.configs.recommended.rules,
       ...nextPlugin.configs["core-web-vitals"].rules,
+      "@next/next/no-img-element": "off",
     },
   },
 
