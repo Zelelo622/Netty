@@ -6,3 +6,5 @@ apps/web/dev/
 
 # Turborepo cache
 .turbo/
+
+.idea/
