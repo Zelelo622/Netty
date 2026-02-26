@@ -10,8 +10,9 @@
     "clean": "rm -rf .expo node_modules"
   },
   "dependencies": {
-    "@repo/types": "*",
+    "@react-navigation/drawer": "^7.9.2",
     "@react-navigation/native": "^7.0.0",
+    "@repo/types": "*",
     "@rn-primitives/accordion": "^1.2.0",
     "@rn-primitives/alert-dialog": "^1.2.0",
     "@rn-primitives/aspect-ratio": "^1.2.0",
@@ -51,6 +52,7 @@
     "react": "19.1.0",
     "react-dom": "19.1.0",
     "react-native": "0.81.5",
+    "react-native-drawer-layout": "^4.2.2",
     "react-native-gesture-handler": "~2.28.0",
     "react-native-keyboard-controller": "1.18.5",
     "react-native-reanimated": "~4.1.1",
