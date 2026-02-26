@@ -11,6 +11,16 @@
     },
     "lint": {
       "dependsOn": ["^lint"]
+    },
+    "pipeline": {
+      "build": {
+        "dependsOn": ["^build"],
+        "outputs": ["dist/**", ".next/**"]
+      },
+      "release": {
+        "dependsOn": ["build"],
+        "outputs": []
+      }
     }
   }
 }
