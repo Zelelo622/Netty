@@ -3,7 +3,6 @@ export const ROUTES = {
   AUTH: "/sign-in",
   SETTINGS: "/settings",
   ALL_COMMUNITIES: "/communities",
-  CREATE_COMMUNITY: "/communities/create",
 
   COMMUNITY: (name: string) => `/n/${name}`,
   POST: (community: string, postSlug: string) => `/n/${community}/post/${postSlug}`,
