@@ -79,7 +79,7 @@ export function AppSidebar() {
                 ].map((item) => (
                   <SidebarMenuItem key={item.title}>
                     <SidebarMenuButton asChild isActive={pathname === item.url}>
-                      <Link href={item.url} onClick={handleItemClick}>
+                      <Link href={item.url}>
                         <item.icon className="h-4 w-4" />
                         <span>{item.title}</span>
                       </Link>
@@ -112,11 +112,7 @@ export function AppSidebar() {
                   communities.map((sub) => (
                     <SidebarMenuItem key={sub.id}>
                       <SidebarMenuButton asChild isActive={pathname === ROUTES.COMMUNITY(sub.name)}>
-                        <Link
-                          href={ROUTES.COMMUNITY(sub.name)}
-                          onClick={handleItemClick}
-                          className="flex items-center gap-2"
-                        >
+                        <Link href={ROUTES.COMMUNITY(sub.name)} className="flex items-center gap-2">
                           <Avatar className="h-4 w-4 border shadow-sm">
                             <AvatarImage
                               src={sub.avatarUrl}
