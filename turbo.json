@@ -5,22 +5,17 @@
       "dependsOn": ["^build"],
       "outputs": [".next/**", "dist/**"]
     },
+    "release": {
+      "dependsOn": ["build"],
+      "outputs": [],
+      "cache": false
+    },
     "dev": {
       "cache": false,
       "persistent": true
     },
     "lint": {
       "dependsOn": ["^lint"]
-    },
-    "pipeline": {
-      "build": {
-        "dependsOn": ["^build"],
-        "outputs": ["dist/**", ".next/**"]
-      },
-      "release": {
-        "dependsOn": ["build"],
-        "outputs": []
-      }
     }
   }
 }
