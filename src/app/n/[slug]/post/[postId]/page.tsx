@@ -130,10 +130,6 @@ export default function PostPage() {
     }
 
     const depth = parentId ? findCommentDepth(comments, parentId) + 1 : 0;
-    if (depth > 3) {
-      toast.error("Максимальная глубина обсуждения");
-      return;
-    }
 
     try {
       await CommentsService.addComment(

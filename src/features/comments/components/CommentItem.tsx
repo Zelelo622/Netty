@@ -2,7 +2,9 @@
 
 import { formatDistanceToNow } from "date-fns";
 import { ru } from "date-fns/locale";
-import { MessageSquare } from "lucide-react";
+import { ArrowRight, MessageSquare } from "lucide-react";
+import Link from "next/link";
+import { useParams } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 
@@ -10,6 +12,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { useAuth } from "@/context/AuthContext";
+import { ROUTES } from "@/lib/routes";
 import { cn } from "@/lib/utils";
 import { CommentsService } from "@/services/comments.service";
 import { IComment } from "@/types/types";
@@ -19,10 +22,17 @@ import { CommentVote } from "./CommentVote";
 interface ICommentItemProps {
   comment: IComment;
   onReply: (parentId: string, text: string, authorId: string) => Promise<void>;
+  isThreadPage?: boolean;
 }
 
-export default function CommentItem({ comment, onReply }: ICommentItemProps) {
+const MAX_VISUAL_DEPTH = 4;
+
+export default function CommentItem({ comment, onReply, isThreadPage = false }: ICommentItemProps) {
   const { user } = useAuth();
+  const params = useParams();
+  const communitySlug = Array.isArray(params.slug) ? params.slug[0] : params.slug;
+  const postId = Array.isArray(params.postId) ? params.postId[0] : params.postId;
+
   const [isEditing, setIsEditing] = useState(false);
   const [editText, setEditText] = useState(comment.text);
   const [isUpdating, setIsUpdating] = useState(false);
@@ -74,12 +84,23 @@ export default function CommentItem({ comment, onReply }: ICommentItemProps) {
 
   const commentDate = comment.createdAt?.toDate ? comment.createdAt.toDate() : new Date();
 
+  const visualDepth = Math.min(comment.depth, MAX_VISUAL_DEPTH);
+
+  const threadUrl =
+    communitySlug && postId ? ROUTES.COMMENT_THREAD(communitySlug, postId, comment.id) : null;
+
+  const hasDeepReplies =
+    !isThreadPage &&
+    comment.replies &&
+    comment.replies.length > 0 &&
+    comment.depth >= MAX_VISUAL_DEPTH;
+
   return (
     <div
       id={comment.id}
       className={cn(
         "scroll-mt-24 transition-all duration-500 flex flex-col gap-3",
-        comment.depth > 0 && "mt-4 ml-2 md:ml-6 pl-4 border-l-2 border-muted"
+        visualDepth > 0 && "mt-4 ml-2 md:ml-6 pl-4 border-l-2 border-muted"
       )}
     >
       <div className="flex items-center gap-2">
@@ -104,10 +125,20 @@ export default function CommentItem({ comment, onReply }: ICommentItemProps) {
             className="min-h-[80px] bg-muted/20 border-none focus-visible:ring-1 focus-visible:ring-primary/50 rounded-xl resize-none text-sm"
           />
           <div className="flex gap-2">
-            <Button size="sm" variant="ghost" onClick={() => setIsEditing(false)}>
+            <Button
+              className="cursor-pointer"
+              size="sm"
+              variant="ghost"
+              onClick={() => setIsEditing(false)}
+            >
               Отмена
             </Button>
-            <Button size="sm" onClick={handleUpdate} disabled={isUpdating}>
+            <Button
+              className="cursor-pointer"
+              size="sm"
+              onClick={handleUpdate}
+              disabled={isUpdating}
+            >
               Сохранить
             </Button>
           </div>
@@ -121,23 +152,21 @@ export default function CommentItem({ comment, onReply }: ICommentItemProps) {
       <div className="flex items-center gap-4">
         <CommentVote commentId={comment.id} initialVotes={comment.votes} />
 
-        {comment.depth < 3 && (
-          <Button
-            variant="ghost"
-            size="sm"
-            className="cursor-pointer h-7 gap-1.5 text-xs text-muted-foreground"
-            onClick={() => setIsReplying((prev) => !prev)}
-          >
-            <MessageSquare className="h-3.5 w-3.5" />
-            Ответить
-          </Button>
-        )}
+        <Button
+          variant="ghost"
+          size="sm"
+          className="cursor-pointer h-7 gap-1.5 text-xs text-muted-foreground"
+          onClick={() => setIsReplying((prev) => !prev)}
+        >
+          <MessageSquare className="h-3.5 w-3.5" />
+          Ответить
+        </Button>
 
         {isAuthor && !isEditing && (
           <Button
             variant="ghost"
             size="sm"
-            className="h-7 text-xs text-muted-foreground hover:text-primary"
+            className="cursor-pointer h-7 text-xs text-muted-foreground hover:text-primary"
             onClick={() => setIsEditing(true)}
           >
             Изменить
@@ -181,12 +210,29 @@ export default function CommentItem({ comment, onReply }: ICommentItemProps) {
         </div>
       )}
 
-      {comment.replies && comment.replies.length > 0 && (
-        <div className="space-y-4">
-          {comment.replies.map((reply) => (
-            <CommentItem key={reply.id} comment={reply} onReply={onReply} />
-          ))}
-        </div>
+      {hasDeepReplies && threadUrl ? (
+        <Link
+          href={threadUrl}
+          className="flex items-center gap-1 text-primary w-fit hover:opacity-80"
+        >
+          <ArrowRight width={16} height={16} />
+          Продолжить ветку ({comment.replies!.length}){" "}
+          {comment.replies!.length === 1 ? "ответ" : "ответа"}
+        </Link>
+      ) : (
+        comment.replies &&
+        comment.replies.length > 0 && (
+          <div className="space-y-4">
+            {comment.replies.map((reply) => (
+              <CommentItem
+                key={reply.id}
+                comment={reply}
+                onReply={onReply}
+                isThreadPage={isThreadPage}
+              />
+            ))}
+          </div>
+        )
       )}
     </div>
   );

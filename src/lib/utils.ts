@@ -33,7 +33,11 @@ export function buildCommentTree(flatComments: IComment[]): IComment[] {
     }
   });
 
-  return roots.sort((a, b) => b.votes - a.votes);
+  return roots.sort((a, b) => {
+    const aTime = a.createdAt?.seconds || 0;
+    const bTime = b.createdAt?.seconds || 0;
+    return bTime - aTime;
+  });
 }
 
 export function findCommentDepth(comments: IComment[], targetId: string): number {
@@ -49,6 +53,33 @@ export function findCommentDepth(comments: IComment[], targetId: string): number
     }
   }
   return -1;
+}
+
+export function getDescendants(comments: IComment[], rootId: string): IComment[] {
+  const childrenMap = new Map<string, IComment[]>();
+  for (const c of comments) {
+    if (!c.parentId) {
+      continue;
+    }
+    if (!childrenMap.has(c.parentId)) {
+      childrenMap.set(c.parentId, []);
+    }
+    childrenMap.get(c.parentId)!.push(c);
+  }
+
+  const result: IComment[] = [];
+  const queue = childrenMap.get(rootId) ?? [];
+
+  while (queue.length > 0) {
+    const current = queue.shift()!;
+    result.push(current);
+    const children = childrenMap.get(current.id);
+    if (children) {
+      queue.push(...children);
+    }
+  }
+
+  return result;
 }
 
 export const getNotificationText = (type: INotification["type"]) => {
