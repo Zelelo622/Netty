@@ -33,29 +33,35 @@ export default function CreatePostPage() {
   const [selectedCommunity, setSelectedCommunity] = useState<string>("");
   const [communities, setCommunities] = useState<ICommunity[]>([]);
   const [isLoading, setIsLoading] = useState(false);
-  const [isDataFetching, setIsDataFetching] = useState(true);
+  const [isDataFetching, setIsDataFetching] = useState(false);
   const [selectedFlair, setSelectedFlair] = useState<string | null>(null);
 
   useEffect(() => {
     if (!user) return;
 
     const fetchData = async () => {
+      setIsDataFetching(true);
       try {
         const userSubs = await CommunityService.getUserCommunities(user.uid);
-        setCommunities(userSubs);
+
+        let preselectedId = "";
+        let finalCommunities = userSubs;
 
         if (slug) {
           const target = userSubs.find((c) => c.name.toLowerCase() === slug.toLowerCase());
           if (target) {
-            setSelectedCommunity(target.id!);
+            preselectedId = target.id!;
           } else {
             const communityData = await CommunityService.getCommunityData(slug);
             if (communityData) {
-              setCommunities((prev) => [...prev, communityData]);
-              setSelectedCommunity(communityData.id!);
+              finalCommunities = [...userSubs, communityData];
+              preselectedId = communityData.id!;
             }
           }
         }
+
+        setCommunities(finalCommunities);
+        if (preselectedId) setSelectedCommunity(preselectedId);
       } catch {
         toast.error("Ошибка при загрузке сообществ");
       } finally {
