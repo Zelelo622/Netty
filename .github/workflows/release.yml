@@ -1,4 +1,5 @@
 name: Release
+
 on:
     push:
         branches:
@@ -6,17 +7,26 @@ on:
 
 jobs:
     release:
-        name: Release
+        name: Semantic Release
         runs-on: ubuntu-latest
         permissions:
             contents: write
             issues: write
             pull-requests: write
+
         steps:
+            - name: Generate GitHub App Token
+              id: generate_token
+              uses: actions/create-github-app-token@v2
+              with:
+                  app-id: ${{ vars.RELEASE_APP_ID }}
+                  private-key: ${{ secrets.RELEASE_APP_PRIVATE_KEY }}
+
             - name: Checkout
               uses: actions/checkout@v4
               with:
                   fetch-depth: 0
+                  token: ${{ steps.generate_token.outputs.token }}
 
             - name: Setup Node.js
               uses: actions/setup-node@v4
@@ -29,5 +39,5 @@ jobs:
 
             - name: Release
               env:
-                  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+                  GITHUB_TOKEN: ${{ steps.generate_token.outputs.token }}
               run: npx semantic-release
