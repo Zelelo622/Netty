@@ -24,24 +24,25 @@ export function CommunityActions({
 }: CommunityActionsProps) {
   return (
     <div className="flex items-center gap-2">
-      <Button
-        onClick={onJoinLeave}
-        disabled={submitting || (isOwner && isSubscribed)}
-        className={`cursor-pointer rounded-full font-bold px-8 h-10 transition-all shadow-lg ${
-          isSubscribed
-            ? "bg-white/10 hover:bg-white/20 text-white border border-white/20 backdrop-blur-md"
-            : "bg-primary text-white hover:opacity-90"
-        } ${isOwner && isSubscribed ? "opacity-50 cursor-not-allowed" : ""}`}
-      >
-        {submitting ? (
-          <Loader2 className="h-4 w-4 animate-spin" />
-        ) : isSubscribed ? (
-          "Следите"
-        ) : (
-          "Вступить"
-        )}
-      </Button>
-
+      {!isOwner ? (
+        <Button
+          onClick={onJoinLeave}
+          disabled={submitting || (isOwner && isSubscribed)}
+          className={`cursor-pointer rounded-full font-bold px-8 h-10 transition-all shadow-lg ${
+            isSubscribed
+              ? "bg-white/10 hover:bg-white/20 text-white border border-white/20 backdrop-blur-md"
+              : "bg-primary text-white hover:opacity-90"
+          } ${isOwner && isSubscribed ? "opacity-50 cursor-not-allowed" : ""}`}
+        >
+          {submitting ? (
+            <Loader2 className="h-4 w-4 animate-spin" />
+          ) : isSubscribed ? (
+            "Следите"
+          ) : (
+            "Вступить"
+          )}
+        </Button>
+      ) : null}
       <TooltipProvider delayDuration={200}>
         <div className="flex items-center gap-1 bg-black/20 backdrop-blur-md p-1 rounded-full border border-white/10">
           {hasUser && (
