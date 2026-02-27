@@ -51,34 +51,33 @@ export const CommunityCard = ({
               </div>
             </div>
           </div>
-
-          <Button
-            className={`w-full sm:w-auto cursor-pointer relative z-20 font-bold rounded-full transition-all ${
-              isOwner && isSubscribed
-                ? "bg-emerald-500/10 text-emerald-600 border-emerald-200 hover:bg-emerald-500/10 cursor-default"
-                : ""
-            }`}
-            variant={isSubscribed ? "secondary" : "default"}
-            size="sm"
-            disabled={isDisabled}
-            onClick={(e) => {
-              if (isOwner && isSubscribed) {
-                e.preventDefault();
-                return;
-              }
-              onToggleSubscription(e, community);
-            }}
-          >
-            {isSubmitting ? (
-              <Loader2 className="h-4 w-4 animate-spin" />
-            ) : isOwner && isSubscribed ? (
-              "Создатель"
-            ) : isSubscribed ? (
-              "Вы подписаны"
-            ) : (
-              "Подписаться"
-            )}
-          </Button>
+          {isOwner ? null : (
+            <Button
+              className={`w-full sm:w-auto cursor-pointer relative z-20 font-bold rounded-full transition-all ${
+                isOwner && isSubscribed
+                  ? "bg-emerald-500/10 text-emerald-600 border-emerald-200 hover:bg-emerald-500/10 cursor-default"
+                  : ""
+              }`}
+              variant={isSubscribed ? "secondary" : "default"}
+              size="sm"
+              disabled={isDisabled}
+              onClick={(e) => {
+                if (isOwner && isSubscribed) {
+                  e.preventDefault();
+                  return;
+                }
+                onToggleSubscription(e, community);
+              }}
+            >
+              {isSubmitting ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : isSubscribed ? (
+                "Вы подписаны"
+              ) : (
+                "Подписаться"
+              )}
+            </Button>
+          )}
         </CardHeader>
       </Card>
     </Link>
