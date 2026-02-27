@@ -1,6 +1,5 @@
 "use client";
 
-import { INotification } from "@/types/types";
 import { signOut } from "firebase/auth";
 import { Bell, Trash2 } from "lucide-react";
 import Link from "next/link";
@@ -23,6 +22,7 @@ import { useAuth } from "@/context/AuthContext";
 import { ROUTES } from "@/lib/routes";
 import { getNotificationText } from "@/lib/utils";
 import { NotificationService } from "@/services/notification.service";
+import { INotification } from "@/types/types";
 
 import { LogoTextIcon } from "./icons/LogoTextIcon";
 import { MaskotIcon } from "./icons/MaskotIcon";
@@ -87,7 +87,7 @@ function Navbar() {
       await NotificationService.markAsRead(notification.id);
     }
 
-    const postUrl = ROUTES.POST(notification.communityName, notification.postSlug);
+    const postUrl = ROUTES.POST(notification.communityName, notification.postId);
 
     if (notification.commentId) {
       router.push(`${postUrl}?highlight=${notification.commentId}#${notification.commentId}`);
