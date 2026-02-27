@@ -1,6 +1,5 @@
 "use client";
 
-import { ICommunity } from "@/types/types";
 import { Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -21,6 +20,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { useAuth } from "@/context/AuthContext";
 import { ROUTES } from "@/lib/routes";
 import { CommunityService } from "@/services/community.service";
+import { ICommunity } from "@/types/types";
 
 import { DeleteConfirmModal } from "../../../components/DeleteConfirmModal";
 import { ImageUploader } from "../../../components/ImageUploader";

@@ -1,10 +1,9 @@
 "use client";
 
-import { IComment } from "@/types/types";
 import { formatDistanceToNow } from "date-fns";
 import { ru } from "date-fns/locale";
 import { MessageSquare } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -13,6 +12,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { useAuth } from "@/context/AuthContext";
 import { cn } from "@/lib/utils";
 import { CommentsService } from "@/services/comments.service";
+import { IComment } from "@/types/types";
 
 import { CommentVote } from "./CommentVote";
 
@@ -30,7 +30,14 @@ export default function CommentItem({ comment, onReply }: ICommentItemProps) {
   const [replyText, setReplyText] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  const replyTextareaRef = useRef<HTMLTextAreaElement>(null);
   const isAuthor = user?.uid === comment.authorId;
+
+  useEffect(() => {
+    if (isReplying) {
+      setTimeout(() => replyTextareaRef.current?.focus(), 0);
+    }
+  }, [isReplying]);
 
   const handleUpdate = async () => {
     if (!editText.trim() || editText === comment.text) {
@@ -44,7 +51,7 @@ export default function CommentItem({ comment, onReply }: ICommentItemProps) {
       comment.isEdited = true;
       setIsEditing(false);
       toast.success("Изменено");
-    } catch (_error) {
+    } catch {
       toast.error("Ошибка при обновлении");
     } finally {
       setIsUpdating(false);
@@ -54,33 +61,15 @@ export default function CommentItem({ comment, onReply }: ICommentItemProps) {
   const handleSubmitReply = async () => {
     if (!replyText.trim()) return;
     setIsSubmitting(true);
-    await onReply(comment.id, replyText, comment.authorId);
-    setReplyText("");
     setIsReplying(false);
-    setIsSubmitting(false);
-  };
-
-  const handleReplyClick = () => {
-    setIsReplying(!isReplying);
-    if (!isReplying) {
-      setReplyText(`u/${comment.authorName} `);
-    } else {
-      setReplyText("");
+    setReplyText("");
+    try {
+      await onReply(comment.id, replyText, comment.authorId);
+    } catch {
+      toast.error("Ошибка при отправке");
+    } finally {
+      setIsSubmitting(false);
     }
-  };
-
-  const renderText = (text: string) => {
-    const parts = text.split(/(u\/[a-zA-Z0-9_]+)/g);
-    return parts.map((part, i) => {
-      if (part.startsWith("u/")) {
-        return (
-          <span key={i} className="text-blue-500 font-medium hover:underline cursor-pointer">
-            {part}
-          </span>
-        );
-      }
-      return part;
-    });
   };
 
   const commentDate = comment.createdAt?.toDate ? comment.createdAt.toDate() : new Date();
@@ -90,7 +79,7 @@ export default function CommentItem({ comment, onReply }: ICommentItemProps) {
       id={comment.id}
       className={cn(
         "scroll-mt-24 transition-all duration-500 flex flex-col gap-3",
-        comment.depth > 0 && "mt-4 ml-2 md:ml-6 pl-4 border-l-2 border-muted transition-colors"
+        comment.depth > 0 && "mt-4 ml-2 md:ml-6 pl-4 border-l-2 border-muted"
       )}
     >
       <div className="flex items-center gap-2">
@@ -124,27 +113,26 @@ export default function CommentItem({ comment, onReply }: ICommentItemProps) {
           </div>
         </div>
       ) : (
-        <div className="text-sm leading-relaxed text-foreground/90 whitespace-pre-wrap">
-          {renderText(comment.text)}
-        </div>
+        <p className="text-sm leading-relaxed text-foreground/90 whitespace-pre-wrap">
+          {comment.text}
+        </p>
       )}
 
       <div className="flex items-center gap-4">
         <CommentVote commentId={comment.id} initialVotes={comment.votes} />
 
-        <Button
-          variant="ghost"
-          size="sm"
-          className="cursor-pointer h-7 gap-1.5 text-xs text-muted-foreground"
-          onClick={handleReplyClick}
-        >
-          {comment.depth < 3 && (
-            <>
-              <MessageSquare className="h-3.5 w-3.5" />
-              Ответить
-            </>
-          )}
-        </Button>
+        {comment.depth < 3 && (
+          <Button
+            variant="ghost"
+            size="sm"
+            className="cursor-pointer h-7 gap-1.5 text-xs text-muted-foreground"
+            onClick={() => setIsReplying((prev) => !prev)}
+          >
+            <MessageSquare className="h-3.5 w-3.5" />
+            Ответить
+          </Button>
+        )}
+
         {isAuthor && !isEditing && (
           <Button
             variant="ghost"
@@ -159,10 +147,14 @@ export default function CommentItem({ comment, onReply }: ICommentItemProps) {
 
       {isReplying && (
         <div className="mt-2 space-y-2 pl-4 border-l-2 border-primary/20">
+          <p className="text-[11px] text-muted-foreground">
+            Ответ для <span className="font-semibold text-foreground">u/{comment.authorName}</span>
+          </p>
           <Textarea
+            ref={replyTextareaRef}
             value={replyText}
             onChange={(e) => setReplyText(e.target.value)}
-            placeholder="Ваш ответ..."
+            placeholder="Напишите ответ..."
             className="min-h-[80px] bg-muted/20 border-none focus-visible:ring-1 focus-visible:ring-primary/50 rounded-xl resize-none text-sm"
           />
           <div className="flex justify-end gap-2">
@@ -170,7 +162,10 @@ export default function CommentItem({ comment, onReply }: ICommentItemProps) {
               size="sm"
               variant="ghost"
               className="cursor-pointer rounded-full"
-              onClick={() => setIsReplying(false)}
+              onClick={() => {
+                setIsReplying(false);
+                setReplyText("");
+              }}
             >
               Отмена
             </Button>

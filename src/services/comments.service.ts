@@ -82,7 +82,8 @@ export const CommentsService = {
     return onSnapshot(q, (snapshot) => {
       const comments = snapshot.docs.map((doc) => ({
         id: doc.id,
-        ...doc.data(),
+
+        ...doc.data({ serverTimestamps: "estimate" }),
       })) as IComment[];
 
       callback(comments);

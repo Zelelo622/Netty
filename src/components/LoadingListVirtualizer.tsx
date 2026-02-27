@@ -1,5 +1,6 @@
-import { IPost } from "@/types/types";
 import { Loader2 } from "lucide-react";
+
+import { IPost } from "@/types/types";
 
 interface ILoadingListVirtualizerProps {
   isFetchingMore: boolean;
