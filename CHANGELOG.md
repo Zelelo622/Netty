@@ -1,3 +1,10 @@
+## [1.0.1](https://github.com/Zelelo622/Netty/compare/v1.0.0...v1.0.1) (2026-02-27)
+
+
+### Bug Fixes
+
+* убрал postSlug из navbar ([3339c5b](https://github.com/Zelelo622/Netty/commit/3339c5b7ad2c677c620097879b6013a2830873d8))
+
 # 1.0.0 (2026-02-26)
 
 
