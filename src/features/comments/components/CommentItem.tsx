@@ -1,6 +1,5 @@
 "use client";
 
-import { IComment } from "@/types/types";
 import { formatDistanceToNow } from "date-fns";
 import { ru } from "date-fns/locale";
 import { MessageSquare } from "lucide-react";
@@ -13,6 +12,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { useAuth } from "@/context/AuthContext";
 import { cn } from "@/lib/utils";
 import { CommentsService } from "@/services/comments.service";
+import { IComment } from "@/types/types";
 
 import { CommentVote } from "./CommentVote";
 

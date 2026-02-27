@@ -1,6 +1,5 @@
 "use client";
 
-import { ICommunity } from "@/types/types";
 import { Users, Loader2 } from "lucide-react";
 import Link from "next/link";
 
@@ -8,6 +7,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { ROUTES } from "@/lib/routes";
+import { ICommunity } from "@/types/types";
 
 interface ICommunityCardProps {
   community: ICommunity;

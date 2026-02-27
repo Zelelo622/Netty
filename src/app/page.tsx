@@ -1,6 +1,5 @@
 "use client";
 
-import { IPost } from "@/types/types";
 import { doc, getDoc, DocumentData, QueryDocumentSnapshot } from "firebase/firestore";
 import { Loader2 } from "lucide-react";
 import { useEffect, useState, useRef, useCallback } from "react";
@@ -10,6 +9,7 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useAuth } from "@/context/AuthContext";
 import { db } from "@/lib/firebase";
 import { PostsService } from "@/services/posts.service";
+import { IPost } from "@/types/types";
 
 import PostList from "../features/posts/components/PostList";
 import { TTabType } from "../features/posts/components/types";

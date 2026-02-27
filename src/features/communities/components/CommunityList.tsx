@@ -1,8 +1,7 @@
 "use client";
 
-import { ICommunity } from "@/types/types";
-
 import { useAuth } from "@/context/AuthContext";
+import { ICommunity } from "@/types/types";
 
 import { CommunityCard } from "./CommunityCard";
 

@@ -1,7 +1,7 @@
-import { ICommunity } from "@/types/types";
 import { Users } from "lucide-react";
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { ICommunity } from "@/types/types";
 
 interface ICommunityHeaderProps {
   community: ICommunity;
