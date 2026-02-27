@@ -1,4 +1,3 @@
-import { ICommunity } from "@/types/types";
 import {
   collection,
   getDocs,
@@ -17,9 +16,12 @@ import {
   QueryDocumentSnapshot,
   limit,
   startAfter,
+  updateDoc,
+  deleteDoc,
 } from "firebase/firestore";
 
 import { db } from "@/lib/firebase";
+import { ICommunity } from "@/types/types";
 
 import { PostsService } from "./posts.service";
 
@@ -33,7 +35,7 @@ const communityConverter: FirestoreDataConverter<ICommunity> = {
 
 const communitiesRef = collection(db, "communities").withConverter(communityConverter);
 
-const cleanCommunityName = (name: string) => name.trim();
+const cleanName = (name: string) => name.trim();
 const mapSnapshot = (snapshot: QuerySnapshot<ICommunity>) => snapshot.docs.map((doc) => doc.data());
 
 export const CommunityService = {
@@ -42,18 +44,14 @@ export const CommunityService = {
     lastVisibleDoc: QueryDocumentSnapshot<ICommunity> | null = null
   ) {
     let q = query(communitiesRef, orderBy("membersCount", "desc"), limit(limitCount));
-
-    if (lastVisibleDoc) {
-      q = query(q, startAfter(lastVisibleDoc));
-    }
+    if (lastVisibleDoc) q = query(q, startAfter(lastVisibleDoc));
 
     const snapshot = await getDocs(q);
 
-    const lastDoc = snapshot.docs[snapshot.docs.length - 1] as QueryDocumentSnapshot<ICommunity>;
-
     return {
       communities: mapSnapshot(snapshot),
-      lastDoc: lastDoc || null,
+      lastDoc: (snapshot.docs[snapshot.docs.length - 1] ??
+        null) as QueryDocumentSnapshot<ICommunity> | null,
       hasMore: snapshot.docs.length === limitCount,
     };
   },
@@ -63,12 +61,8 @@ export const CommunityService = {
 
     return onSnapshot(
       q,
-      (snapshot) => {
-        callback(mapSnapshot(snapshot));
-      },
-      (error) => {
-        console.error("Subscription error:", error);
-      }
+      (snapshot) => callback(mapSnapshot(snapshot)),
+      (error) => console.error("Subscription error:", error)
     );
   },
 
@@ -82,38 +76,36 @@ export const CommunityService = {
     return mapSnapshot(snapshot);
   },
 
+  async getCommunityData(communityName: string) {
+    const q = query(communitiesRef, where("name", "==", cleanName(communityName)));
+    const snapshot = await getDocs(q);
+    return snapshot.empty ? null : snapshot.docs[0].data();
+  },
+
   async toggleSubscription(communityId: string, userId: string, isSubscribed: boolean) {
     const communityRef = doc(communitiesRef, communityId);
     const userRef = doc(db, "users", userId);
 
-    try {
-      await runTransaction(db, async (transaction) => {
-        const communityDoc = await transaction.get(communityRef);
-        if (!communityDoc.exists()) throw new Error("Сообщество не существует");
+    await runTransaction(db, async (transaction) => {
+      const communityDoc = await transaction.get(communityRef);
+      if (!communityDoc.exists()) throw new Error("Сообщество не существует");
 
-        const communityData = communityDoc.data();
+      const { creatorId } = communityDoc.data();
+      if (creatorId === userId && isSubscribed) {
+        throw new Error(
+          "Создатель не может покинуть своё сообщество. Вы можете только удалить его."
+        );
+      }
 
-        if (communityData.creatorId === userId && isSubscribed) {
-          throw new Error(
-            "Создатель не может покинуть своё сообщество. Вы можете только удалить его."
-          );
-        }
+      const communityUpdate = isSubscribed
+        ? { subscribers: arrayRemove(userId), membersCount: increment(-1) }
+        : { subscribers: arrayUnion(userId), membersCount: increment(1) };
 
-        const communityUpdate = isSubscribed
-          ? { subscribers: arrayRemove(userId), membersCount: increment(-1) }
-          : { subscribers: arrayUnion(userId), membersCount: increment(1) };
-
-        const userUpdate = {
-          subscribedCommunities: isSubscribed ? arrayRemove(communityId) : arrayUnion(communityId),
-        };
-
-        transaction.update(communityRef, communityUpdate);
-        transaction.update(userRef, userUpdate);
+      transaction.update(communityRef, communityUpdate);
+      transaction.update(userRef, {
+        subscribedCommunities: isSubscribed ? arrayRemove(communityId) : arrayUnion(communityId),
       });
-    } catch (error) {
-      console.error("Toggle subscription error:", error);
-      throw error;
-    }
+    });
   },
 
   async createCommunity(data: {
@@ -123,82 +115,53 @@ export const CommunityService = {
     avatarUrl?: string;
     bannerUrl?: string;
   }) {
-    const nameToSearch = cleanCommunityName(data.name);
+    const nameToSearch = cleanName(data.name);
     const userRef = doc(db, "users", data.creatorId);
     const newCommunityRef = doc(communitiesRef);
 
-    try {
-      return await runTransaction(db, async (transaction) => {
-        const nameQuery = query(communitiesRef, where("name", "==", nameToSearch));
-        const nameCheck = await getDocs(nameQuery);
+    return await runTransaction(db, async (transaction) => {
+      const nameCheck = await getDocs(query(communitiesRef, where("name", "==", nameToSearch)));
+      if (!nameCheck.empty) throw new Error("Это название уже занято");
 
-        if (!nameCheck.empty) {
-          throw new Error("Это название уже занято");
-        }
+      const newCommunity: ICommunity = {
+        id: newCommunityRef.id,
+        name: nameToSearch,
+        description: data.description || "",
+        creatorId: data.creatorId,
+        createdAt: serverTimestamp() as any,
+        membersCount: 1,
+        subscribers: [data.creatorId],
+        avatarUrl: data.avatarUrl || "",
+        bannerUrl: data.bannerUrl || "",
+      };
 
-        const newCommunityData: ICommunity = {
-          id: newCommunityRef.id,
-          name: nameToSearch,
-          description: data.description || "",
-          creatorId: data.creatorId,
-          createdAt: serverTimestamp() as any,
-          membersCount: 1,
-          subscribers: [data.creatorId],
-          avatarUrl: data.avatarUrl || "",
-          bannerUrl: data.bannerUrl || "",
-        };
-
-        transaction.set(newCommunityRef, newCommunityData);
-        transaction.update(userRef, {
-          subscribedCommunities: arrayUnion(newCommunityRef.id),
-        });
-
-        return nameToSearch;
+      transaction.set(newCommunityRef, newCommunity);
+      transaction.update(userRef, {
+        subscribedCommunities: arrayUnion(newCommunityRef.id),
       });
-    } catch (error) {
-      console.error("Create community error:", error);
-      throw error;
-    }
-  },
 
-  async getCommunityData(communityName: string) {
-    const cleanName = cleanCommunityName(communityName);
-    const q = query(communitiesRef, where("name", "==", cleanName));
-    const snapshot = await getDocs(q);
-
-    return snapshot.empty ? null : snapshot.docs[0].data();
+      return nameToSearch;
+    });
   },
 
   async updateCommunity(communityId: string, data: Partial<ICommunity>) {
     const communityRef = doc(communitiesRef, communityId);
 
     if (data.name) {
-      data.name = cleanCommunityName(data.name);
-      const nameQuery = query(communitiesRef, where("name", "==", data.name));
-      const nameCheck = await getDocs(nameQuery);
-      const isTaken = nameCheck.docs.some((d) => d.id !== communityId);
-      if (isTaken) throw new Error("Название уже занято");
+      data.name = cleanName(data.name);
+      const nameCheck = await getDocs(query(communitiesRef, where("name", "==", data.name)));
+      if (nameCheck.docs.some((d) => d.id !== communityId)) {
+        throw new Error("Название уже занято");
+      }
     }
 
-    await runTransaction(db, async (transaction) => {
-      transaction.update(communityRef, {
-        ...data,
-      });
-    });
+    await updateDoc(communityRef, data);
 
     return data.name;
   },
 
   async deleteCommunity(communityId: string) {
     await PostsService.deleteAllCommunityPosts(communityId);
-
-    await runTransaction(db, async (transaction) => {
-      const communityRef = doc(communitiesRef, communityId);
-      const communityDoc = await transaction.get(communityRef);
-
-      if (!communityDoc.exists()) throw new Error("Сообщество не найдено");
-
-      transaction.delete(communityRef);
-    });
+    await deleteDoc(doc(communitiesRef, communityId));
   },
 };

@@ -1,4 +1,3 @@
-import { INotification } from "@/types/types";
 import {
   addDoc,
   collection,
@@ -14,6 +13,7 @@ import {
 } from "firebase/firestore";
 
 import { db } from "@/lib/firebase";
+import { INotification } from "@/types/types";
 
 export const NotificationService = {
   async createNotification(notificationData: Omit<INotification, "id" | "createdAt" | "read">) {
@@ -21,15 +21,11 @@ export const NotificationService = {
       return;
     }
 
-    try {
-      await addDoc(collection(db, "notifications"), {
-        ...notificationData,
-        read: false,
-        createdAt: serverTimestamp(),
-      });
-    } catch (e) {
-      console.error("Ошибка при записи уведомления:", e);
-    }
+    await addDoc(collection(db, "notifications"), {
+      ...notificationData,
+      read: false,
+      createdAt: serverTimestamp(),
+    });
   },
 
   subscribeToNotifications(userId: string, callback: (data: INotification[]) => void) {
@@ -57,10 +53,7 @@ export const NotificationService = {
     const snapshot = await getDocs(q);
 
     const batch = writeBatch(db);
-    snapshot.docs.forEach((doc) => {
-      batch.delete(doc.ref);
-    });
-
+    snapshot.docs.forEach((doc) => batch.delete(doc.ref));
     await batch.commit();
   },
 };

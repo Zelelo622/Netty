@@ -1,6 +1,5 @@
 "use client";
 
-import { ICommunity } from "@/types/types";
 import { HelpCircle } from "lucide-react";
 import { useParams, useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
@@ -18,9 +17,10 @@ import { CommunitySelect } from "@/features/communities/components/CommunitySele
 import { PostRules } from "@/features/communities/components/PostRules";
 import { FlairSelect } from "@/features/posts/components/FlairSelect";
 import { ROUTES } from "@/lib/routes";
-import { cn, generateSlug } from "@/lib/utils";
+import { cn } from "@/lib/utils";
 import { CommunityService } from "@/services/community.service";
 import { PostsService } from "@/services/posts.service";
+import { ICommunity } from "@/types/types";
 
 export default function CreatePostPage() {
   const { user, loading: authLoading } = useAuth();
@@ -43,6 +43,7 @@ export default function CreatePostPage() {
       try {
         const userSubs = await CommunityService.getUserCommunities(user.uid);
         setCommunities(userSubs);
+
         if (slug) {
           const target = userSubs.find((c) => c.name.toLowerCase() === slug.toLowerCase());
           if (target) {
@@ -55,7 +56,7 @@ export default function CreatePostPage() {
             }
           }
         }
-      } catch (_error) {
+      } catch {
         toast.error("Ошибка при загрузке сообществ");
       } finally {
         setIsDataFetching(false);
@@ -72,11 +73,9 @@ export default function CreatePostPage() {
     setIsLoading(true);
     try {
       const community = communities.find((c) => c.id === selectedCommunity);
-      const postSlug = `${generateSlug(title)}-${Math.random().toString(36).substring(2, 8)}`;
 
-      await PostsService.createPost({
+      const postId = await PostsService.createPost({
         title: title.trim(),
-        slug: postSlug,
         content: content.trim(),
         communityId: selectedCommunity,
         communityName: community?.name || "unknown",
@@ -87,8 +86,8 @@ export default function CreatePostPage() {
         tags: selectedFlair ? [selectedFlair] : [],
       });
 
-      router.push(ROUTES.POST(community?.name || selectedCommunity, postSlug));
-    } catch (_error) {
+      router.push(ROUTES.POST(community?.name || selectedCommunity, postId));
+    } catch {
       toast.error("Не удалось создать пост");
     } finally {
       setIsLoading(false);

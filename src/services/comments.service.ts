@@ -1,4 +1,3 @@
-import { IComment, IPost } from "@/types/types";
 import {
   collection,
   addDoc,
@@ -8,16 +7,16 @@ import {
   updateDoc,
   query,
   where,
-  getDocs,
-  runTransaction,
   getDoc,
   orderBy,
   onSnapshot,
 } from "firebase/firestore";
 
 import { db } from "@/lib/firebase";
+import { IComment, IPost } from "@/types/types";
 
 import { NotificationService } from "./notification.service";
+import { voteOnDocument } from "./posts.service";
 
 export const CommentsService = {
   async addComment(
@@ -31,23 +30,17 @@ export const CommentsService = {
       createdAt: serverTimestamp(),
     });
 
-    const postRef = doc(db, "posts", data.postId);
-    await updateDoc(postRef, {
+    await updateDoc(doc(db, "posts", data.postId), {
       commentsCount: increment(1),
     });
 
-    const baseNotification = {
-      issuerId: data.authorId,
-      issuerName: data.authorName,
-      postId: post.id,
-      postSlug: post.slug,
-      communityName: post.communityName,
-      commentId: commentRef.id,
-    };
-
     if (data.parentId && parentCommentAuthorId) {
       await NotificationService.createNotification({
-        ...baseNotification,
+        issuerId: data.authorId,
+        issuerName: data.authorName,
+        postId: post.id,
+        communityName: post.communityName,
+        commentId: commentRef.id,
         recipientId: parentCommentAuthorId,
         type: "REPLY",
       });
@@ -56,16 +49,8 @@ export const CommentsService = {
     return commentRef.id;
   },
 
-  async getPostComments(postId: string): Promise<IComment[]> {
-    const q = query(collection(db, "comments"), where("postId", "==", postId));
-
-    const snap = await getDocs(q);
-    return snap.docs.map((doc) => ({ id: doc.id, ...doc.data() }) as IComment);
-  },
-
   async updateComment(commentId: string, text: string) {
-    const commentRef = doc(db, "comments", commentId);
-    await updateDoc(commentRef, {
+    await updateDoc(doc(db, "comments", commentId), {
       text,
       isEdited: true,
       updatedAt: serverTimestamp(),
@@ -78,21 +63,7 @@ export const CommentsService = {
     voteValue: 1 | -1 | 0,
     previousValue: number
   ) {
-    const commentRef = doc(db, "comments", commentId);
-    const voteRef = doc(db, "comments", commentId, "userVotes", userId);
-
-    try {
-      await runTransaction(db, async (transaction) => {
-        const change = voteValue - previousValue;
-
-        transaction.set(voteRef, { value: voteValue });
-
-        transaction.update(commentRef, { votes: increment(change) });
-      });
-    } catch (error) {
-      console.error("Comment vote error:", error);
-      throw error;
-    }
+    await voteOnDocument("comments", commentId, userId, voteValue, previousValue);
   },
 
   async getCommentVoteStatus(commentId: string, userId: string): Promise<number> {

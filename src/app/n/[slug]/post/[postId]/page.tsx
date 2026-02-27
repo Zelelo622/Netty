@@ -1,9 +1,8 @@
 "use client";
 
-import { IComment, IPost } from "@/types/types";
 import { formatDistanceToNow } from "date-fns";
 import { ru } from "date-fns/locale";
-import { MoreHorizontal, Languages, Trash2, Pencil } from "lucide-react"; // Добавили Pencil
+import { MoreHorizontal, Languages, Trash2, Pencil } from "lucide-react";
 import Link from "next/link";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -29,14 +28,15 @@ import { PostActions } from "@/features/posts/components/PostActions";
 import { PostVote } from "@/features/posts/components/PostVote";
 import { POST_FLAIRS } from "@/lib/constants";
 import { ROUTES } from "@/lib/routes";
-import { buildCommentTree, cn, findCommentDepth } from "@/lib/utils";
+import { buildCommentTree, cn, findCommentDepth, getBaseUrl } from "@/lib/utils";
 import { CommentsService } from "@/services/comments.service";
 import { PostsService } from "@/services/posts.service";
+import { IComment, IPost } from "@/types/types";
 
 export default function PostPage() {
   const searchParams = useSearchParams();
   const highlightId = searchParams.get("highlight");
-  const { postSlug } = useParams();
+  const { postId } = useParams();
   const router = useRouter();
   const { user } = useAuth();
 
@@ -44,10 +44,8 @@ export default function PostPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [isDeleting, setIsDeleting] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
-
   const [isEditing, setIsEditing] = useState(false);
   const [isUpdating, setIsUpdating] = useState(false);
-
   const [comments, setComments] = useState<IComment[]>([]);
   const [rootCommentText, setRootCommentText] = useState("");
   const [isSubmittingComment, setIsSubmittingComment] = useState(false);
@@ -56,72 +54,52 @@ export default function PostPage() {
   const flair = POST_FLAIRS.find((f) => post?.tags?.includes(f.id));
 
   useEffect(() => {
-    if (post?.id) {
-      CommentsService.getPostComments(post.id).then((data) => {
-        setComments(buildCommentTree(data));
-      });
-    }
-  }, [post?.id]);
+    if (!postId) return;
 
-  useEffect(() => {
     const fetchPostData = async () => {
-      if (!postSlug) return;
       try {
         setIsLoading(true);
-        const postData = await PostsService.getPostBySlug(postSlug as string);
-        if (postData) {
-          setPost(postData);
-          if (user) {
-            await PostsService.getUserVoteStatus(postData.id, user.uid);
-          }
-        }
+        const postData = await PostsService.getPostById(postId as string);
+        if (postData) setPost(postData);
       } catch (error) {
         console.error("Ошибка при загрузке поста:", error);
       } finally {
         setIsLoading(false);
       }
     };
+
     fetchPostData();
-  }, [postSlug, user]);
-
-  useEffect(() => {
-    const id = highlightId || window.location.hash.replace("#", "");
-
-    if (!id || isLoading || comments.length === 0) return;
-
-    const scrollToTarget = () => {
-      const element = document.getElementById(id);
-      if (element) {
-        element.scrollIntoView({ behavior: "smooth", block: "center" });
-
-        element.classList.add("bg-primary/10", "ring-2", "ring-primary/20");
-
-        setTimeout(() => {
-          element.classList.remove("bg-primary/10", "ring-2", "ring-primary/20");
-          router.replace(window.location.pathname + window.location.hash, { scroll: false });
-        }, 3000);
-      }
-    };
-
-    const timer = setTimeout(scrollToTarget, 100);
-    return () => clearTimeout(timer);
-  }, [highlightId, isLoading, comments.length]);
+  }, [postId]);
 
   useEffect(() => {
     if (!post?.id) return;
 
     const unsubscribe = CommentsService.subscribeToPostComments(post.id, (flatComments) => {
-      const tree = buildCommentTree(flatComments);
-      setComments(tree);
-      setIsLoading(false);
+      setComments(buildCommentTree(flatComments));
     });
 
     return () => unsubscribe();
   }, [post?.id]);
 
-  const handleEditClick = () => {
-    setIsEditing(true);
-  };
+  useEffect(() => {
+    const id = highlightId || window.location.hash.replace("#", "");
+    if (!id || isLoading || comments.length === 0) return;
+
+    const timer = setTimeout(() => {
+      const element = document.getElementById(id);
+      if (!element) return;
+
+      element.scrollIntoView({ behavior: "smooth", block: "center" });
+      element.classList.add("bg-primary/10", "ring-2", "ring-primary/20");
+
+      setTimeout(() => {
+        element.classList.remove("bg-primary/10", "ring-2", "ring-primary/20");
+        router.replace(window.location.pathname + window.location.hash, { scroll: false });
+      }, 3000);
+    }, 100);
+
+    return () => clearTimeout(timer);
+  }, [highlightId, isLoading, comments.length]);
 
   const handleUpdatePost = async (newContent: string, newImageUrl: string) => {
     if (!post) return;
@@ -131,20 +109,10 @@ export default function PostPage() {
         content: newContent,
         imageUrl: newImageUrl,
       });
-
-      setPost((prev) =>
-        prev
-          ? {
-              ...prev,
-              content: newContent,
-              imageUrl: newImageUrl,
-              updatedAt: new Date(),
-            }
-          : null
-      );
+      setPost((prev) => (prev ? { ...prev, content: newContent, imageUrl: newImageUrl } : null));
       setIsEditing(false);
       toast.success("Пост обновлен");
-    } catch (_error) {
+    } catch {
       toast.error("Ошибка при обновлении поста");
     } finally {
       setIsUpdating(false);
@@ -161,12 +129,13 @@ export default function PostPage() {
       return;
     }
 
+    const depth = parentId ? findCommentDepth(comments, parentId) + 1 : 0;
+    if (depth > 3) {
+      toast.error("Максимальная глубина обсуждения");
+      return;
+    }
+
     try {
-      const depth = parentId ? findCommentDepth(comments, parentId) + 1 : 0;
-      if (depth > 3) {
-        toast.error("Максимальная глубина обсуждения");
-        return;
-      }
       await CommentsService.addComment(
         {
           postId: post.id,
@@ -180,9 +149,8 @@ export default function PostPage() {
         post,
         parentCommentAuthorId
       );
-
       toast.success("Комментарий добавлен");
-    } catch (_error) {
+    } catch {
       toast.error("Ошибка при отправке");
     }
   };
@@ -204,8 +172,8 @@ export default function PostPage() {
     try {
       await PostsService.deletePost(post.id);
       toast.success("Пост удален");
-      router.push(`/n/${post.communityName}`);
-    } catch (_error) {
+      router.push(ROUTES.COMMUNITY(post.communityName));
+    } catch {
       toast.error("Ошибка при удалении");
       setIsDeleting(false);
     }
@@ -214,12 +182,13 @@ export default function PostPage() {
   if (isLoading) return <LoadingSpinner />;
   if (!post) return <div className="text-center py-20">Пост не найден</div>;
 
-  const postDate = post.createdAt?.toDate ? post.createdAt.toDate() : new Date(post.createdAt);
-
+  const postDate = post.createdAt?.toDate
+    ? post.createdAt.toDate()
+    : new Date(post.createdAt as any);
   const updatedDate = post.updatedAt?.toDate
     ? post.updatedAt.toDate()
     : post.updatedAt
-      ? new Date(post.updatedAt)
+      ? new Date(post.updatedAt as any)
       : null;
 
   return (
@@ -247,12 +216,7 @@ export default function PostPage() {
               <span>{formatDistanceToNow(postDate, { addSuffix: true, locale: ru })}</span>
               {updatedDate && (
                 <span className="italic text-muted-foreground/70">
-                  (изм.{" "}
-                  {formatDistanceToNow(updatedDate, {
-                    addSuffix: true,
-                    locale: ru,
-                  })}
-                  )
+                  (изм. {formatDistanceToNow(updatedDate, { addSuffix: true, locale: ru })})
                 </span>
               )}
             </span>
@@ -277,7 +241,10 @@ export default function PostPage() {
 
             {isAuthor && (
               <>
-                <DropdownMenuItem className="cursor-pointer gap-2" onSelect={handleEditClick}>
+                <DropdownMenuItem
+                  className="cursor-pointer gap-2"
+                  onSelect={() => setIsEditing(true)}
+                >
                   <Pencil className="h-4 w-4" />
                   <span>Редактировать</span>
                 </DropdownMenuItem>
@@ -344,7 +311,7 @@ export default function PostPage() {
         <PostActions
           commentsCount={post.commentsCount}
           title={post.title}
-          shareUrl={`${window.location.origin}${ROUTES.POST(post.communityName, post.slug)}`}
+          shareUrl={`${getBaseUrl()}${ROUTES.POST(post.communityName, post.id)}`}
         />
       </div>
 

@@ -21,7 +21,7 @@ import { Separator } from "@/components/ui/separator";
 import { useAuth } from "@/context/AuthContext";
 import { POST_FLAIRS } from "@/lib/constants";
 import { ROUTES } from "@/lib/routes";
-import { cn } from "@/lib/utils";
+import { cn, getBaseUrl } from "@/lib/utils";
 import { PostsService } from "@/services/posts.service";
 
 import { PostActions } from "./PostActions";
@@ -51,7 +51,7 @@ export const PostCard = ({ post }: IPostCardProps) => {
       await PostsService.deletePost(post.id);
       toast.success("Пост успешно удален");
       router.refresh();
-    } catch (_error) {
+    } catch {
       toast.error("Ошибка при удалении");
       setIsDeleting(false);
     }
@@ -92,7 +92,7 @@ export const PostCard = ({ post }: IPostCardProps) => {
                   <DropdownMenuItem
                     disabled
                     className="cursor-pointer gap-2"
-                    onClick={() => alert("Перевод в разработке...")}
+                    onClick={() => toast.info("Перевод в разработке")}
                   >
                     <Languages className="h-4 w-4" />
                     <span>Показать на другом языке</span>
@@ -115,7 +115,8 @@ export const PostCard = ({ post }: IPostCardProps) => {
           </div>
 
           <div className="space-y-2">
-            <Link href={ROUTES.POST(post.communityName, post.slug)} className="group block">
+            {/* Ссылка теперь использует post.id вместо post.slug */}
+            <Link href={ROUTES.POST(post.communityName, post.id)} className="group block">
               <h2 className="mb-2 text-lg font-bold leading-tight sm:text-2xl group-hover:text-primary transition-colors line-clamp-2">
                 {post.title}
               </h2>
@@ -145,7 +146,7 @@ export const PostCard = ({ post }: IPostCardProps) => {
           <PostActions
             commentsCount={post.commentsCount}
             title={post.title}
-            shareUrl={`${window.location.origin}${ROUTES.POST(post.communityName, post.slug)}`}
+            shareUrl={`${getBaseUrl()}${ROUTES.POST(post.communityName, post.id)}`}
           />
         </div>
 
