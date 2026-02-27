@@ -1,9 +1,11 @@
+import { Timestamp } from "firebase/firestore";
+
 export interface ICommunity {
   id?: string;
   name: string;
   description: string;
   creatorId: string;
-  createdAt: any;
+  createdAt: Timestamp;
   membersCount: number;
   subscribers: string[];
   avatarUrl?: string;
@@ -12,7 +14,6 @@ export interface ICommunity {
 
 export interface IPost {
   id: string;
-  slug: string;
   title: string;
   content: string;
   communityId: string;
@@ -20,15 +21,12 @@ export interface IPost {
   authorId: string;
   authorName: string;
   authorImage?: string;
-  createdAt: any;
-
+  createdAt: Timestamp;
   votes: number;
   commentsCount: number;
-
   imageUrl?: string;
   tags?: string[];
-
-  updatedAt?: any;
+  updatedAt?: Timestamp;
   isEdited?: boolean;
 }
 
@@ -40,11 +38,11 @@ export interface IComment {
   authorName: string;
   authorImage?: string;
   text: string;
-  createdAt: any;
+  createdAt: Timestamp;
   votes: number;
   depth: number;
   isEdited?: boolean;
-  updatedAt?: any;
+  updatedAt?: Timestamp;
   replies?: IComment[];
 }
 
@@ -57,7 +55,6 @@ export interface INotification {
   postId: string;
   commentId?: string;
   read: boolean;
-  createdAt: any;
+  createdAt: Timestamp;
   communityName: string;
-  postSlug: string;
 }

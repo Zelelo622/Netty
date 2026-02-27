@@ -1,4 +1,3 @@
-import { IPost } from "@/types/types";
 import {
   collection,
   deleteDoc,
@@ -20,9 +19,11 @@ import {
   QueryDocumentSnapshot,
   startAfter,
   updateDoc,
+  Query,
 } from "firebase/firestore";
 
 import { db } from "@/lib/firebase";
+import { IPost } from "@/types/types";
 
 const postConverter: FirestoreDataConverter<IPost> = {
   toFirestore: (post: IPost) => post,
@@ -37,19 +38,45 @@ const FIRESTORE_IN_LIMIT = 30;
 
 const mapSnapshot = (snapshot: QuerySnapshot<IPost>) => snapshot.docs.map((doc) => doc.data());
 
+function withPagination(
+  baseQuery: Query<IPost>,
+  limitCount: number,
+  lastDoc?: QueryDocumentSnapshot<DocumentData>
+) {
+  let q = query(baseQuery, orderBy("createdAt", "desc"), limit(limitCount));
+  if (lastDoc) q = query(q, startAfter(lastDoc));
+  return q;
+}
+
+function buildPaginatedResult(snapshot: QuerySnapshot<IPost>, limitCount: number) {
+  return {
+    posts: mapSnapshot(snapshot),
+    lastVisible: snapshot.docs[snapshot.docs.length - 1] ?? null,
+    hasMore: snapshot.docs.length === limitCount,
+  };
+}
+
+export async function voteOnDocument(
+  collectionName: string,
+  docId: string,
+  userId: string,
+  voteValue: 1 | -1 | 0,
+  previousValue: number
+) {
+  const docRef = doc(db, collectionName, docId);
+  const voteRef = doc(db, collectionName, docId, "userVotes", userId);
+
+  await runTransaction(db, async (transaction) => {
+    const change = voteValue - previousValue;
+    transaction.set(voteRef, { value: voteValue });
+    transaction.update(docRef, { votes: increment(change) });
+  });
+}
+
 export const PostsService = {
   async getAllPosts(limitCount = 10, lastDoc?: QueryDocumentSnapshot<DocumentData>) {
-    let q = query(postsRef, orderBy("createdAt", "desc"), limit(limitCount));
-
-    if (lastDoc) {
-      q = query(q, startAfter(lastDoc));
-    }
-
-    const snapshot = await getDocs(q);
-    return {
-      posts: mapSnapshot(snapshot),
-      lastVisible: snapshot.docs[snapshot.docs.length - 1] || null,
-    };
+    const snapshot = await getDocs(withPagination(postsRef, limitCount, lastDoc));
+    return buildPaginatedResult(snapshot, limitCount);
   },
 
   async getFeedPosts(
@@ -57,26 +84,12 @@ export const PostsService = {
     limitCount = 10,
     lastDoc?: QueryDocumentSnapshot<DocumentData>
   ) {
-    if (!subscribedCommunityIds?.length) return { posts: [], lastVisible: null };
+    if (!subscribedCommunityIds?.length) return { posts: [], lastVisible: null, hasMore: false };
 
     const limitedIds = subscribedCommunityIds.slice(0, FIRESTORE_IN_LIMIT);
-
-    let q = query(
-      postsRef,
-      where("communityId", "in", limitedIds),
-      orderBy("createdAt", "desc"),
-      limit(limitCount)
-    );
-
-    if (lastDoc) {
-      q = query(q, startAfter(lastDoc));
-    }
-
-    const snapshot = await getDocs(q);
-    return {
-      posts: mapSnapshot(snapshot),
-      lastVisible: snapshot.docs[snapshot.docs.length - 1] || null,
-    };
+    const base = query(postsRef, where("communityId", "in", limitedIds));
+    const snapshot = await getDocs(withPagination(base, limitCount, lastDoc));
+    return buildPaginatedResult(snapshot, limitCount);
   },
 
   async getUserPosts(
@@ -84,22 +97,9 @@ export const PostsService = {
     limitCount = 10,
     lastDoc?: QueryDocumentSnapshot<DocumentData>
   ) {
-    let q = query(
-      postsRef,
-      where("authorId", "==", userId),
-      orderBy("createdAt", "desc"),
-      limit(limitCount)
-    );
-
-    if (lastDoc) {
-      q = query(q, startAfter(lastDoc));
-    }
-
-    const snapshot = await getDocs(q);
-    return {
-      posts: mapSnapshot(snapshot),
-      lastVisible: snapshot.docs[snapshot.docs.length - 1] || null,
-    };
+    const base = query(postsRef, where("authorId", "==", userId));
+    const snapshot = await getDocs(withPagination(base, limitCount, lastDoc));
+    return buildPaginatedResult(snapshot, limitCount);
   },
 
   async getCommunityPosts(
@@ -107,23 +107,9 @@ export const PostsService = {
     limitCount = 10,
     lastDoc?: QueryDocumentSnapshot<DocumentData>
   ) {
-    let q = query(
-      postsRef,
-      where("communityId", "==", communityId),
-      orderBy("createdAt", "desc"),
-      limit(limitCount)
-    );
-
-    if (lastDoc) {
-      q = query(q, startAfter(lastDoc));
-    }
-
-    const snapshot = await getDocs(q);
-
-    return {
-      posts: mapSnapshot(snapshot),
-      lastVisible: snapshot.docs[snapshot.docs.length - 1] || null,
-    };
+    const base = query(postsRef, where("communityId", "==", communityId));
+    const snapshot = await getDocs(withPagination(base, limitCount, lastDoc));
+    return buildPaginatedResult(snapshot, limitCount);
   },
 
   async getPostById(postId: string) {
@@ -131,16 +117,10 @@ export const PostsService = {
     return postDoc.exists() ? postDoc.data() : null;
   },
 
-  async getPostBySlug(slug: string): Promise<IPost | null> {
-    const q = query(postsRef, where("slug", "==", slug), limit(1));
-    const snapshot = await getDocs(q);
-    return snapshot.empty ? null : snapshot.docs[0].data();
-  },
-
-  async createPost(data: Partial<IPost>) {
+  async createPost(data: Omit<IPost, "id" | "createdAt" | "votes" | "commentsCount">) {
     const postRef = doc(postsRef);
 
-    const cleanData = Object.fromEntries(Object.entries(data).filter(([_, v]) => v !== undefined));
+    const cleanData = Object.fromEntries(Object.entries(data).filter(([, v]) => v !== undefined));
 
     const newPost = {
       ...cleanData,
@@ -148,7 +128,7 @@ export const PostsService = {
       createdAt: serverTimestamp(),
       votes: 0,
       commentsCount: 0,
-      tags: data.tags || [],
+      tags: data.tags ?? [],
     } as IPost;
 
     await setDoc(postRef, newPost);
@@ -156,25 +136,14 @@ export const PostsService = {
   },
 
   async votePost(postId: string, userId: string, voteValue: 1 | -1 | 0, previousValue: number) {
-    const postRef = doc(db, "posts", postId);
-    const voteRef = doc(db, "posts", postId, "userVotes", userId);
-
-    try {
-      await runTransaction(db, async (transaction) => {
-        const change = voteValue - previousValue;
-        transaction.set(voteRef, { value: voteValue });
-        transaction.update(postRef, { votes: increment(change) });
-      });
-    } catch (error) {
-      console.error("Vote error:", error);
-      throw error;
-    }
+    await voteOnDocument("posts", postId, userId, voteValue, previousValue);
   },
 
-  async updatePost(postId: string, data: Partial<IPost>) {
+  async updatePost(postId: string, data: Partial<Omit<IPost, "id" | "createdAt">>) {
     const postRef = doc(db, "posts", postId);
     await updateDoc(postRef, {
       ...data,
+      isEdited: true,
       updatedAt: serverTimestamp(),
     });
   },
@@ -193,11 +162,7 @@ export const PostsService = {
     const q = query(postsRef, where("communityId", "==", communityId));
     const snapshot = await getDocs(q);
     const batch = writeBatch(db);
-
-    snapshot.forEach((postDoc) => {
-      batch.delete(postDoc.ref);
-    });
-
+    snapshot.forEach((postDoc) => batch.delete(postDoc.ref));
     await batch.commit();
   },
 };
