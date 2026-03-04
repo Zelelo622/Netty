@@ -2,10 +2,10 @@
 
 import { formatDistanceToNow } from "date-fns";
 import { ru } from "date-fns/locale";
-import { ArrowRight, MessageSquare } from "lucide-react";
+import { ArrowRight, MessageSquare, ChevronDown, Pencil } from "lucide-react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -13,7 +13,7 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { useAuth } from "@/context/AuthContext";
 import { ROUTES } from "@/lib/routes";
-import { cn } from "@/lib/utils";
+import { cn, getTotalRepliesCount } from "@/lib/utils";
 import { CommentsService } from "@/services/comments.service";
 import { IComment } from "@/types/types";
 
@@ -23,11 +23,17 @@ interface ICommentItemProps {
   comment: IComment;
   onReply: (parentId: string, text: string, authorId: string) => Promise<void>;
   isThreadPage?: boolean;
+  isParentHovered?: boolean;
 }
 
 const MAX_VISUAL_DEPTH = 4;
 
-export default function CommentItem({ comment, onReply, isThreadPage = false }: ICommentItemProps) {
+export default function CommentItem({
+  comment,
+  onReply,
+  isThreadPage = false,
+  isParentHovered = false,
+}: ICommentItemProps) {
   const { user } = useAuth();
   const params = useParams();
   const communitySlug = Array.isArray(params.slug) ? params.slug[0] : params.slug;
@@ -39,9 +45,14 @@ export default function CommentItem({ comment, onReply, isThreadPage = false }: 
   const [isReplying, setIsReplying] = useState(false);
   const [replyText, setReplyText] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isCollapsed, setIsCollapsed] = useState(false);
+  const [isSelfHovered, setIsSelfHovered] = useState(false);
 
   const replyTextareaRef = useRef<HTMLTextAreaElement>(null);
   const isAuthor = user?.uid === comment.authorId;
+
+  const totalReplies = useMemo(() => getTotalRepliesCount(comment.replies), [comment.replies]);
+  const isHighlighted = isSelfHovered || isParentHovered;
 
   useEffect(() => {
     if (isReplying) {
@@ -84,26 +95,42 @@ export default function CommentItem({ comment, onReply, isThreadPage = false }: 
 
   const commentDate = comment.createdAt?.toDate ? comment.createdAt.toDate() : new Date();
 
-  const visualDepth = Math.min(comment.depth, MAX_VISUAL_DEPTH);
+  const hasDeepReplies =
+    comment.replies && comment.replies.length > 0 && comment.depth >= MAX_VISUAL_DEPTH;
 
   const threadUrl =
     communitySlug && postId ? ROUTES.COMMENT_THREAD(communitySlug, postId, comment.id) : null;
-
-  const hasDeepReplies =
-    !isThreadPage &&
-    comment.replies &&
-    comment.replies.length > 0 &&
-    comment.depth >= MAX_VISUAL_DEPTH;
 
   return (
     <div
       id={comment.id}
       className={cn(
-        "scroll-mt-24 transition-all duration-500 flex flex-col gap-3",
-        visualDepth > 0 && "mt-4 ml-2 md:ml-6 pl-4 border-l-2 border-muted"
+        "relative scroll-mt-24 transition-all duration-300 flex flex-col gap-3",
+        comment.depth > 0 && "mt-4 ml-1 md:ml-6 pl-3"
       )}
     >
-      <div className="flex items-center gap-2">
+      {comment.depth > 0 && (
+        <>
+          <div
+            className={cn(
+              "absolute left-0 top-0 bottom-0 w-[1.5px] transition-colors duration-200",
+              isHighlighted ? "bg-primary/60" : "bg-muted-foreground/20"
+            )}
+          />
+
+          <div
+            onMouseEnter={() => setIsSelfHovered(true)}
+            onMouseLeave={() => setIsSelfHovered(false)}
+            onClick={() => setIsCollapsed(!isCollapsed)}
+            className="absolute left-[-4px] top-0 bottom-0 w-4 cursor-pointer z-10"
+          />
+        </>
+      )}
+
+      <div
+        className="flex items-center gap-2 cursor-pointer select-none hover:opacity-80 hover:bg-gray-700 hover:rounded-lg"
+        onClick={() => setIsCollapsed((prev) => !prev)}
+      >
         <Avatar className="h-6 w-6">
           <AvatarImage src={comment.authorImage} />
           <AvatarFallback>{comment.authorName[0]}</AvatarFallback>
@@ -112,127 +139,110 @@ export default function CommentItem({ comment, onReply, isThreadPage = false }: 
         <span className="text-[10px] text-muted-foreground">
           {formatDistanceToNow(commentDate, { addSuffix: true, locale: ru })}
         </span>
-        {comment.isEdited && (
-          <span className="text-[10px] text-muted-foreground italic">• Изменено</span>
+        {isCollapsed && totalReplies > 0 && (
+          <span className="text-[10px] text-primary font-medium flex items-center gap-1 bg-primary/5 px-2 py-0.5 rounded-full">
+            <ChevronDown className="h-3 w-3" />
+            Развернуть {totalReplies} {totalReplies === 1 ? "ответ" : "ответов"}
+          </span>
         )}
       </div>
 
-      {isEditing ? (
-        <div className="space-y-2">
-          <Textarea
-            value={editText}
-            onChange={(e) => setEditText(e.target.value)}
-            className="min-h-[80px] bg-muted/20 border-none focus-visible:ring-1 focus-visible:ring-primary/50 rounded-xl resize-none text-sm"
-          />
-          <div className="flex gap-2">
-            <Button
-              className="cursor-pointer"
-              size="sm"
-              variant="ghost"
-              onClick={() => setIsEditing(false)}
-            >
-              Отмена
-            </Button>
-            <Button
-              className="cursor-pointer"
-              size="sm"
-              onClick={handleUpdate}
-              disabled={isUpdating}
-            >
-              Сохранить
-            </Button>
+      {!isCollapsed && (
+        <>
+          <div className="overflow-hidden">
+            {isEditing ? (
+              <div className="space-y-2">
+                <Textarea
+                  value={editText}
+                  onChange={(e) => setEditText(e.target.value)}
+                  className="min-h-20 bg-muted/20 border-none focus-visible:ring-1 focus-visible:ring-primary/50 rounded-xl resize-none text-sm"
+                />
+                <div className="flex gap-2">
+                  <Button size="sm" variant="ghost" onClick={() => setIsEditing(false)}>
+                    Отмена
+                  </Button>
+                  <Button size="sm" onClick={handleUpdate} disabled={isUpdating}>
+                    Сохранить
+                  </Button>
+                </div>
+              </div>
+            ) : (
+              <p className="text-sm leading-relaxed text-foreground/90 whitespace-pre-wrap wrap-break-word">
+                {comment.text}
+              </p>
+            )}
           </div>
-        </div>
-      ) : (
-        <p className="text-sm leading-relaxed text-foreground/90 whitespace-pre-wrap">
-          {comment.text}
-        </p>
-      )}
 
-      <div className="flex items-center gap-4">
-        <CommentVote commentId={comment.id} initialVotes={comment.votes} />
-
-        <Button
-          variant="ghost"
-          size="sm"
-          className="cursor-pointer h-7 gap-1.5 text-xs text-muted-foreground"
-          onClick={() => setIsReplying((prev) => !prev)}
-        >
-          <MessageSquare className="h-3.5 w-3.5" />
-          Ответить
-        </Button>
-
-        {isAuthor && !isEditing && (
-          <Button
-            variant="ghost"
-            size="sm"
-            className="cursor-pointer h-7 text-xs text-muted-foreground hover:text-primary"
-            onClick={() => setIsEditing(true)}
-          >
-            Изменить
-          </Button>
-        )}
-      </div>
-
-      {isReplying && (
-        <div className="mt-2 space-y-2 pl-4 border-l-2 border-primary/20">
-          <p className="text-[11px] text-muted-foreground">
-            Ответ для <span className="font-semibold text-foreground">u/{comment.authorName}</span>
-          </p>
-          <Textarea
-            ref={replyTextareaRef}
-            value={replyText}
-            onChange={(e) => setReplyText(e.target.value)}
-            placeholder="Напишите ответ..."
-            className="min-h-[80px] bg-muted/20 border-none focus-visible:ring-1 focus-visible:ring-primary/50 rounded-xl resize-none text-sm"
-          />
-          <div className="flex justify-end gap-2">
+          <div className="flex items-center gap-4">
+            <CommentVote commentId={comment.id} initialVotes={comment.votes} />
             <Button
-              size="sm"
               variant="ghost"
-              className="cursor-pointer rounded-full"
-              onClick={() => {
-                setIsReplying(false);
-                setReplyText("");
-              }}
-            >
-              Отмена
-            </Button>
-            <Button
               size="sm"
-              className="cursor-pointer rounded-full px-4"
-              onClick={handleSubmitReply}
-              disabled={isSubmitting || !replyText.trim()}
+              className="h-7 gap-1.5 text-xs text-muted-foreground hover:bg-transparent hover:text-primary"
+              onClick={() => setIsReplying((prev) => !prev)}
             >
-              {isSubmitting ? "..." : "Ответить"}
+              <MessageSquare className="h-3.5 w-3.5" />
+              <span className="hidden sm:inline">Ответить</span>
             </Button>
+            {isAuthor && !isEditing && (
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-7 text-xs text-muted-foreground hover:text-primary"
+                onClick={() => setIsEditing(true)}
+              >
+                <Pencil className="h-3.5 w-3.5 sm:hidden" />
+                <span className="hidden sm:inline">Изменить</span>
+              </Button>
+            )}
           </div>
-        </div>
-      )}
 
-      {hasDeepReplies && threadUrl ? (
-        <Link
-          href={threadUrl}
-          className="flex items-center gap-1 text-primary w-fit hover:opacity-80"
-        >
-          <ArrowRight width={16} height={16} />
-          Продолжить ветку ({comment.replies!.length}){" "}
-          {comment.replies!.length === 1 ? "ответ" : "ответа"}
-        </Link>
-      ) : (
-        comment.replies &&
-        comment.replies.length > 0 && (
-          <div className="space-y-4">
-            {comment.replies.map((reply) => (
-              <CommentItem
-                key={reply.id}
-                comment={reply}
-                onReply={onReply}
-                isThreadPage={isThreadPage}
+          {isReplying && (
+            <div className="mt-2 space-y-2 pl-4 border-l-2 border-primary/20">
+              <Textarea
+                ref={replyTextareaRef}
+                value={replyText}
+                onChange={(e) => setReplyText(e.target.value)}
+                placeholder="Напишите ответ..."
+                className="min-h-20 bg-muted/20 border-none focus-visible:ring-1 focus-visible:ring-primary/50 rounded-xl resize-none text-sm"
               />
-            ))}
+              <div className="flex justify-end gap-2">
+                <Button size="sm" variant="ghost" onClick={() => setIsReplying(false)}>
+                  Отмена
+                </Button>
+                <Button
+                  size="sm"
+                  onClick={handleSubmitReply}
+                  disabled={isSubmitting || !replyText.trim()}
+                >
+                  {isSubmitting ? "..." : "Ответить"}
+                </Button>
+              </div>
+            </div>
+          )}
+
+          <div className="flex flex-col">
+            {hasDeepReplies && threadUrl ? (
+              <Link
+                href={threadUrl}
+                className="mt-2 flex items-center gap-2 p-2 rounded-lg bg-muted/30 hover:bg-muted/50 text-xs font-bold text-primary transition-colors w-fit"
+              >
+                <ArrowRight className="h-4 w-4" />
+                Продолжить ветку ({totalReplies} {totalReplies === 1 ? "ответ" : "ответов"})
+              </Link>
+            ) : (
+              comment.replies?.map((reply) => (
+                <CommentItem
+                  key={reply.id}
+                  comment={reply}
+                  onReply={onReply}
+                  isThreadPage={isThreadPage}
+                  isParentHovered={isHighlighted}
+                />
+              ))
+            )}
           </div>
-        )
+        </>
       )}
     </div>
   );

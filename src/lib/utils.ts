@@ -96,3 +96,10 @@ export const getNotificationText = (type: INotification["type"]) => {
 };
 
 export const getBaseUrl = () => (typeof window !== "undefined" ? window.location.origin : "");
+
+export const getTotalRepliesCount = (replies?: IComment[]): number => {
+  if (!replies || replies.length === 0) {
+    return 0;
+  }
+  return replies.reduce((acc, reply) => acc + 1 + getTotalRepliesCount(reply.replies), 0);
+};
