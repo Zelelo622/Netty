@@ -2,12 +2,11 @@
 
 import { ArrowLeft } from "lucide-react";
 import Link from "next/link";
-import { useParams, useRouter } from "next/navigation";
+import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 
 import { LoadingSpinner } from "@/components/LoadingSpinner";
-import { Button } from "@/components/ui/button";
 import { useAuth } from "@/context/AuthContext";
 import CommentItem from "@/features/comments/components/CommentItem";
 import { ROUTES } from "@/lib/routes";
@@ -17,7 +16,6 @@ import { PostsService } from "@/services/posts.service";
 import { IComment, IPost } from "@/types/types";
 
 export default function CommentThreadPage() {
-  const router = useRouter();
   const params = useParams();
   const slug = Array.isArray(params.slug) ? params.slug[0] : params.slug;
   const postId = Array.isArray(params.postId) ? params.postId[0] : params.postId;
@@ -101,9 +99,9 @@ export default function CommentThreadPage() {
       <div className="flex items-center mb-6">
         <Link
           href={post ? ROUTES.POST(slug!, postId!) : ROUTES.COMMUNITY(slug!)}
-          className="text-base flex items-center gap-1 hover:opacity-80"
+          className="text-base flex items-center gap-3 hover:opacity-80"
         >
-          <ArrowLeft width={16} height={16} />
+          <ArrowLeft width={16} height={16} className="shrink-0" />
           {post ? `Вернуться к посту «${post.title}»` : "Назад"}
         </Link>
       </div>
@@ -114,15 +112,6 @@ export default function CommentThreadPage() {
         </div>
         <div className="flex items-center gap-2">
           <span className="opacity-50">Вы просматриваете отдельную ветку комментариев.</span>
-          <Button
-            variant="link"
-            className="cursor-pointer text-base text-primary p-0 hover:opacity-80"
-            onClick={() => {
-              router.push(`${ROUTES.POST(slug!, postId!)}#${commentId}`);
-            }}
-          >
-            Показать все комментарии
-          </Button>
         </div>
       </div>
       {rootComment ? (
