@@ -5,6 +5,7 @@ import { useCallback, useRef, useState } from "react";
 
 import { Card } from "@/components/ui/card";
 import { useChat } from "@/context/ChatContext";
+import { HeaderChat } from "@/features/chat/components/HeaderChat";
 import { cn } from "@/lib/utils";
 
 export function ChatWindow() {
@@ -67,7 +68,12 @@ export function ChatWindow() {
           />
         )}
       </div>
-      <Card className="flex flex-col h-full shadow-2xl border-b-0 rounded-b-none overflow-hidden animate-in slide-in-from-bottom-5 duration-300"></Card>
+      <Card className="flex flex-col h-full shadow-2xl border-b-0 rounded-b-none overflow-hidden animate-in slide-in-from-bottom-5 duration-300 py-1">
+        <div className="flex justify-between items-center">
+          <div>левая часть</div>
+          <HeaderChat />
+        </div>
+      </Card>
     </div>
   );
 }
