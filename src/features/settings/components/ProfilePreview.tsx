@@ -19,10 +19,8 @@ export const ProfilePreview = ({ user }: IProfilePreviewProps) => {
       <UserAvatar photoURL={user.photoURL} displayName={user.displayName} size={200} />
 
       <div className="text-center space-y-1">
-        <p className="font-bold text-sm truncate max-w-[200px]">
-          {user.displayName || "Без имени"}
-        </p>
-        <p className="text-[10px] text-muted-foreground truncate max-w-[200px]">{user.email}</p>
+        <p className="font-bold text-sm truncate max-w-50">{user.displayName || "Без имени"}</p>
+        <p className="text-[10px] text-muted-foreground truncate max-w-50">{user.email}</p>
       </div>
     </div>
   );
