@@ -13,6 +13,8 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { AuthService } from "@/services/auth.service";
+import { SettingsService } from "@/services/settings.service";
+import { configToMascotURL, DEFAULT_MASCOT_CONFIG } from "@/types/mascot";
 
 import { FormField } from "./FormFieldAuth";
 
@@ -36,6 +38,7 @@ export const RegisterForm = ({
     setLoading(true);
     try {
       await AuthService.register(email, password, name);
+      await SettingsService.updatePublicProfile(name, configToMascotURL(DEFAULT_MASCOT_CONFIG));
       toast.success("Аккаунт создан!");
       onSuccess();
     } catch (error: any) {

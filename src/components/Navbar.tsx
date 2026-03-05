@@ -7,7 +7,6 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -30,6 +29,7 @@ import { ModeToggle } from "./ThemeToggle";
 import { auth } from "../lib/firebase";
 import { ScrollArea } from "./ui/scroll-area";
 import { SidebarTrigger } from "./ui/sidebar";
+import { UserAvatar } from "./UserAvatar";
 
 function Navbar() {
   const { user, loading } = useAuth();
@@ -183,12 +183,11 @@ function Navbar() {
                       variant="ghost"
                       className="relative h-10 w-10 rounded-full cursor-pointer focus-visible:ring-0 focus-visible:ring-offset-0"
                     >
-                      <Avatar className="h-9 w-9 border border-primary/20 transition-transform hover:scale-105">
-                        <AvatarImage src={user.photoURL || ""} alt={user.displayName || "User"} />
-                        <AvatarFallback className="bg-primary/10 text-primary">
-                          {user.displayName?.charAt(0) || user.email?.charAt(0)}
-                        </AvatarFallback>
-                      </Avatar>
+                      <UserAvatar
+                        photoURL={user.photoURL}
+                        displayName={user.displayName}
+                        size={40}
+                      />
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent className="w-56" align="end" forceMount>
