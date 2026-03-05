@@ -10,6 +10,7 @@ import { toast } from "sonner";
 
 import { DeletePostModal } from "@/components/DeletePostModal";
 import { LoadingSpinner } from "@/components/LoadingSpinner";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -21,21 +22,20 @@ import {
 import { Separator } from "@/components/ui/separator";
 import { Textarea } from "@/components/ui/textarea";
 import { useAuth } from "@/context/AuthContext";
-import { useUserProfile } from "@/hooks/useUserProfile";
-import { UserProfileCache } from "@/lib/userProfileCache";
 import CommentItem from "@/features/comments/components/CommentItem";
 import { EditPostForm } from "@/features/posts/components/EditPostForm";
 import { PostActions } from "@/features/posts/components/PostActions";
 import { PostVote } from "@/features/posts/components/PostVote";
+import { useCommunity } from "@/hooks/useCommunity";
+import { useUserProfile } from "@/hooks/useUserProfile";
+import { CommunityCache } from "@/lib/communityCache";
 import { POST_FLAIRS } from "@/lib/constants";
 import { ROUTES } from "@/lib/routes";
+import { UserProfileCache } from "@/lib/userProfileCache";
 import { buildCommentTree, cn, findCommentDepth, getBaseUrl } from "@/lib/utils";
 import { CommentsService } from "@/services/comments.service";
 import { PostsService } from "@/services/posts.service";
 import { IComment, IPost } from "@/types/types";
-import { useCommunity } from "@/hooks/useCommunity";
-import { CommunityCache } from "@/lib/communityCache";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 export default function PostPage() {
   const searchParams = useSearchParams();

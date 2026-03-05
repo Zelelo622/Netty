@@ -7,6 +7,7 @@ import { useState } from "react";
 import { toast } from "sonner";
 
 import { DeletePostModal } from "@/components/DeletePostModal";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -18,6 +19,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Separator } from "@/components/ui/separator";
 import { useAuth } from "@/context/AuthContext";
+import { useCommunity } from "@/hooks/useCommunity";
 import { useUserProfile } from "@/hooks/useUserProfile";
 import { POST_FLAIRS } from "@/lib/constants";
 import { ROUTES } from "@/lib/routes";
@@ -27,8 +29,6 @@ import { PostsService } from "@/services/posts.service";
 import { PostActions } from "./PostActions";
 import { PostVote } from "./PostVote";
 import { IPostCardProps } from "./types";
-import { useCommunity } from "@/hooks/useCommunity";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 export const PostCard = ({ post }: IPostCardProps) => {
   const { user } = useAuth();
