@@ -27,7 +27,7 @@ interface ICommentItemProps {
   isParentHovered?: boolean;
 }
 
-const MAX_VISUAL_DEPTH = 4;
+export const MAX_VISUAL_DEPTH = 4;
 
 export default function CommentItem({
   comment,

@@ -46,7 +46,6 @@ export interface INotification {
   id: string;
   recipientId: string;
   issuerId: string;
-  issuerName: string;
   type: "REPLY" | "POST_VOTE" | "COMMENT_VOTE";
   postId: string;
   commentId?: string;

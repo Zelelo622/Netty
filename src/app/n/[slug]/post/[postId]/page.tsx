@@ -27,6 +27,7 @@ import { EditPostForm } from "@/features/posts/components/EditPostForm";
 import { PostActions } from "@/features/posts/components/PostActions";
 import { PostVote } from "@/features/posts/components/PostVote";
 import { useCommunity } from "@/hooks/useCommunity";
+import { useHighlightComment } from "@/hooks/useHighlightComment";
 import { useUserProfile } from "@/hooks/useUserProfile";
 import { CommunityCache } from "@/lib/communityCache";
 import { POST_FLAIRS } from "@/lib/constants";
@@ -58,6 +59,8 @@ export default function PostPage() {
   const community = useCommunity(post?.communityName);
   const isAuthor = user?.uid === post?.authorId;
   const flair = POST_FLAIRS.find((f) => post?.tags?.includes(f.id));
+
+  useHighlightComment(highlightId, isLoading, comments.length);
 
   useEffect(() => {
     if (!postId) return;
@@ -93,26 +96,6 @@ export default function PostPage() {
 
     return () => unsubscribe();
   }, [post?.id]);
-
-  useEffect(() => {
-    const id = highlightId || window.location.hash.replace("#", "");
-    if (!id || isLoading || comments.length === 0) return;
-
-    const timer = setTimeout(() => {
-      const element = document.getElementById(id);
-      if (!element) return;
-
-      element.scrollIntoView({ behavior: "smooth", block: "center" });
-      element.classList.add("bg-primary/10", "ring-2", "ring-primary/20");
-
-      setTimeout(() => {
-        element.classList.remove("bg-primary/10", "ring-2", "ring-primary/20");
-        router.replace(window.location.pathname + window.location.hash, { scroll: false });
-      }, 3000);
-    }, 100);
-
-    return () => clearTimeout(timer);
-  }, [highlightId, isLoading, comments.length]);
 
   const handleUpdatePost = async (newContent: string, newImageUrl: string) => {
     if (!post) return;
