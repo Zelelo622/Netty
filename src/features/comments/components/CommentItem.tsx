@@ -8,10 +8,11 @@ import { useParams } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
+import { UserAvatar } from "@/components/UserAvatar";
 import { useAuth } from "@/context/AuthContext";
+import { useUserProfile } from "@/hooks/useUserProfile";
 import { ROUTES } from "@/lib/routes";
 import { cn, getTotalRepliesCount } from "@/lib/utils";
 import { CommentsService } from "@/services/comments.service";
@@ -38,6 +39,8 @@ export default function CommentItem({
   const params = useParams();
   const communitySlug = Array.isArray(params.slug) ? params.slug[0] : params.slug;
   const postId = Array.isArray(params.postId) ? params.postId[0] : params.postId;
+
+  const { profile: author } = useUserProfile(comment.authorId);
 
   const [isEditing, setIsEditing] = useState(false);
   const [editText, setEditText] = useState(comment.text);
@@ -117,25 +120,31 @@ export default function CommentItem({
               isHighlighted ? "bg-primary/60" : "bg-muted-foreground/20"
             )}
           />
-
           <div
             onMouseEnter={() => setIsSelfHovered(true)}
             onMouseLeave={() => setIsSelfHovered(false)}
             onClick={() => setIsCollapsed(!isCollapsed)}
-            className="absolute left-[-4px] top-0 bottom-0 w-4 cursor-pointer z-10"
+            className="absolute -left-1 top-0 bottom-0 w-4 cursor-pointer z-10"
           />
         </>
       )}
 
       <div
-        className="flex items-center gap-2 cursor-pointer select-none hover:opacity-80 hover:bg-gray-700 hover:rounded-lg"
+        className="flex items-center gap-2 cursor-pointer select-none hover:opacity-80"
         onClick={() => setIsCollapsed((prev) => !prev)}
       >
-        <Avatar className="h-6 w-6">
-          <AvatarImage src={comment.authorImage} />
-          <AvatarFallback>{comment.authorName[0]}</AvatarFallback>
-        </Avatar>
-        <span className="text-xs font-bold">u/{comment.authorName}</span>
+        <UserAvatar
+          photoURL={author?.photoURL}
+          displayName={author?.displayName}
+          size={24}
+          className="rounded-full shrink-0"
+        />
+        <Link
+          href={author?.displayName ? ROUTES.PROFILE(author.displayName) : "#"}
+          className="text-xs font-bold text-muted-foreground z-10 hover:text-foreground hover:underline transition-colors"
+        >
+          u/{author?.displayName ?? "..."}
+        </Link>
         <span className="text-[10px] text-muted-foreground">
           {formatDistanceToNow(commentDate, { addSuffix: true, locale: ru })}
         </span>

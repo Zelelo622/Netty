@@ -10,7 +10,6 @@ import { toast } from "sonner";
 
 import { DeletePostModal } from "@/components/DeletePostModal";
 import { LoadingSpinner } from "@/components/LoadingSpinner";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -22,6 +21,8 @@ import {
 import { Separator } from "@/components/ui/separator";
 import { Textarea } from "@/components/ui/textarea";
 import { useAuth } from "@/context/AuthContext";
+import { useUserProfile } from "@/hooks/useUserProfile";
+import { UserProfileCache } from "@/lib/userProfileCache";
 import CommentItem from "@/features/comments/components/CommentItem";
 import { EditPostForm } from "@/features/posts/components/EditPostForm";
 import { PostActions } from "@/features/posts/components/PostActions";
@@ -32,6 +33,9 @@ import { buildCommentTree, cn, findCommentDepth, getBaseUrl } from "@/lib/utils"
 import { CommentsService } from "@/services/comments.service";
 import { PostsService } from "@/services/posts.service";
 import { IComment, IPost } from "@/types/types";
+import { useCommunity } from "@/hooks/useCommunity";
+import { CommunityCache } from "@/lib/communityCache";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 export default function PostPage() {
   const searchParams = useSearchParams();
@@ -50,6 +54,8 @@ export default function PostPage() {
   const [rootCommentText, setRootCommentText] = useState("");
   const [isSubmittingComment, setIsSubmittingComment] = useState(false);
 
+  const { profile } = useUserProfile(post?.authorId);
+  const community = useCommunity(post?.communityName);
   const isAuthor = user?.uid === post?.authorId;
   const flair = POST_FLAIRS.find((f) => post?.tags?.includes(f.id));
 
@@ -60,7 +66,11 @@ export default function PostPage() {
       try {
         setIsLoading(true);
         const postData = await PostsService.getPostById(postId as string);
-        if (postData) setPost(postData);
+        if (postData) {
+          setPost(postData);
+          UserProfileCache.fetch(postData.authorId);
+          CommunityCache.fetch(postData.communityName);
+        }
       } catch (error) {
         console.error("Ошибка при загрузке поста:", error);
       } finally {
@@ -75,6 +85,9 @@ export default function PostPage() {
     if (!post?.id) return;
 
     const unsubscribe = CommentsService.subscribeToPostComments(post.id, (flatComments) => {
+      const uniqueAuthorIds = [...new Set(flatComments.map((c) => c.authorId))];
+      uniqueAuthorIds.forEach((uid) => UserProfileCache.fetch(uid));
+
       setComments(buildCommentTree(flatComments));
     });
 
@@ -133,15 +146,7 @@ export default function PostPage() {
 
     try {
       await CommentsService.addComment(
-        {
-          postId: post.id,
-          parentId,
-          text,
-          authorId: user.uid,
-          authorName: user.displayName || "Аноним",
-          authorImage: user.photoURL || "",
-          depth,
-        },
+        { postId: post.id, parentId, text, authorId: user.uid, depth },
         post,
         parentCommentAuthorId
       );
@@ -191,9 +196,11 @@ export default function PostPage() {
     <div className="max-w-3xl mx-auto px-4 py-8">
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-3">
-          <Avatar className="h-10 w-10">
-            <AvatarImage src={post.authorImage} />
-            <AvatarFallback>{post.authorName[0]}</AvatarFallback>
+          <Avatar className="h-10 w-10 shrink-0">
+            <AvatarImage src={community?.avatarUrl} />
+            <AvatarFallback className="text-sm font-bold">
+              {post.communityName[0].toUpperCase()}
+            </AvatarFallback>
           </Avatar>
           <div className="flex flex-col">
             <div className="flex items-center gap-2">
@@ -208,7 +215,13 @@ export default function PostPage() {
               </Badge>
             </div>
             <span className="text-xs text-muted-foreground flex flex-wrap items-center gap-1">
-              <span>u/{post.authorName} •</span>
+              <Link
+                href={profile?.displayName ? ROUTES.PROFILE(profile.displayName) : "#"}
+                className="text-xs font-bold text-muted-foreground z-10 hover:text-foreground hover:underline transition-colors"
+              >
+                u/{profile?.displayName ?? "..."}
+              </Link>
+              <span>•</span>
               <span>{formatDistanceToNow(postDate, { addSuffix: true, locale: ru })}</span>
               {updatedDate && (
                 <span className="italic text-muted-foreground/70">
@@ -234,7 +247,6 @@ export default function PostPage() {
               <Languages className="h-4 w-4" />
               <span>Перевести</span>
             </DropdownMenuItem>
-
             {isAuthor && (
               <>
                 <DropdownMenuItem
@@ -292,7 +304,7 @@ export default function PostPage() {
             </div>
           )}
           {post.content && (
-            <p className="text-base break-words md:text-lg text-foreground/80 whitespace-pre-wrap leading-relaxed">
+            <p className="text-base wrap-break-word md:text-lg text-foreground/80 whitespace-pre-wrap leading-relaxed">
               {post.content}
             </p>
           )}
@@ -303,7 +315,6 @@ export default function PostPage() {
 
       <div className="flex items-center justify-between">
         <PostVote postId={post.id} initialVotes={post.votes} />
-
         <PostActions
           commentsCount={post.commentsCount}
           title={post.title}

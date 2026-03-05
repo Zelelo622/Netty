@@ -62,7 +62,7 @@ export const ProfileSettings = ({ initialData }: IProfileSettingsProps) => {
   const handleEditorApply = (newConfig: IMascotConfig, _png: string) => {
     setMascotConfig(newConfig);
     setEditorOpen(false);
-    toast.success("Аватар обновлён — не забудь сохранить профиль!");
+    toast.info("Аватар обновлён — не забудь сохранить профиль!");
   };
 
   return (

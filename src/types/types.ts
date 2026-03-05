@@ -19,8 +19,6 @@ export interface IPost {
   communityId: string;
   communityName: string;
   authorId: string;
-  authorName: string;
-  authorImage?: string;
   createdAt: Timestamp;
   votes: number;
   commentsCount: number;
@@ -35,8 +33,6 @@ export interface IComment {
   postId: string;
   parentId: string | null;
   authorId: string;
-  authorName: string;
-  authorImage?: string;
   text: string;
   createdAt: Timestamp;
   votes: number;

@@ -191,16 +191,18 @@ function Navbar() {
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent className="w-56" align="end" forceMount>
-                    <DropdownMenuLabel className="font-normal">
-                      <div className="flex flex-col space-y-1">
-                        <p className="text-sm font-medium leading-none">
-                          {user.displayName || "Пользователь"}
-                        </p>
-                        <p className="text-xs leading-none text-muted-foreground truncate">
-                          {user.email}
-                        </p>
-                      </div>
-                    </DropdownMenuLabel>
+                    <DropdownMenuItem className="cursor-pointer">
+                      <Link href={ROUTES.PROFILE(user.displayName!)}>
+                        <div className="flex flex-col space-y-1">
+                          <p className="text-sm font-medium leading-none">
+                            {user.displayName || "Пользователь"}
+                          </p>
+                          <p className="text-xs leading-none text-muted-foreground truncate">
+                            {user.email}
+                          </p>
+                        </div>
+                      </Link>
+                    </DropdownMenuItem>
                     <DropdownMenuSeparator />
                     <DropdownMenuItem asChild className="cursor-pointer">
                       <Link href={ROUTES.SETTINGS}>Настройки</Link>

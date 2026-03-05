@@ -29,9 +29,15 @@ interface ICreateComminutyModalProps {
   isOpen: boolean;
   onClose: () => void;
   initialData?: ICommunity | null;
+  onSuccess?: (updated: ICommunity) => void;
 }
 
-export function CreateCommunityModal({ isOpen, onClose, initialData }: ICreateComminutyModalProps) {
+export function CreateCommunityModal({
+  isOpen,
+  onClose,
+  initialData,
+  onSuccess,
+}: ICreateComminutyModalProps) {
   const { user } = useAuth();
   const router = useRouter();
   const isEditMode = !!initialData;
@@ -92,6 +98,10 @@ export function CreateCommunityModal({ isOpen, onClose, initialData }: ICreateCo
           avatarUrl,
           bannerUrl,
         });
+
+        const fresh = await CommunityService.getCommunityData(finalSlug ?? initialData.name);
+        if (fresh && onSuccess) onSuccess(fresh);
+
         toast.success("Сообщество обновлено");
       } else {
         finalSlug = await CommunityService.createCommunity({
@@ -186,7 +196,6 @@ export function CreateCommunityModal({ isOpen, onClose, initialData }: ICreateCo
                   Удалить
                 </Button>
               )}
-
               <div className="flex gap-2 justify-end">
                 <Button
                   type="button"

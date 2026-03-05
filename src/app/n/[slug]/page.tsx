@@ -138,6 +138,7 @@ export default function CommunityPage() {
         isOpen={isEditModalOpen}
         onClose={() => setIsEditModalOpen(false)}
         initialData={community}
+        onSuccess={(updated) => setCommunity(updated)}
       />
 
       <CommunityHeader community={community}>

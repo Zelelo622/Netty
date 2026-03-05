@@ -10,6 +10,7 @@ import { LoadingSpinner } from "@/components/LoadingSpinner";
 import { useAuth } from "@/context/AuthContext";
 import CommentItem from "@/features/comments/components/CommentItem";
 import { ROUTES } from "@/lib/routes";
+import { UserProfileCache } from "@/lib/userProfileCache";
 import { buildCommentTree, getDescendants } from "@/lib/utils";
 import { CommentsService } from "@/services/comments.service";
 import { PostsService } from "@/services/posts.service";
@@ -47,8 +48,10 @@ export default function CommentThreadPage() {
       }
 
       const descendants = getDescendants(flatComments, commentId!);
-
       const branchComments = [root, ...descendants];
+
+      const uniqueAuthorIds = [...new Set(branchComments.map((c) => c.authorId))];
+      uniqueAuthorIds.forEach((uid) => UserProfileCache.fetch(uid));
 
       const depthOffset = root.depth;
       const normalize = branchComments.map((c) => ({
@@ -76,23 +79,13 @@ export default function CommentThreadPage() {
     const depth = parentComment ? parentComment.depth + 1 : 0;
 
     await CommentsService.addComment(
-      {
-        postId: post.id,
-        parentId,
-        text,
-        authorId: user.uid,
-        authorName: user.displayName || "Аноним",
-        authorImage: user.photoURL || "",
-        depth,
-      },
+      { postId: post.id, parentId, text, authorId: user.uid, depth },
       post,
       parentCommentAuthorId
     );
   };
 
-  if (isLoading) {
-    return <LoadingSpinner />;
-  }
+  if (isLoading) return <LoadingSpinner />;
 
   return (
     <div className="max-w-3xl mx-auto px-4 py-8">

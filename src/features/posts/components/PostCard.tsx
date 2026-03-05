@@ -7,7 +7,6 @@ import { useState } from "react";
 import { toast } from "sonner";
 
 import { DeletePostModal } from "@/components/DeletePostModal";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -19,6 +18,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Separator } from "@/components/ui/separator";
 import { useAuth } from "@/context/AuthContext";
+import { useUserProfile } from "@/hooks/useUserProfile";
 import { POST_FLAIRS } from "@/lib/constants";
 import { ROUTES } from "@/lib/routes";
 import { cn, getBaseUrl } from "@/lib/utils";
@@ -27,11 +27,16 @@ import { PostsService } from "@/services/posts.service";
 import { PostActions } from "./PostActions";
 import { PostVote } from "./PostVote";
 import { IPostCardProps } from "./types";
+import { useCommunity } from "@/hooks/useCommunity";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 export const PostCard = ({ post }: IPostCardProps) => {
   const { user } = useAuth();
   const router = useRouter();
   const isAuthor = user?.uid === post.authorId;
+
+  const { profile: author } = useUserProfile(post.authorId);
+  const community = useCommunity(post.communityName);
 
   const [isDeleting, setIsDeleting] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
@@ -62,9 +67,11 @@ export const PostCard = ({ post }: IPostCardProps) => {
       <Card className="hover:border-primary/20 transition-colors gap-3">
         <div className="px-4 sm:px-6">
           <div className="flex items-center gap-2 mb-3">
-            <Avatar className="h-6 w-6">
-              <AvatarImage src={post.authorImage} />
-              <AvatarFallback>{post.authorName[0]}</AvatarFallback>
+            <Avatar className="h-6 w-6 shrink-0">
+              <AvatarImage src={community?.avatarUrl} />
+              <AvatarFallback className="text-[10px] font-bold">
+                {post.communityName[0].toUpperCase()}
+              </AvatarFallback>
             </Avatar>
             <div className="flex flex-wrap items-center gap-x-2 text-[10px] sm:text-xs">
               <Link
@@ -74,7 +81,12 @@ export const PostCard = ({ post }: IPostCardProps) => {
                 n/{post.communityName}
               </Link>
               <span className="text-muted-foreground">•</span>
-              <span className="text-muted-foreground">u/{post.authorName}</span>
+              <Link
+                href={author?.displayName ? ROUTES.PROFILE(author.displayName) : "#"}
+                className="text-xs font-bold text-muted-foreground z-10 hover:text-foreground hover:underline transition-colors"
+              >
+                u/{author?.displayName ?? "..."}
+              </Link>
               <span className="text-muted-foreground">{formattedDate}</span>
             </div>
             <div className="ml-auto">
@@ -115,7 +127,6 @@ export const PostCard = ({ post }: IPostCardProps) => {
           </div>
 
           <div className="space-y-2">
-            {/* Ссылка теперь использует post.id вместо post.slug */}
             <Link href={ROUTES.POST(post.communityName, post.id)} className="group block">
               <h2 className="mb-2 text-lg font-bold leading-tight sm:text-2xl group-hover:text-primary transition-colors line-clamp-2">
                 {post.title}
