@@ -62,6 +62,11 @@ export const PostCard = ({ post }: IPostCardProps) => {
     }
   };
 
+  const handleTranslateAndNavigate = () => {
+    const postUrl = `${ROUTES.POST(post.communityName, post.id)}?translate=true`;
+    router.push(postUrl);
+  };
+
   return (
     <>
       <Card className="hover:border-primary/20 transition-colors gap-3">
@@ -102,9 +107,8 @@ export const PostCard = ({ post }: IPostCardProps) => {
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="w-56">
                   <DropdownMenuItem
-                    disabled
                     className="cursor-pointer gap-2"
-                    onClick={() => toast.info("Перевод в разработке")}
+                    onClick={handleTranslateAndNavigate}
                   >
                     <Languages className="h-4 w-4" />
                     <span>Показать на другом языке</span>

@@ -41,6 +41,7 @@ import { IComment, IPost } from "@/types/types";
 export default function PostPage() {
   const searchParams = useSearchParams();
   const highlightId = searchParams.get("highlight");
+  const autoTranslate = searchParams.get("translate") === "true";
   const { postId } = useParams();
   const router = useRouter();
   const { user } = useAuth();
@@ -54,6 +55,12 @@ export default function PostPage() {
   const [comments, setComments] = useState<IComment[]>([]);
   const [rootCommentText, setRootCommentText] = useState("");
   const [isSubmittingComment, setIsSubmittingComment] = useState(false);
+
+  const [translatedData, setTranslatedData] = useState<{ title: string; content: string } | null>(
+    null
+  );
+  const [isTranslating, setIsTranslating] = useState(false);
+  const [isShowingTranslation, setIsShowingTranslation] = useState(false);
 
   const { profile } = useUserProfile(post?.authorId);
   const community = useCommunity(post?.communityName);
@@ -96,6 +103,15 @@ export default function PostPage() {
 
     return () => unsubscribe();
   }, [post?.id]);
+
+  useEffect(() => {
+    if (autoTranslate && post && !translatedData && !isTranslating) {
+      handleTranslateToggle();
+
+      const newUrl = window.location.pathname;
+      window.history.replaceState({}, "", newUrl);
+    }
+  }, [post, autoTranslate]);
 
   const handleUpdatePost = async (newContent: string, newImageUrl: string) => {
     if (!post) return;
@@ -163,8 +179,46 @@ export default function PostPage() {
     }
   };
 
-  if (isLoading) return <LoadingSpinner />;
-  if (!post) return <div className="text-center py-20">Пост не найден</div>;
+  const handleTranslateToggle = async () => {
+    if (translatedData) {
+      setIsShowingTranslation(!isShowingTranslation);
+      return;
+    }
+
+    if (!post) return;
+
+    setIsTranslating(true);
+    try {
+      const response = await fetch("/api/translate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          title: post.title,
+          content: post.content,
+          targetLang: "en",
+        }),
+      });
+
+      if (!response.ok) throw new Error("Ошибка API");
+
+      const data = await response.json();
+      setTranslatedData({ title: data.title, content: data.content });
+      setIsShowingTranslation(true);
+      toast.success("Переведено на английский");
+    } catch (error) {
+      toast.error("Не удалось перевести пост");
+      console.error(error);
+    } finally {
+      setIsTranslating(false);
+    }
+  };
+
+  if (isLoading) {
+    return <LoadingSpinner />;
+  }
+  if (!post) {
+    return <div className="text-center py-20">Пост не найден</div>;
+  }
 
   const postDate = post.createdAt?.toDate
     ? post.createdAt.toDate()
@@ -223,12 +277,18 @@ export default function PostPage() {
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-56 rounded-xl">
             <DropdownMenuItem
-              disabled
               className="cursor-pointer gap-2"
-              onClick={() => toast.info("В разработке")}
+              onClick={handleTranslateToggle}
+              disabled={isTranslating}
             >
-              <Languages className="h-4 w-4" />
-              <span>Перевести</span>
+              <Languages className={cn("h-4 w-4", isTranslating && "animate-pulse")} />
+              <span>
+                {isTranslating
+                  ? "Переводим..."
+                  : isShowingTranslation
+                    ? "Показать оригинал"
+                    : "Перевести (EN)"}
+              </span>
             </DropdownMenuItem>
             {isAuthor && (
               <>
@@ -264,7 +324,9 @@ export default function PostPage() {
             {flair.label}
           </Badge>
         )}
-        <h1 className="text-xl md:text-2xl font-black mb-6 leading-tight">{post.title}</h1>
+        <h1 className="text-xl md:text-2xl font-black mb-6 leading-tight">
+          {isShowingTranslation && translatedData ? translatedData.title : post.title}
+        </h1>
       </div>
 
       {isEditing ? (
@@ -288,7 +350,13 @@ export default function PostPage() {
           )}
           {post.content && (
             <p className="text-base wrap-break-word md:text-lg text-foreground/80 whitespace-pre-wrap leading-relaxed">
-              {post.content}
+              {isShowingTranslation && translatedData ? translatedData.content : post.content}
+            </p>
+          )}
+
+          {isShowingTranslation && (
+            <p className="text-xs text-muted-foreground italic">
+              Переведено автоматически через Google Translate
             </p>
           )}
         </div>
