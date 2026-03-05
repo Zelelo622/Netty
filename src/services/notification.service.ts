@@ -2,6 +2,7 @@ import {
   addDoc,
   collection,
   doc,
+  getDoc,
   getDocs,
   onSnapshot,
   orderBy,
@@ -13,13 +14,11 @@ import {
 } from "firebase/firestore";
 
 import { db } from "@/lib/firebase";
-import { INotification } from "@/types/types";
+import { IComment, INotification } from "@/types/types";
 
 export const NotificationService = {
   async createNotification(notificationData: Omit<INotification, "id" | "createdAt" | "read">) {
-    if (notificationData.recipientId === notificationData.issuerId) {
-      return;
-    }
+    if (notificationData.recipientId === notificationData.issuerId) return;
 
     await addDoc(collection(db, "notifications"), {
       ...notificationData,
@@ -55,5 +54,10 @@ export const NotificationService = {
     const batch = writeBatch(db);
     snapshot.docs.forEach((doc) => batch.delete(doc.ref));
     await batch.commit();
+  },
+
+  async getCommentById(commentId: string): Promise<IComment | null> {
+    const snap = await getDoc(doc(db, "comments", commentId));
+    return snap.exists() ? ({ id: snap.id, ...snap.data() } as IComment) : null;
   },
 };

@@ -2,14 +2,16 @@
 
 import { ArrowLeft } from "lucide-react";
 import Link from "next/link";
-import { useParams } from "next/navigation";
+import { useParams, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 
 import { LoadingSpinner } from "@/components/LoadingSpinner";
 import { useAuth } from "@/context/AuthContext";
 import CommentItem from "@/features/comments/components/CommentItem";
+import { useHighlightComment } from "@/hooks/useHighlightComment";
 import { ROUTES } from "@/lib/routes";
+import { UserProfileCache } from "@/lib/userProfileCache";
 import { buildCommentTree, getDescendants } from "@/lib/utils";
 import { CommentsService } from "@/services/comments.service";
 import { PostsService } from "@/services/posts.service";
@@ -17,6 +19,8 @@ import { IComment, IPost } from "@/types/types";
 
 export default function CommentThreadPage() {
   const params = useParams();
+  const searchParams = useSearchParams();
+  const highlightId = searchParams.get("highlight");
   const slug = Array.isArray(params.slug) ? params.slug[0] : params.slug;
   const postId = Array.isArray(params.postId) ? params.postId[0] : params.postId;
   const commentId = Array.isArray(params.commentId) ? params.commentId[0] : params.commentId;
@@ -27,6 +31,8 @@ export default function CommentThreadPage() {
   const [rootComment, setRootComment] = useState<IComment | null>(null);
   const [allComments, setAllComments] = useState<IComment[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+
+  useHighlightComment(highlightId, isLoading, rootComment ? 1 : 0);
 
   useEffect(() => {
     if (!postId) return;
@@ -47,8 +53,10 @@ export default function CommentThreadPage() {
       }
 
       const descendants = getDescendants(flatComments, commentId!);
-
       const branchComments = [root, ...descendants];
+
+      const uniqueAuthorIds = [...new Set(branchComments.map((c) => c.authorId))];
+      uniqueAuthorIds.forEach((uid) => UserProfileCache.fetch(uid));
 
       const depthOffset = root.depth;
       const normalize = branchComments.map((c) => ({
@@ -76,23 +84,13 @@ export default function CommentThreadPage() {
     const depth = parentComment ? parentComment.depth + 1 : 0;
 
     await CommentsService.addComment(
-      {
-        postId: post.id,
-        parentId,
-        text,
-        authorId: user.uid,
-        authorName: user.displayName || "Аноним",
-        authorImage: user.photoURL || "",
-        depth,
-      },
+      { postId: post.id, parentId, text, authorId: user.uid, depth },
       post,
       parentCommentAuthorId
     );
   };
 
-  if (isLoading) {
-    return <LoadingSpinner />;
-  }
+  if (isLoading) return <LoadingSpinner />;
 
   return (
     <div className="max-w-3xl mx-auto px-4 py-8">

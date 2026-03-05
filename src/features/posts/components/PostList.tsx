@@ -2,10 +2,12 @@
 
 import { useWindowVirtualizer } from "@tanstack/react-virtual";
 import Link from "next/link";
-import { useLayoutEffect, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 
 import { Button } from "@/components/ui/button";
+import { CommunityCache } from "@/lib/communityCache";
 import { ROUTES } from "@/lib/routes";
+import { UserProfileCache } from "@/lib/userProfileCache";
 
 import { PostCard } from "./PostCard";
 import { IPostListProps } from "./types";
@@ -15,6 +17,15 @@ import { LoadingSpinner } from "../../../components/LoadingSpinner";
 const PostList = ({ posts, isLoading, activeTab, isAuth }: IPostListProps) => {
   const listRef = useRef<HTMLDivElement>(null);
   const [marginTop, setMarginTop] = useState(0);
+
+  useEffect(() => {
+    if (!posts.length) return;
+    const uniqueIds = [...new Set(posts.map((p) => p.authorId))];
+    uniqueIds.forEach((uid) => UserProfileCache.fetch(uid));
+
+    const uniqueCommunities = [...new Set(posts.map((p) => p.communityName))];
+    uniqueCommunities.forEach((name) => CommunityCache.fetch(name));
+  }, [posts]);
 
   useLayoutEffect(() => {
     if (listRef.current) {

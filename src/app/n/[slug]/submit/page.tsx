@@ -86,8 +86,6 @@ export default function CreatePostPage() {
         communityId: selectedCommunity,
         communityName: community?.name || "unknown",
         authorId: user.uid,
-        authorName: user.displayName || "User",
-        authorImage: user.photoURL || "",
         imageUrl: imageUrl.trim() || undefined,
         tags: selectedFlair ? [selectedFlair] : [],
       });

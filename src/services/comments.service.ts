@@ -37,7 +37,6 @@ export const CommentsService = {
     if (data.parentId && parentCommentAuthorId) {
       await NotificationService.createNotification({
         issuerId: data.authorId,
-        issuerName: data.authorName,
         postId: post.id,
         communityName: post.communityName,
         commentId: commentRef.id,

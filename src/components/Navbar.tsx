@@ -18,7 +18,10 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useAuth } from "@/context/AuthContext";
+import { MAX_VISUAL_DEPTH } from "@/features/comments/components/CommentItem";
+import { NotificationItem } from "@/features/notifications/components/NotificationItem";
 import { ROUTES } from "@/lib/routes";
+import { UserProfileCache } from "@/lib/userProfileCache";
 import { getNotificationText } from "@/lib/utils";
 import { NotificationService } from "@/services/notification.service";
 import { INotification } from "@/types/types";
@@ -42,10 +45,14 @@ function Navbar() {
     if (!user?.uid) return;
 
     const unsubscribe = NotificationService.subscribeToNotifications(user.uid, (data) => {
+      const uniqueIds = [...new Set(data.map((n) => n.issuerId))];
+      uniqueIds.forEach((uid) => UserProfileCache.fetch(uid));
+
       if (notifications.length > 0 && data.length > notifications.length) {
         const newNotify = data[0];
         if (!newNotify.read) {
-          toast.info(`${newNotify.issuerName} ${getNotificationText(newNotify.type)}`, {
+          const issuerName = UserProfileCache.get(newNotify.issuerId)?.displayName ?? "Кто-то";
+          toast.info(`${issuerName} ${getNotificationText(newNotify.type)}`, {
             description: "Нажмите, чтобы посмотреть",
             position: "top-right",
             action: {
@@ -89,10 +96,24 @@ function Navbar() {
 
     const postUrl = ROUTES.POST(notification.communityName, notification.postId);
 
-    if (notification.commentId) {
-      router.push(`${postUrl}?highlight=${notification.commentId}#${notification.commentId}`);
-    } else {
+    if (!notification.commentId) {
       router.push(postUrl);
+      return;
+    }
+
+    const comment = await NotificationService.getCommentById(notification.commentId);
+
+    if (!comment) {
+      router.push(postUrl);
+      return;
+    }
+
+    if (comment.depth >= MAX_VISUAL_DEPTH && comment.parentId) {
+      router.push(
+        `${ROUTES.COMMENT_THREAD(notification.communityName, notification.postId, comment.parentId)}?highlight=${notification.commentId}#${notification.commentId}`
+      );
+    } else {
+      router.push(`${postUrl}?highlight=${notification.commentId}#${notification.commentId}`);
     }
   };
 
@@ -152,21 +173,11 @@ function Navbar() {
                     <ScrollArea className="h-[300px]">
                       {notifications.length > 0 ? (
                         notifications.map((n) => (
-                          <DropdownMenuItem
+                          <NotificationItem
                             key={n.id}
-                            className={`flex flex-col items-start gap-1 p-3 cursor-pointer focus:bg-muted ${!n.read ? "bg-primary/5" : ""}`}
-                            onClick={() => handleNotificationClick(n)}
-                          >
-                            <div className="flex items-center gap-2 w-full">
-                              <span className="font-bold text-xs">{n.issuerName}</span>
-                              <span className="text-xs text-muted-foreground">
-                                {getNotificationText(n.type)}
-                              </span>
-                            </div>
-                            <span className="text-[10px] text-muted-foreground uppercase">
-                              недавно
-                            </span>
-                          </DropdownMenuItem>
+                            notification={n}
+                            onClick={handleNotificationClick}
+                          />
                         ))
                       ) : (
                         <div className="p-4 text-center text-sm text-muted-foreground">
@@ -191,16 +202,18 @@ function Navbar() {
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent className="w-56" align="end" forceMount>
-                    <DropdownMenuLabel className="font-normal">
-                      <div className="flex flex-col space-y-1">
-                        <p className="text-sm font-medium leading-none">
-                          {user.displayName || "Пользователь"}
-                        </p>
-                        <p className="text-xs leading-none text-muted-foreground truncate">
-                          {user.email}
-                        </p>
-                      </div>
-                    </DropdownMenuLabel>
+                    <DropdownMenuItem className="cursor-pointer">
+                      <Link href={ROUTES.PROFILE(user.displayName!)}>
+                        <div className="flex flex-col space-y-1">
+                          <p className="text-sm font-medium leading-none">
+                            {user.displayName || "Пользователь"}
+                          </p>
+                          <p className="text-xs leading-none text-muted-foreground truncate">
+                            {user.email}
+                          </p>
+                        </div>
+                      </Link>
+                    </DropdownMenuItem>
                     <DropdownMenuSeparator />
                     <DropdownMenuItem asChild className="cursor-pointer">
                       <Link href={ROUTES.SETTINGS}>Настройки</Link>
