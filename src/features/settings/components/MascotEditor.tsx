@@ -126,7 +126,7 @@ export const MascotEditor: React.FC<IMascotEditorProps> = ({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-3xl! p-0 gap-0 overflow-hidden">
         <div className="flex flex-col sm:flex-row max-h-[90dvh]">
-          <div className="flex flex-row sm:flex-col items-center gap-4 p-5 sm:p-8 sm:w-60 shrink-0 bg-gradient-to-br from-blue-50 to-purple-50 dark:from-blue-950/20 dark:to-purple-950/20">
+          <div className="flex flex-row sm:flex-col items-center gap-4 p-5 sm:p-8 sm:w-60 shrink-0 bg-linear-to-br from-blue-50 to-purple-50 dark:from-blue-950/20 dark:to-purple-950/20">
             <div className="hidden sm:flex items-center gap-2 px-3 py-1 bg-blue-100 dark:bg-blue-900/40 rounded-full text-blue-600 dark:text-blue-400 text-[10px] font-black tracking-widest uppercase">
               <Wand2 size={12} /> Результат
             </div>
