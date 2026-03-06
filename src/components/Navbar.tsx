@@ -30,10 +30,10 @@ import { INotification } from "@/types/types";
 import { LogoTextIcon } from "./icons/LogoTextIcon";
 import { MaskotIcon } from "./icons/MaskotIcon";
 import { ModeToggle } from "./ThemeToggle";
-import { auth } from "../lib/firebase";
 import { ScrollArea } from "./ui/scroll-area";
 import { SidebarTrigger } from "./ui/sidebar";
 import { UserAvatar } from "./UserAvatar";
+import { auth } from "../lib/firebase";
 
 function Navbar() {
   const { user, loading } = useAuth();

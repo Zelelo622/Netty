@@ -6,12 +6,13 @@ import { useCallback, useRef, useState } from "react";
 import { Card } from "@/components/ui/card";
 import { useChat } from "@/context/ChatContext";
 import { HeaderChat } from "@/features/chat/components/HeaderChat";
+import { HeaderSettings } from "@/features/chat/components/HeaderSettings";
 import { cn } from "@/lib/utils";
 
 export function ChatWindow() {
   const { isOpen, closeChat } = useChat();
 
-  const [size, setSize] = useState({ width: 550, height: 450 });
+  const [size, setSize] = useState({ width: 780, height: 680 });
   const [isHoveringResize, setIsHoveringResize] = useState(false);
   const isResizing = useRef(false);
 
@@ -35,10 +36,10 @@ export function ChatWindow() {
     const viewportHeight = window.innerHeight;
 
     const calculatedWidth = viewportWidth - e.clientX - 40;
-    const constrainedWidth = Math.max(450, Math.min(calculatedWidth, viewportWidth - 320));
+    const constrainedWidth = Math.max(780, Math.min(calculatedWidth, viewportWidth - 320));
 
     const calculatedHeight = viewportHeight - e.clientY;
-    const constrainedHeight = Math.max(350, Math.min(calculatedHeight, viewportHeight - 84));
+    const constrainedHeight = Math.max(680, Math.min(calculatedHeight, viewportHeight - 84));
 
     setSize({
       width: constrainedWidth,
@@ -57,7 +58,7 @@ export function ChatWindow() {
         onMouseDown={startResizing}
         onMouseEnter={() => setIsHoveringResize(true)}
         onMouseLeave={() => setIsHoveringResize(false)}
-        className="absolute -top-1 -left-1 w-5 h-5 cursor-nwse-resize z-50 transition-color hover:bg-primary/10 rounded-tl-lg"
+        className="absolute -top-1 -left-1 w-5 h-5 cursor-nwse-resize z-50 transition-color hover:bg-accent/50 rounded-tl-lg"
       >
         {isHoveringResize && (
           <MoveUpLeft
@@ -68,10 +69,25 @@ export function ChatWindow() {
           />
         )}
       </div>
-      <Card className="flex flex-col h-full shadow-2xl border-b-0 rounded-b-none overflow-hidden animate-in slide-in-from-bottom-5 duration-300 py-1">
-        <div className="flex justify-between items-center">
-          <div>левая часть</div>
-          <HeaderChat />
+      <Card className="flex flex-col h-full shadow-2xl border rounded-br-none overflow-hidden animate-in slide-in-from-bottom-5 duration-300 p-0">
+        <div className="grid h-full grid-cols-[30%_1fr] min-w-0">
+          {/* Левая панель */}
+          <div className="flex flex-col border-r bg-muted/20 min-w-[min(500px,30%)]">
+            <HeaderSettings />
+            <div className="flex-1 overflow-y-auto p-4">
+              <div>Чат</div>
+              <div>Чат</div>
+              <div>Чат</div>
+              <div>Чат</div>
+            </div>
+          </div>
+
+          {/* Правая панель — чат */}
+          <div className="flex flex-col min-w-0">
+            <HeaderChat />
+
+            <div className="flex-1 overflow-y-auto">{/* сообщения */}</div>
+          </div>
         </div>
       </Card>
     </div>
