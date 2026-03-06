@@ -1,3 +1,4 @@
+import { UserAvatar } from "@/components/UserAvatar";
 import { cn } from "@/lib/utils";
 import { IMessage } from "@/types/types";
 
@@ -12,7 +13,7 @@ export const MessageBubble = ({ message }: IMessageBubbleProps) => {
     <div
       className={cn("flex gap-3 max-w-[80%] items-end", isUser ? "ml-auto justify-end" : "mr-auto")}
     >
-      {!isUser && <div className="w-8 h-8 rounded-full bg-primary/20 shrink-0" />}
+      {!isUser && <UserAvatar />}
 
       <div
         className={cn(
@@ -29,7 +30,7 @@ export const MessageBubble = ({ message }: IMessageBubbleProps) => {
         </div>
       </div>
 
-      {isUser && <div className="w-8 h-8 rounded-full bg-primary/10 shrink-0" />}
+      {isUser && <UserAvatar />}
     </div>
   );
 };

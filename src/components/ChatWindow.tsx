@@ -10,6 +10,7 @@ import { HeaderSettings } from "@/features/chat/components/HeaderSettings";
 import { InputChat } from "@/features/chat/components/InputChat";
 import { cn } from "@/lib/utils";
 import { MessageBubble } from "@/features/chat/components/MessageBubble";
+import { ChatItem } from "@/features/chat/components/ChatItem";
 
 export function ChatWindow() {
   const { isOpen, closeChat } = useChat();
@@ -78,10 +79,26 @@ export function ChatWindow() {
           <div className="flex flex-col border-r bg-muted/20 min-w-[min(500px,30%)]">
             <HeaderSettings />
             <div className="flex-1 overflow-y-auto p-4 bg-background/95">
-              <div>Чат</div>
-              <div>Чат</div>
-              <div>Чат</div>
-              <div>Чат</div>
+              <ChatItem
+                id="1"
+                name="Алексей Иванов"
+                avatar="https://i.pravatar.cc/150?img=68"
+                lastMessage="Ок, давай в 20:00 у метро"
+                lastMessageTime="14:32"
+                unreadCount={3}
+                isOnline={true}
+                isActive={true}
+              />
+
+              <ChatItem
+                id="2"
+                name="Дизайн Команда"
+                avatar="https://i.pravatar.cc/150?img=45"
+                lastMessage="Новый лого готов, кидаю в фигму"
+                lastMessageTime="11:05"
+                unreadCount={0}
+                isOnline={false}
+              />
             </div>
           </div>
 
