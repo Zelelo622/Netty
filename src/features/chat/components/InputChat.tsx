@@ -6,11 +6,19 @@ import { KeyboardEvent, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
+import EmojiPicker, { EmojiClickData, Theme } from "emoji-picker-react";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 
 export const InputChat = () => {
   const [message, setMessage] = useState("");
   const [isFocused, setIsFocused] = useState(false);
+  const [openEmoji, setOpenEmoji] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+  const onEmojiClick = (emojiData: EmojiClickData) => {
+    setMessage((prev) => prev + emojiData.emoji);
+    setOpenEmoji(false);
+  };
 
   const handleSend = () => {
     if (message.trim()) {
@@ -61,17 +69,29 @@ export const InputChat = () => {
           />
           <div className="flex items-center justify-between w-full">
             <div className="flex items-center gap-1">
+              <Popover open={openEmoji} onOpenChange={setOpenEmoji}>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="cursor-pointer h-9 w-9 rounded-full text-muted-foreground hover:text-foreground"
+                    title="Эмодзи"
+                  >
+                    <Smile />
+                  </Button>
+                </PopoverTrigger>
+
+                <PopoverContent className="w-auto p-0 border-none shadow-xl">
+                  <EmojiPicker
+                    onEmojiClick={onEmojiClick}
+                    autoFocusSearch={false}
+                    theme={Theme.DARK}
+                    skinTonesDisabled
+                    previewConfig={{ showPreview: false }}
+                  />
+                </PopoverContent>
+              </Popover>
               <Button
-                type="button"
-                variant="ghost"
-                size="icon"
-                className="cursor-pointer h-9 w-9 rounded-full text-muted-foreground hover:text-foreground"
-                title="Эмодзи"
-              >
-                <Smile />
-              </Button>
-              <Button
-                type="button"
                 variant="ghost"
                 size="icon"
                 className="cursor-pointer h-9 w-9 rounded-full text-muted-foreground hover:text-foreground"
