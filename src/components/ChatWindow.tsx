@@ -9,6 +9,7 @@ import { HeaderChat } from "@/features/chat/components/HeaderChat";
 import { HeaderSettings } from "@/features/chat/components/HeaderSettings";
 import { InputChat } from "@/features/chat/components/InputChat";
 import { cn } from "@/lib/utils";
+import { MessageBubble } from "@/features/chat/components/MessageBubble";
 
 export function ChatWindow() {
   const { isOpen, closeChat } = useChat();
@@ -16,6 +17,7 @@ export function ChatWindow() {
   const [size, setSize] = useState({ width: 780, height: 680 });
   const [isHoveringResize, setIsHoveringResize] = useState(false);
   const isResizing = useRef(false);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const startResizing = useCallback((e: React.MouseEvent) => {
     e.preventDefault();
@@ -87,9 +89,28 @@ export function ChatWindow() {
           <div className="flex flex-col min-w-0">
             <HeaderChat />
 
-            <div className="flex-1 overflow-y-auto bg-background/95">{/* сообщения */}</div>
+            <div className="flex-1 overflow-y-auto bg-background/95 p-2">
+              <MessageBubble
+                message={{
+                  id: "1",
+                  text: "Привет! Как дела?",
+                  sender: "other",
+                  timestamp: new Date(),
+                }}
+              />
+              <MessageBubble
+                message={{
+                  id: "2",
+                  text: "Привет! Нормально, а у тебя?",
+                  sender: "user",
+                  timestamp: new Date(Date.now() - 1000 * 60 * 2),
+                }}
+              />
+
+              <div ref={messagesEndRef} className="h-1" />
+            </div>
             <div className="bg-background/95">
-              <InputChat />
+              <InputChat onSend={() => {}} />
             </div>
           </div>
         </div>

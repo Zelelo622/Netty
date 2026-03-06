@@ -53,3 +53,12 @@ export interface INotification {
   createdAt: Timestamp;
   communityName: string;
 }
+
+// TODO: нужно будет править под firebase
+export interface IMessage {
+  id: string;
+  text: string;
+  sender: "user" | "other";
+  timestamp: Date;
+  isPending?: boolean;
+}

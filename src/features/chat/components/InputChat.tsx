@@ -9,7 +9,11 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
 
-export const InputChat = () => {
+interface IInputChatProps {
+  onSend: (text: string) => void;
+}
+
+export const InputChat = ({ onSend }: IInputChatProps) => {
   const [message, setMessage] = useState("");
   const [isFocused, setIsFocused] = useState(false);
   const [openEmoji, setOpenEmoji] = useState(false);
@@ -23,7 +27,7 @@ export const InputChat = () => {
   const handleSend = () => {
     if (message.trim()) {
       // TODO: пока что временно
-      console.log("Отправляем: ", message);
+      onSend(message.trim());
       setMessage("");
       textareaRef.current?.focus();
     }
@@ -35,7 +39,7 @@ export const InputChat = () => {
 
       if (message.trim()) {
         // TODO: пока что временно
-        console.log("Отправляем: ", message.trim());
+        onSend(message.trim());
         setMessage("");
       }
     }
