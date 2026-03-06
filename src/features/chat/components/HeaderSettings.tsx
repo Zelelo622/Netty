@@ -1,3 +1,5 @@
+"use client";
+
 import { MessageCirclePlus, MessageSquareCheck } from "lucide-react";
 
 import { MaskotIcon } from "@/components/icons/MaskotIcon";
@@ -6,7 +8,7 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip
 
 export const HeaderSettings = () => {
   return (
-    <div className="shrink-0 px-1 py-3 bg-muted/40 h-12 flex items-center justify-between">
+    <div className="shrink-0 px-1 py-3 bg-background/95 h-12 flex items-center justify-between">
       <div className="flex items-center gap-1">
         <MaskotIcon className="w-8 h-8" />
         <span className="text-2xl">Chats</span>

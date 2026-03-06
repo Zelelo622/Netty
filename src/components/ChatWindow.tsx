@@ -7,6 +7,7 @@ import { Card } from "@/components/ui/card";
 import { useChat } from "@/context/ChatContext";
 import { HeaderChat } from "@/features/chat/components/HeaderChat";
 import { HeaderSettings } from "@/features/chat/components/HeaderSettings";
+import { InputChat } from "@/features/chat/components/InputChat";
 import { cn } from "@/lib/utils";
 
 export function ChatWindow() {
@@ -74,7 +75,7 @@ export function ChatWindow() {
           {/* Левая панель */}
           <div className="flex flex-col border-r bg-muted/20 min-w-[min(500px,30%)]">
             <HeaderSettings />
-            <div className="flex-1 overflow-y-auto p-4">
+            <div className="flex-1 overflow-y-auto p-4 bg-background/95">
               <div>Чат</div>
               <div>Чат</div>
               <div>Чат</div>
@@ -86,7 +87,10 @@ export function ChatWindow() {
           <div className="flex flex-col min-w-0">
             <HeaderChat />
 
-            <div className="flex-1 overflow-y-auto">{/* сообщения */}</div>
+            <div className="flex-1 overflow-y-auto bg-background/95">{/* сообщения */}</div>
+            <div className="bg-background/95">
+              <InputChat />
+            </div>
           </div>
         </div>
       </Card>

@@ -1,3 +1,5 @@
+"use client";
+
 import { SquareArrowOutUpRightIcon, XIcon } from "lucide-react";
 import Link from "next/link";
 
@@ -9,7 +11,7 @@ export const HeaderChat = () => {
   const { closeChat } = useChat();
 
   return (
-    <div className="flex items-center justify-between border-b p-1 h-12">
+    <div className="flex items-center justify-between border-b p-1 h-12 bg-background/95">
       <>
         {/* TODO: тут выводить названия чата */}
         <div className="text-lg">Сообщения</div>
