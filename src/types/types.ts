@@ -54,11 +54,31 @@ export interface INotification {
   communityName: string;
 }
 
-// TODO: нужно будет править под firebase
 export interface IMessage {
   id: string;
   text: string;
-  sender: "user" | "other";
-  timestamp: Date;
+  senderId: string;
+  createdAt: Timestamp;
+  reactions?: Record<string, string[]>;
   isPending?: boolean;
+  isFailed?: boolean;
+}
+
+export interface IConversation {
+  id: string;
+  participants: [string, string];
+  lastMessageAt: Timestamp | null;
+  lastMessagePreview: string;
+  lastMessageSenderId: string;
+  unreadCount: Record<string, number>;
+  createdAt: Timestamp;
+  updatedAt: Timestamp;
+}
+
+export interface IChatListItem extends IConversation {
+  otherParticipantId: string;
+  otherParticipant: {
+    displayName: string;
+    photoURL: string;
+  };
 }

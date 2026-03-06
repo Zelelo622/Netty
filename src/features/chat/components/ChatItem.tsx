@@ -14,7 +14,6 @@ interface IChatItemProps {
 }
 
 export const ChatItem = ({
-  id,
   name,
   avatar,
   lastMessage,
@@ -33,10 +32,10 @@ export const ChatItem = ({
       )}
     >
       <div className="relative">
-        <UserAvatar />
+        <UserAvatar photoURL={avatar} />
 
         {isOnline && (
-          <span className="absolute bottom-0 right-0 h-2 w-2 rounded-full bg-green-500 ring-2 ring-background" />
+          <span className="absolute bottom-0 right-0 h-3 w-3.5 rounded-full bg-green-500 ring-2 ring-background" />
         )}
       </div>
 

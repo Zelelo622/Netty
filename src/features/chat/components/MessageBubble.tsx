@@ -1,36 +1,53 @@
+"use client";
+
+import { Timestamp } from "firebase/firestore";
+
 import { UserAvatar } from "@/components/UserAvatar";
 import { cn } from "@/lib/utils";
 import { IMessage } from "@/types/types";
 
 interface IMessageBubbleProps {
   message: IMessage;
+  currentUserId: string;
+  /** Аватар собеседника, если нужен */
+  otherAvatar?: string | null;
 }
 
-export const MessageBubble = ({ message }: IMessageBubbleProps) => {
-  const isUser = message.sender === "user";
+function formatTime(ts: Timestamp | null | undefined): string {
+  if (!ts) return "";
+  return ts.toDate().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+}
+
+export const MessageBubble = ({ message, currentUserId, otherAvatar }: IMessageBubbleProps) => {
+  const isOwn = message.senderId === currentUserId;
 
   return (
     <div
-      className={cn("flex gap-3 max-w-[80%] items-end", isUser ? "ml-auto justify-end" : "mr-auto")}
+      className={cn(
+        "flex gap-2 max-w-[80%] items-end mb-2",
+        isOwn ? "ml-auto flex-row-reverse" : "mr-auto"
+      )}
     >
-      {!isUser && <UserAvatar />}
+      {!isOwn && (
+        <div className="shrink-0">
+          <UserAvatar photoURL={otherAvatar} />
+        </div>
+      )}
 
       <div
         className={cn(
-          "px-4 py-2.5 rounded-2xl text-sm leading-relaxed",
-          isUser ? "bg-primary text-primary-foreground rounded-br-none" : "bg-muted rounded-bl-none"
+          "px-3 py-2 rounded-2xl text-sm leading-relaxed break-words",
+          isOwn ? "bg-primary text-primary-foreground rounded-br-none" : "bg-muted rounded-bl-none",
+          message.isPending && "opacity-60",
+          message.isFailed && "border border-destructive"
         )}
       >
         {message.text}
-        <div className="text-xs opacity-60 mt-1 text-right">
-          {message.timestamp.toLocaleTimeString([], {
-            hour: "2-digit",
-            minute: "2-digit",
-          })}
+        <div className="text-xs opacity-60 mt-0.5 text-right select-none">
+          {formatTime(message.createdAt)}
+          {message.isFailed && " · Ошибка"}
         </div>
       </div>
-
-      {isUser && <UserAvatar />}
     </div>
   );
 };

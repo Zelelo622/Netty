@@ -10,13 +10,15 @@ import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
 
 interface IInputChatProps {
-  onSend: (text: string) => void;
+  onSend: (text: string) => Promise<void>;
+  disabled?: boolean;
 }
 
-export const InputChat = ({ onSend }: IInputChatProps) => {
+export const InputChat = ({ onSend, disabled }: IInputChatProps) => {
   const [message, setMessage] = useState("");
   const [isFocused, setIsFocused] = useState(false);
   const [openEmoji, setOpenEmoji] = useState(false);
+  const [isSending, setIsSending] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   const onEmojiClick = (emojiData: EmojiClickData) => {
@@ -24,11 +26,19 @@ export const InputChat = ({ onSend }: IInputChatProps) => {
     setOpenEmoji(false);
   };
 
-  const handleSend = () => {
-    if (message.trim()) {
-      // TODO: пока что временно
-      onSend(message.trim());
-      setMessage("");
+  const handleSend = async () => {
+    const trimmed = message.trim();
+    if (!trimmed || isSending) return;
+
+    setMessage("");
+    setIsSending(true);
+    try {
+      await onSend(trimmed);
+    } catch (err) {
+      console.error("[InputChat] send failed:", err);
+      setMessage(trimmed); // возвращаем текст если ошибка
+    } finally {
+      setIsSending(false);
       textareaRef.current?.focus();
     }
   };
@@ -36,12 +46,7 @@ export const InputChat = ({ onSend }: IInputChatProps) => {
   const handleKeyDown = (e: KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
-
-      if (message.trim()) {
-        // TODO: пока что временно
-        onSend(message.trim());
-        setMessage("");
-      }
+      handleSend();
     }
   };
 
@@ -63,7 +68,8 @@ export const InputChat = ({ onSend }: IInputChatProps) => {
             onKeyDown={handleKeyDown}
             onFocus={() => setIsFocused(true)}
             onBlur={() => setIsFocused(false)}
-            placeholder="Сообщение..."
+            placeholder={disabled ? "Выберите собеседника..." : "Сообщение..."}
+            disabled={disabled || isSending}
             rows={1}
             className={cn(
               "min-h-11 max-h-35 resize-none bg-transparent! border-0 px-2 py-2.5 text-base",
@@ -79,12 +85,12 @@ export const InputChat = ({ onSend }: IInputChatProps) => {
                     variant="ghost"
                     size="icon"
                     className="cursor-pointer h-9 w-9 rounded-full text-muted-foreground hover:text-foreground"
+                    disabled={disabled}
                     title="Эмодзи"
                   >
                     <Smile />
                   </Button>
                 </PopoverTrigger>
-
                 <PopoverContent className="w-auto p-0 border-none shadow-xl">
                   <EmojiPicker
                     onEmojiClick={onEmojiClick}
@@ -99,11 +105,11 @@ export const InputChat = ({ onSend }: IInputChatProps) => {
             <div className="flex items-center">
               <Button
                 type="button"
-                variant={"outline"}
+                variant="outline"
                 size="icon"
                 className="cursor-pointer h-9 w-9 rounded-full"
                 onClick={handleSend}
-                disabled={isEmpty}
+                disabled={isEmpty || disabled || isSending}
               >
                 <SendHorizonal />
               </Button>
