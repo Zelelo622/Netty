@@ -1,13 +1,13 @@
 "use client";
 
-import { Paperclip, SendHorizonal, Smile } from "lucide-react";
+import EmojiPicker, { EmojiClickData, Theme } from "emoji-picker-react";
+import { SendHorizonal, Smile } from "lucide-react";
 import { KeyboardEvent, useRef, useState } from "react";
 
 import { Button } from "@/components/ui/button";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
-import EmojiPicker, { EmojiClickData, Theme } from "emoji-picker-react";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 
 export const InputChat = () => {
   const [message, setMessage] = useState("");
@@ -91,14 +91,6 @@ export const InputChat = () => {
                   />
                 </PopoverContent>
               </Popover>
-              <Button
-                variant="ghost"
-                size="icon"
-                className="cursor-pointer h-9 w-9 rounded-full text-muted-foreground hover:text-foreground"
-                title="Прикрепить"
-              >
-                <Paperclip />
-              </Button>
             </div>
             <div className="flex items-center">
               <Button
@@ -114,8 +106,6 @@ export const InputChat = () => {
             </div>
           </div>
         </div>
-
-        <input type="file" id="file-upload" className="hidden" />
       </div>
     </div>
   );
