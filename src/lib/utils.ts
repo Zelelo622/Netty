@@ -1,8 +1,8 @@
 import { clsx, type ClassValue } from "clsx";
+import { Timestamp } from "firebase/firestore";
 import { twMerge } from "tailwind-merge";
 
 import { IComment, INotification } from "@/types/types";
-import { Timestamp } from "firebase/firestore";
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));

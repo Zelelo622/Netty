@@ -1,14 +1,14 @@
 "use client";
 
+import EmojiPicker, { EmojiClickData, Theme } from "emoji-picker-react";
 import { CheckCheck, Clock } from "lucide-react";
+import { useState } from "react";
 
+import { ContextMenu, ContextMenuContent, ContextMenuTrigger } from "@/components/ui/context-menu";
 import { UserAvatar } from "@/components/UserAvatar";
 import { cn, formatTime } from "@/lib/utils";
-import { IMessage } from "@/types/types";
-import EmojiPicker, { EmojiClickData, Theme } from "emoji-picker-react";
 import { ChatService } from "@/services/chat.service";
-import { ContextMenu, ContextMenuContent, ContextMenuTrigger } from "@/components/ui/context-menu";
-import { useState } from "react";
+import { IMessage } from "@/types/types";
 
 interface IMessageBubbleProps {
   message: IMessage;
