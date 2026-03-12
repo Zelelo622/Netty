@@ -67,6 +67,7 @@ export const ChatService = {
       text,
       senderId,
       createdAt: serverTimestamp() as Timestamp,
+      read: false,
     };
 
     batch.set(msgRef, msgData);
@@ -96,9 +97,26 @@ export const ChatService = {
   },
 
   async markAsRead(convId: string, uid: string): Promise<void> {
-    await updateDoc(doc(db, CONVERSATIONS_COLLECTION, convId), {
-      [`unreadCount.${uid}`]: 0,
-    });
+    const convRef = doc(db, CONVERSATIONS_COLLECTION, convId);
+    const messagesColl = collection(db, CONVERSATIONS_COLLECTION, convId, "messages");
+
+    const q = query(messagesColl, where("read", "==", false), where("senderId", "!=", uid));
+
+    const snap = await getDocs(q);
+
+    const batch = writeBatch(db);
+
+    batch.update(convRef, { [`unreadCount.${uid}`]: 0 });
+
+    if (!snap.empty) {
+      snap.docs.forEach((d) => {
+        batch.update(d.ref, { read: true });
+      });
+
+      await batch.commit();
+    } else {
+      await updateDoc(convRef, { [`unreadCount.${uid}`]: 0 });
+    }
   },
 
   async toggleReaction(

@@ -26,6 +26,8 @@ export function ChatWindow() {
   const [optimisticMessages, setOptimisticMessages] = useState<IMessage[]>([]);
   const isResizing = useRef(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const convExistsRef = useRef(false);
+  const sendQueue = useRef<Promise<void>>(Promise.resolve());
 
   const convId = user && activeParticipantId ? getConvId(user.uid, activeParticipantId) : null;
 
@@ -33,7 +35,11 @@ export function ChatWindow() {
   const { users } = useAllUsers(user?.uid);
   const activeOtherUser = users.find((u) => u.uid === activeParticipantId);
 
-  const sendQueue = useRef<Promise<void>>(Promise.resolve());
+  // Сбрасываем optimistic и флаг существования при смене собеседника
+  useEffect(() => {
+    convExistsRef.current = false;
+    setOptimisticMessages([]);
+  }, [activeParticipantId]);
 
   useEffect(() => {
     setOptimisticMessages([]);
@@ -44,15 +50,18 @@ export function ChatWindow() {
   }, [messages, optimisticMessages]);
 
   useEffect(() => {
-    if (convId && user) {
-      ChatService.markAsRead(convId, user.uid).catch(() => {});
+    if (!convId || !user || messages.length === 0) return;
+
+    const unreadFromOther = messages.filter((m) => m.senderId !== user.uid && m.read === false);
+
+    if (unreadFromOther.length > 0) {
+      ChatService.markAsRead(convId, user.uid);
     }
-  }, [convId, user]);
+  }, [messages, convId, user]);
 
   const handleSend = useCallback(
     async (text: string): Promise<void> => {
       if (!user || !activeParticipantId) return;
-
       const cid = getConvId(user.uid, activeParticipantId);
 
       const tempId = `temp_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
@@ -62,12 +71,14 @@ export function ChatWindow() {
         senderId: user.uid,
         createdAt: Timestamp.now(),
         isPending: true,
+        read: false,
       };
       setOptimisticMessages((prev) => [...prev, optimistic]);
 
       sendQueue.current = sendQueue.current
         .then(async () => {
           await ChatService.getOrCreateConversation(user.uid, activeParticipantId);
+          convExistsRef.current = true;
           await ChatService.sendMessage(cid, user.uid, activeParticipantId, text);
         })
         .catch((err) => {
@@ -80,6 +91,12 @@ export function ChatWindow() {
     [user, activeParticipantId]
   );
 
+  useEffect(() => {
+    if (messages.length > 0) {
+      convExistsRef.current = true;
+    }
+  }, [messages]);
+
   const stopResizing = useCallback(() => {
     isResizing.current = false;
     document.removeEventListener("mousemove", handleMouseMove);
@@ -88,11 +105,9 @@ export function ChatWindow() {
 
   const handleMouseMove = useCallback((e: MouseEvent) => {
     if (!isResizing.current) return;
-    const vw = window.innerWidth;
-    const vh = window.innerHeight;
     setSize({
-      width: Math.max(640, Math.min(vw - e.clientX - 40, vw - 320)),
-      height: Math.max(520, Math.min(vh - e.clientY, vh - 84)),
+      width: Math.max(640, Math.min(window.innerWidth - e.clientX - 40, window.innerWidth - 320)),
+      height: Math.max(520, Math.min(window.innerHeight - e.clientY, window.innerHeight - 84)),
     });
   }, []);
 
@@ -127,7 +142,6 @@ export function ChatWindow() {
 
       <Card className="flex flex-col h-full shadow-2xl border rounded-br-none overflow-hidden animate-in slide-in-from-bottom-5 duration-300 p-0">
         <div className="grid h-full grid-cols-[280px_1fr] min-w-0 overflow-hidden">
-          {/* Левая панель */}
           <div className="flex flex-col border-r bg-muted/20 overflow-hidden">
             <HeaderSettings />
             <div className="flex-1 overflow-y-auto p-2 bg-background/95">
@@ -146,10 +160,8 @@ export function ChatWindow() {
             </div>
           </div>
 
-          {/* Правая панель */}
           <div className="flex flex-col min-w-0 overflow-hidden">
             <HeaderChat />
-
             <div className="flex-1 overflow-y-auto bg-background/95 px-3 py-2">
               {!activeParticipantId ? (
                 <div className="flex items-center justify-center h-full text-muted-foreground text-sm">

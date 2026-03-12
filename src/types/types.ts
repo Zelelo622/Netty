@@ -59,6 +59,7 @@ export interface IMessage {
   text: string;
   senderId: string;
   createdAt: Timestamp;
+  read: boolean;
   reactions?: Record<string, string[]>;
   isPending?: boolean;
   isFailed?: boolean;

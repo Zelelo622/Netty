@@ -1,6 +1,7 @@
 "use client";
 
 import { Timestamp } from "firebase/firestore";
+import { CheckCheck, Clock } from "lucide-react";
 
 import { UserAvatar } from "@/components/UserAvatar";
 import { cn } from "@/lib/utils";
@@ -19,6 +20,24 @@ function formatTime(ts: Timestamp | null | undefined): string {
 
 export const MessageBubble = ({ message, currentUserId, otherAvatar }: IMessageBubbleProps) => {
   const isOwn = message.senderId === currentUserId;
+
+  const renderStatus = () => {
+    if (!isOwn) return null;
+
+    if (message.isPending) {
+      return <Clock className="h-3.5 w-3.5 opacity-60" />;
+    }
+
+    if (message.isFailed) {
+      return null;
+    }
+
+    if (message.read) {
+      return <CheckCheck className="h-3.5 w-3.5 text-green-500" />;
+    }
+
+    return <CheckCheck className="h-3.5 w-3.5 opacity-60" />;
+  };
 
   return (
     <div
@@ -43,7 +62,10 @@ export const MessageBubble = ({ message, currentUserId, otherAvatar }: IMessageB
       >
         {message.text}
         <div className="text-xs opacity-60 mt-0.5 text-right select-none">
-          {formatTime(message.createdAt)}
+          <div className="flex flex-row-reverse items-center justify-between">
+            {formatTime(message.createdAt)}
+            {renderStatus()}
+          </div>
           {message.isFailed && " · Ошибка"}
         </div>
       </div>
