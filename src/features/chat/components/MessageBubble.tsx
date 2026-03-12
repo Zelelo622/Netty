@@ -9,7 +9,6 @@ import { IMessage } from "@/types/types";
 interface IMessageBubbleProps {
   message: IMessage;
   currentUserId: string;
-  /** Аватар собеседника, если нужен */
   otherAvatar?: string | null;
 }
 
@@ -36,7 +35,7 @@ export const MessageBubble = ({ message, currentUserId, otherAvatar }: IMessageB
 
       <div
         className={cn(
-          "px-3 py-2 rounded-2xl text-sm leading-relaxed break-words",
+          "px-3 py-2 rounded-2xl text-sm leading-relaxed wrap-break-word",
           isOwn ? "bg-primary text-primary-foreground rounded-br-none" : "bg-muted rounded-bl-none",
           message.isPending && "opacity-60",
           message.isFailed && "border border-destructive"

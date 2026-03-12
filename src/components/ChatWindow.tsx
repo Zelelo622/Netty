@@ -14,7 +14,6 @@ import { InputChat } from "@/features/chat/components/InputChat";
 import { MessageBubble } from "@/features/chat/components/MessageBubble";
 import { useAllUsers } from "@/hooks/useAllUsers";
 import { useMessages } from "@/hooks/useMessages";
-import { useUserProfile } from "@/hooks/useUserProfile";
 import { ChatService, getConvId } from "@/services/chat.service";
 import { IMessage } from "@/types/types";
 
@@ -32,18 +31,18 @@ export function ChatWindow() {
 
   const { messages } = useMessages(convId);
   const { users } = useAllUsers(user?.uid);
-  const { profile: otherProfile } = useUserProfile(activeParticipantId ?? undefined);
+  const activeOtherUser = users.find((u) => u.uid === activeParticipantId);
+
+  const sendQueue = useRef<Promise<void>>(Promise.resolve());
 
   useEffect(() => {
     setOptimisticMessages([]);
   }, [messages]);
 
-  // Автоскролл
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, optimisticMessages]);
 
-  // markAsRead при смене активного чата
   useEffect(() => {
     if (convId && user) {
       ChatService.markAsRead(convId, user.uid).catch(() => {});
@@ -56,8 +55,7 @@ export function ChatWindow() {
 
       const cid = getConvId(user.uid, activeParticipantId);
 
-      // Оптимистичное сообщение — показываем сразу
-      const tempId = `temp_${Date.now()}`;
+      const tempId = `temp_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
       const optimistic: IMessage = {
         id: tempId,
         text,
@@ -67,23 +65,21 @@ export function ChatWindow() {
       };
       setOptimisticMessages((prev) => [...prev, optimistic]);
 
-      try {
-        await ChatService.getOrCreateConversation(user.uid, activeParticipantId);
-        await ChatService.sendMessage(cid, user.uid, activeParticipantId, text);
-        // onSnapshot сам обновит messages и useEffect уберёт optimistic
-      } catch (err) {
-        console.error("[ChatWindow] handleSend error:", err);
-        // Помечаем как failed
-        setOptimisticMessages((prev) =>
-          prev.map((m) => (m.id === tempId ? { ...m, isPending: false, isFailed: true } : m))
-        );
-        throw err; // пробрасываем чтобы InputChat мог вернуть текст
-      }
+      sendQueue.current = sendQueue.current
+        .then(async () => {
+          await ChatService.getOrCreateConversation(user.uid, activeParticipantId);
+          await ChatService.sendMessage(cid, user.uid, activeParticipantId, text);
+        })
+        .catch((err) => {
+          console.error("Ошибка в очереди отправки:", err);
+          setOptimisticMessages((prev) =>
+            prev.map((m) => (m.id === tempId ? { ...m, isPending: false, isFailed: true } : m))
+          );
+        });
     },
     [user, activeParticipantId]
   );
 
-  // --- resize ---
   const stopResizing = useCallback(() => {
     isResizing.current = false;
     document.removeEventListener("mousemove", handleMouseMove);
@@ -112,7 +108,6 @@ export function ChatWindow() {
 
   if (!isOpen) return null;
 
-  // Сливаем реальные + оптимистичные, исключая дубли
   const realIds = new Set(messages.map((m) => m.id));
   const visibleMessages = [...messages, ...optimisticMessages.filter((m) => !realIds.has(m.id))];
 
@@ -170,7 +165,7 @@ export function ChatWindow() {
                     key={msg.id}
                     message={msg}
                     currentUserId={user?.uid ?? ""}
-                    otherAvatar={otherProfile?.photoURL}
+                    otherAvatar={activeOtherUser?.photoURL}
                   />
                 ))
               )}
@@ -178,7 +173,9 @@ export function ChatWindow() {
             </div>
 
             <div className="bg-background/95 border-t">
-              <InputChat onSend={handleSend} disabled={!activeParticipantId} />
+              {activeParticipantId && (
+                <InputChat onSend={handleSend} disabled={!activeParticipantId} />
+              )}
             </div>
           </div>
         </div>

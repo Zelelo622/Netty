@@ -2,7 +2,7 @@
 
 import EmojiPicker, { EmojiClickData, Theme } from "emoji-picker-react";
 import { SendHorizonal, Smile } from "lucide-react";
-import { KeyboardEvent, useRef, useState } from "react";
+import { KeyboardEvent, useEffect, useRef, useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -18,28 +18,30 @@ export const InputChat = ({ onSend, disabled }: IInputChatProps) => {
   const [message, setMessage] = useState("");
   const [isFocused, setIsFocused] = useState(false);
   const [openEmoji, setOpenEmoji] = useState(false);
-  const [isSending, setIsSending] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+  useEffect(() => {
+    if (!disabled) {
+      textareaRef.current?.focus();
+    }
+  }, [disabled]);
 
   const onEmojiClick = (emojiData: EmojiClickData) => {
     setMessage((prev) => prev + emojiData.emoji);
-    setOpenEmoji(false);
+    textareaRef.current?.focus();
   };
 
   const handleSend = async () => {
     const trimmed = message.trim();
-    if (!trimmed || isSending) return;
+    if (!trimmed) return;
 
     setMessage("");
-    setIsSending(true);
+    textareaRef.current?.focus();
     try {
       await onSend(trimmed);
     } catch (err) {
       console.error("[InputChat] send failed:", err);
-      setMessage(trimmed); // возвращаем текст если ошибка
-    } finally {
-      setIsSending(false);
-      textareaRef.current?.focus();
+      setMessage(trimmed);
     }
   };
 
@@ -69,7 +71,7 @@ export const InputChat = ({ onSend, disabled }: IInputChatProps) => {
             onFocus={() => setIsFocused(true)}
             onBlur={() => setIsFocused(false)}
             placeholder={disabled ? "Выберите собеседника..." : "Сообщение..."}
-            disabled={disabled || isSending}
+            disabled={disabled}
             rows={1}
             className={cn(
               "min-h-11 max-h-35 resize-none bg-transparent! border-0 px-2 py-2.5 text-base",
@@ -109,7 +111,7 @@ export const InputChat = ({ onSend, disabled }: IInputChatProps) => {
                 size="icon"
                 className="cursor-pointer h-9 w-9 rounded-full"
                 onClick={handleSend}
-                disabled={isEmpty || disabled || isSending}
+                disabled={isEmpty || disabled}
               >
                 <SendHorizonal />
               </Button>
