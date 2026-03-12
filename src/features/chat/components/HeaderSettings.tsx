@@ -20,6 +20,7 @@ export const HeaderSettings = () => {
               className="cursor-pointer rounded-4xl hover:bg-accent hover:text-accent-foreground dark:hover:bg-accent"
               variant="ghost"
               size="icon-sm"
+              disabled
             >
               <MessageSquareCheck />
             </Button>
@@ -34,6 +35,7 @@ export const HeaderSettings = () => {
               className="cursor-pointer rounded-4xl hover:bg-accent hover:text-accent-foreground dark:hover:bg-accent"
               variant="ghost"
               size="icon-sm"
+              disabled
             >
               <MessageCirclePlus />
             </Button>
