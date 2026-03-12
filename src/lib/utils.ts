@@ -1,4 +1,5 @@
 import { clsx, type ClassValue } from "clsx";
+import { Timestamp } from "firebase/firestore";
 import { twMerge } from "tailwind-merge";
 
 import { IComment, INotification } from "@/types/types";
@@ -103,3 +104,8 @@ export const getTotalRepliesCount = (replies?: IComment[]): number => {
   }
   return replies.reduce((acc, reply) => acc + 1 + getTotalRepliesCount(reply.replies), 0);
 };
+
+export function formatTime(ts: Timestamp | null | undefined): string {
+  if (!ts) return "";
+  return ts.toDate().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+}

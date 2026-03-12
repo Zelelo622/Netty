@@ -1,7 +1,7 @@
 "use client";
 
 import { signOut } from "firebase/auth";
-import { Bell, Trash2 } from "lucide-react";
+import { Bell, MessageCircle, Trash2 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -18,24 +18,26 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useAuth } from "@/context/AuthContext";
+import { useChat } from "@/context/ChatContext";
 import { MAX_VISUAL_DEPTH } from "@/features/comments/components/CommentItem";
 import { NotificationItem } from "@/features/notifications/components/NotificationItem";
 import { ROUTES } from "@/lib/routes";
 import { UserProfileCache } from "@/lib/userProfileCache";
-import { getNotificationText } from "@/lib/utils";
+import { cn, getNotificationText } from "@/lib/utils";
 import { NotificationService } from "@/services/notification.service";
 import { INotification } from "@/types/types";
 
 import { LogoTextIcon } from "./icons/LogoTextIcon";
 import { MaskotIcon } from "./icons/MaskotIcon";
 import { ModeToggle } from "./ThemeToggle";
-import { auth } from "../lib/firebase";
 import { ScrollArea } from "./ui/scroll-area";
 import { SidebarTrigger } from "./ui/sidebar";
 import { UserAvatar } from "./UserAvatar";
+import { auth } from "../lib/firebase";
 
 function Navbar() {
   const { user, loading } = useAuth();
+  const { toggleChat, isOpen } = useChat();
   const router = useRouter();
 
   const [notifications, setNotifications] = useState<INotification[]>([]);
@@ -128,6 +130,17 @@ function Navbar() {
 
         <div className="flex items-center gap-x-4">
           <ModeToggle />
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={toggleChat}
+            className={cn(
+              "rounded-full cursor-pointer transition-colors",
+              isOpen && "bg-primary/10 text-primary"
+            )}
+          >
+            <MessageCircle className="h-5 w-5" />
+          </Button>
 
           <div className="flex items-center justify-end gap-x-2">
             {loading ? (

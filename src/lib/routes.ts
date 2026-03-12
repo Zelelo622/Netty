@@ -10,4 +10,5 @@ export const ROUTES = {
   COMMENT_THREAD: (community: string, postId: string, commentId: string) =>
     `/n/${community}/post/${postId}/comment/${commentId}`,
   PROFILE: (username: string) => `/u/${username}`,
+  CHAT: "/chat", // TODO: потом доработать, когда чаты появятся
 };
