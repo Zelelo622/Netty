@@ -123,11 +123,19 @@ export const ChatService = {
     messageId: string,
     uid: string,
     emoji: string,
-    action: "add" | "remove"
+    action: "add" | "remove",
+    oldEmoji?: string | null
   ): Promise<void> {
     const msgRef = doc(db, CONVERSATIONS_COLLECTION, convId, "messages", messageId);
-    await updateDoc(msgRef, {
-      [`reactions.${emoji}`]: action === "add" ? arrayUnion(uid) : arrayRemove(uid),
-    });
+    const updates: any = {};
+
+    if (oldEmoji && oldEmoji !== emoji) {
+      updates[`reactions.${oldEmoji}`] = arrayRemove(uid);
+      updates[`reactions.${emoji}`] = arrayUnion(uid);
+    } else {
+      updates[`reactions.${emoji}`] = action === "add" ? arrayUnion(uid) : arrayRemove(uid);
+    }
+
+    await updateDoc(msgRef, updates);
   },
 };

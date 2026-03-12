@@ -187,6 +187,7 @@ export function ChatWindow() {
                     message={msg}
                     currentUserId={user?.uid ?? ""}
                     otherAvatar={activeOtherUser?.photoURL}
+                    convId={convId!}
                   />
                 ))
               )}
