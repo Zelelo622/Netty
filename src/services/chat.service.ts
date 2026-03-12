@@ -74,10 +74,9 @@ export const ChatService = {
 
     batch.update(doc(db, CONVERSATIONS_COLLECTION, convId), {
       lastMessageAt: serverTimestamp(),
-      lastMessagePreview: text.slice(0, 100) + (text.length > 100 ? "..." : ""),
+      lastMessagePreview: text.slice(0, 100),
       lastMessageSenderId: senderId,
       updatedAt: serverTimestamp(),
-      [`unreadCount.${senderId}`]: 0,
       [`unreadCount.${recipientId}`]: increment(1),
     });
 

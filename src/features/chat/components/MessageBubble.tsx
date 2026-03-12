@@ -1,21 +1,15 @@
 "use client";
 
-import { Timestamp } from "firebase/firestore";
 import { CheckCheck, Clock } from "lucide-react";
 
 import { UserAvatar } from "@/components/UserAvatar";
-import { cn } from "@/lib/utils";
+import { cn, formatTime } from "@/lib/utils";
 import { IMessage } from "@/types/types";
 
 interface IMessageBubbleProps {
   message: IMessage;
   currentUserId: string;
   otherAvatar?: string | null;
-}
-
-function formatTime(ts: Timestamp | null | undefined): string {
-  if (!ts) return "";
-  return ts.toDate().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
 }
 
 export const MessageBubble = ({ message, currentUserId, otherAvatar }: IMessageBubbleProps) => {

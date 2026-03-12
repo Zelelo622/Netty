@@ -14,6 +14,8 @@ import { InputChat } from "@/features/chat/components/InputChat";
 import { MessageBubble } from "@/features/chat/components/MessageBubble";
 import { useAllUsers } from "@/hooks/useAllUsers";
 import { useMessages } from "@/hooks/useMessages";
+import { useUserConversations } from "@/hooks/useUserConversations";
+import { formatTime } from "@/lib/utils";
 import { ChatService, getConvId } from "@/services/chat.service";
 import { IMessage } from "@/types/types";
 
@@ -33,9 +35,9 @@ export function ChatWindow() {
 
   const { messages } = useMessages(convId);
   const { users } = useAllUsers(user?.uid);
+  const { conversations } = useUserConversations(user?.uid);
   const activeOtherUser = users.find((u) => u.uid === activeParticipantId);
 
-  // Сбрасываем optimistic и флаг существования при смене собеседника
   useEffect(() => {
     convExistsRef.current = false;
     setOptimisticMessages([]);
@@ -145,18 +147,25 @@ export function ChatWindow() {
           <div className="flex flex-col border-r bg-muted/20 overflow-hidden">
             <HeaderSettings />
             <div className="flex-1 overflow-y-auto p-2 bg-background/95">
-              {users.map((u) => (
-                <ChatItem
-                  key={u.uid}
-                  id={u.uid}
-                  name={u.displayName}
-                  avatar={u.photoURL}
-                  lastMessage=""
-                  lastMessageTime=""
-                  isActive={activeParticipantId === u.uid}
-                  onClick={() => openChatWith(u.uid)}
-                />
-              ))}
+              {users.map((u) => {
+                const cid = getConvId(user?.uid || "", u.uid);
+                const conv = conversations.find((c) => c.id === cid);
+                const unread = conv?.unreadCount?.[user?.uid || ""] || 0;
+
+                return (
+                  <ChatItem
+                    key={u.uid}
+                    id={u.uid}
+                    name={u.displayName}
+                    avatar={u.photoURL}
+                    lastMessage={conv?.lastMessagePreview || ""}
+                    lastMessageTime={conv?.lastMessageAt ? formatTime(conv.lastMessageAt) : ""}
+                    unreadCount={unread}
+                    isActive={activeParticipantId === u.uid}
+                    onClick={() => openChatWith(u.uid)}
+                  />
+                );
+              })}
             </div>
           </div>
 
