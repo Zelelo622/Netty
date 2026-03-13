@@ -84,7 +84,10 @@ export const MessageBubble = ({
   return (
     <div key={menuKey} className={cn("flex flex-col mb-2", isOwn ? "items-end" : "items-start")}>
       <div
-        className={cn("flex gap-2 max-w-[80%] items-end", isOwn ? "flex-row-reverse" : "flex-row")}
+        className={cn(
+          "flex gap-2 max-w-[80%] items-end overflow-hidden",
+          isOwn ? "flex-row-reverse" : "flex-row"
+        )}
       >
         {!isOwn && (
           <div className="shrink-0">
@@ -104,7 +107,9 @@ export const MessageBubble = ({
                 message.isFailed && "border border-destructive"
               )}
             >
-              <span className="whitespace-pre-wrap">{ParseMessageText(message.text)}</span>
+              <span className="whitespace-pre-wrap wrap-anywhere">
+                {ParseMessageText(message.text)}
+              </span>
               <div className="text-xs opacity-60 mt-0.5 text-right select-none">
                 <div className="flex flex-row-reverse items-center justify-between gap-2">
                   {formatTime(message.createdAt)}
