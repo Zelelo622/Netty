@@ -200,7 +200,6 @@ export function ChatWindow() {
 
       <Card className="flex flex-col h-full shadow-2xl border rounded-br-none overflow-hidden animate-in slide-in-from-bottom-5 duration-300 p-0">
         <div className="grid h-full grid-cols-[280px_1fr] min-w-0 overflow-hidden">
-          {/* ── Sidebar ── */}
           <div className="flex flex-col border-r bg-muted/20 overflow-hidden">
             <HeaderSettings />
             <div className="flex-1 overflow-y-auto p-2 bg-background/95">
@@ -225,7 +224,6 @@ export function ChatWindow() {
             </div>
           </div>
 
-          {/* ── Chat area ── */}
           <div className="flex flex-col min-w-0 overflow-hidden">
             <HeaderChat />
 
@@ -234,21 +232,18 @@ export function ChatWindow() {
               onScroll={handleScroll}
               className="flex-1 overflow-y-auto bg-background/95 px-3 py-2"
             >
-              {/* Spinner while loading older messages */}
               {loadingMore && (
                 <div className="flex justify-center py-2">
                   <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
                 </div>
               )}
 
-              {/* Start-of-history label */}
               {!hasMore && messages.length > 0 && (
                 <div className="text-center text-xs text-muted-foreground py-2 select-none">
                   Начало переписки
                 </div>
               )}
 
-              {/* States: no chat selected / initial loading / empty / messages */}
               {!activeParticipantId ? (
                 <div className="flex items-center justify-center h-full text-muted-foreground text-sm">
                   Выберите собеседника слева
