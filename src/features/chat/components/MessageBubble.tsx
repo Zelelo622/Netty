@@ -4,11 +4,13 @@ import EmojiPicker, { EmojiClickData, Theme } from "emoji-picker-react";
 import { CheckCheck, Clock } from "lucide-react";
 import { useState } from "react";
 
+import { Button } from "@/components/ui/button";
 import { ContextMenu, ContextMenuContent, ContextMenuTrigger } from "@/components/ui/context-menu";
 import { UserAvatar } from "@/components/UserAvatar";
 import { cn, formatTime } from "@/lib/utils";
 import { ChatService } from "@/services/chat.service";
 import { IMessage } from "@/types/types";
+
 import { ParseMessageText } from "./ParseMessageText";
 
 interface IMessageBubbleProps {
@@ -16,6 +18,7 @@ interface IMessageBubbleProps {
   currentUserId: string;
   otherAvatar?: string | null;
   convId: string;
+  onEdit: (message: IMessage) => void;
 }
 
 export const MessageBubble = ({
@@ -23,6 +26,7 @@ export const MessageBubble = ({
   currentUserId,
   otherAvatar,
   convId,
+  onEdit,
 }: IMessageBubbleProps) => {
   const [isOpen, setIsOpen] = useState(false);
   const isOwn = message.senderId === currentUserId;
@@ -99,7 +103,10 @@ export const MessageBubble = ({
               <div className="text-xs opacity-60 mt-0.5 text-right select-none">
                 <div className="flex flex-row-reverse items-center justify-between gap-2">
                   {formatTime(message.createdAt)}
-                  {renderStatus()}
+                  <div className="flex gap-1 items-center">
+                    {renderStatus()}
+                    {message.isEdited && <span>ред.</span>}
+                  </div>
                 </div>
                 {message.isFailed && " · Ошибка"}
               </div>
@@ -108,13 +115,27 @@ export const MessageBubble = ({
 
           <ContextMenuContent className="p-0 border-none bg-transparent shadow-none">
             {!message.isPending && (
-              <EmojiPicker
-                open={isOpen}
-                theme={Theme.DARK}
-                onEmojiClick={handleEmojiClick}
-                reactionsDefaultOpen={true}
-                allowExpandReactions={false}
-              />
+              <div className="flex flex-col gap-1">
+                {isOwn && (
+                  <Button
+                    className="cursor-pointer"
+                    variant="outline"
+                    onClick={() => {
+                      onEdit(message);
+                      setIsOpen(false);
+                    }}
+                  >
+                    Редактировать
+                  </Button>
+                )}
+                <EmojiPicker
+                  open={isOpen}
+                  theme={Theme.DARK}
+                  onEmojiClick={handleEmojiClick}
+                  reactionsDefaultOpen={true}
+                  allowExpandReactions={false}
+                />
+              </div>
             )}
           </ContextMenuContent>
         </ContextMenu>

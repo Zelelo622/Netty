@@ -84,6 +84,11 @@ export const ChatService = {
     return msgRef.id;
   },
 
+  async editMessage(convId: string, messageId: string, newText: string) {
+    const ref = doc(db, "conversations", convId, "messages", messageId);
+    await updateDoc(ref, { text: newText, isEdited: true });
+  },
+
   async getUserConversations(uid: string, maxResults = 30): Promise<IConversation[]> {
     const q = query(
       collection(db, CONVERSATIONS_COLLECTION),
