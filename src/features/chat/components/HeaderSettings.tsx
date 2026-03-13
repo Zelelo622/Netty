@@ -6,7 +6,12 @@ import { MaskotIcon } from "@/components/icons/MaskotIcon";
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 
-export const HeaderSettings = () => {
+interface IHeaderSettings {
+  onNewChat: () => void;
+  onMarkReadAllChats: () => void;
+}
+
+export const HeaderSettings = ({ onNewChat, onMarkReadAllChats }: IHeaderSettings) => {
   return (
     <div className="shrink-0 px-1 py-3 bg-background/95 h-12 flex items-center justify-between">
       <div className="flex items-center gap-1">
@@ -20,7 +25,7 @@ export const HeaderSettings = () => {
               className="cursor-pointer rounded-4xl hover:bg-accent hover:text-accent-foreground dark:hover:bg-accent"
               variant="ghost"
               size="icon-sm"
-              disabled
+              onClick={onMarkReadAllChats}
             >
               <MessageSquareCheck />
             </Button>
@@ -35,7 +40,7 @@ export const HeaderSettings = () => {
               className="cursor-pointer rounded-4xl hover:bg-accent hover:text-accent-foreground dark:hover:bg-accent"
               variant="ghost"
               size="icon-sm"
-              disabled
+              onClick={onNewChat}
             >
               <MessageCirclePlus />
             </Button>

@@ -118,6 +118,11 @@ export const ChatService = {
     }
   },
 
+  async markAllAsRead(uid: string, conversations: { id: string }[]): Promise<void> {
+    const promises = conversations.map((conv) => ChatService.markAsRead(conv.id, uid));
+    await Promise.all(promises);
+  },
+
   async toggleReaction(
     convId: string,
     messageId: string,

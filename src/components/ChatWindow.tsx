@@ -20,6 +20,8 @@ import { formatTime } from "@/lib/utils";
 import { ChatService, getConvId } from "@/services/chat.service";
 import { IMessage } from "@/types/types";
 
+import { Button } from "./ui/button";
+
 export function ChatWindow() {
   const { isOpen, activeParticipantId, openChatWith } = useChat();
   const { user } = useAuth();
@@ -27,6 +29,9 @@ export function ChatWindow() {
   const [size, setSize] = useState({ width: 780, height: 680 });
   const [isHoveringResize, setIsHoveringResize] = useState(false);
   const [optimisticMessages, setOptimisticMessages] = useState<IMessage[]>([]);
+
+  const [isSearching, setIsSearching] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
 
   const isResizing = useRef(false);
   const sendQueue = useRef<Promise<void>>(Promise.resolve());
@@ -49,6 +54,9 @@ export function ChatWindow() {
   );
   const { users } = useAllUsers(user?.uid);
   const activeOtherUser = users.find((u) => u.uid === activeParticipantId);
+  const filteredUsers = users.filter((user) =>
+    user.displayName.toLowerCase().includes(searchQuery.toLowerCase())
+  );
 
   const realIds = new Set(messages.map((m) => m.id));
   const visibleMessages: IMessage[] = [
@@ -158,6 +166,14 @@ export function ChatWindow() {
     [user, activeParticipantId]
   );
 
+  const handleMarkAllAsRead = useCallback(async () => {
+    if (!user) return;
+
+    const unreadConvs = conversations.filter((c) => (c.unreadCount?.[user.uid] || 0) > 0);
+    if (unreadConvs.length === 0) return;
+    await ChatService.markAllAsRead(user.uid, unreadConvs);
+  }, [user, conversations]);
+
   const stopResizing = useCallback(() => {
     isResizing.current = false;
     document.removeEventListener("mousemove", handleMouseMove);
@@ -201,27 +217,81 @@ export function ChatWindow() {
       <Card className="flex flex-col h-full shadow-2xl border rounded-br-none overflow-hidden animate-in slide-in-from-bottom-5 duration-300 p-0">
         <div className="grid h-full grid-cols-[280px_1fr] min-w-0 overflow-hidden">
           <div className="flex flex-col border-r bg-muted/20 overflow-hidden">
-            <HeaderSettings />
-            <div className="flex-1 overflow-y-auto p-2 bg-background/95">
-              {users.map((u) => {
-                const cid = getConvId(user?.uid || "", u.uid);
-                const conv = conversations.find((c) => c.id === cid);
-                const unread = conv?.unreadCount?.[user?.uid || ""] || 0;
-                return (
-                  <ChatItem
-                    key={u.uid}
-                    id={u.uid}
-                    name={u.displayName}
-                    avatar={u.photoURL}
-                    lastMessage={conv?.lastMessagePreview || ""}
-                    lastMessageTime={conv?.lastMessageAt ? formatTime(conv.lastMessageAt) : ""}
-                    unreadCount={unread}
-                    isActive={activeParticipantId === u.uid}
-                    onClick={() => openChatWith(u.uid)}
+            <HeaderSettings
+              onMarkReadAllChats={handleMarkAllAsRead}
+              onNewChat={() => {
+                setIsSearching(true);
+                setSearchQuery("");
+              }}
+            />
+            {isSearching ? (
+              <div className="flex flex-col flex-1 overflow-hidden">
+                <div className="p-2">
+                  <input
+                    autoFocus
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    placeholder="Поиск пользователей..."
+                    className="w-full px-3 py-1.5 text-sm rounded-md border bg-background outline-none focus:ring-1 focus:ring-ring"
                   />
-                );
-              })}
-            </div>
+                  <Button
+                    className="cursor-pointer my-1"
+                    onClick={() => setIsSearching(false)}
+                    size={"xs"}
+                    variant={"ghost"}
+                  >
+                    ← Назад
+                  </Button>
+                </div>
+                <div className="flex-1 overflow-y-auto p-2 bg-background/95">
+                  {(searchQuery.trim() === ""
+                    ? [...users].sort(() => Math.random() - 0.5).slice(0, 3)
+                    : filteredUsers
+                  ).map((u) => (
+                    <ChatItem
+                      key={u.uid}
+                      id={u.uid}
+                      name={u.displayName}
+                      avatar={u.photoURL}
+                      lastMessage=""
+                      lastMessageTime=""
+                      unreadCount={0}
+                      isActive={activeParticipantId === u.uid}
+                      onClick={() => {
+                        openChatWith(u.uid);
+                        setIsSearching(false);
+                      }}
+                    />
+                  ))}
+                </div>
+              </div>
+            ) : (
+              <div className="flex-1 overflow-y-auto p-2 bg-background/95">
+                {users
+                  .filter((u) => {
+                    const cid = getConvId(user?.uid || "", u.uid);
+                    return conversations.some((c) => c.id === cid) || localConvIds.has(cid);
+                  })
+                  .map((u) => {
+                    const cid = getConvId(user?.uid || "", u.uid);
+                    const conv = conversations.find((c) => c.id === cid);
+                    const unread = conv?.unreadCount?.[user?.uid || ""] || 0;
+                    return (
+                      <ChatItem
+                        key={u.uid}
+                        id={u.uid}
+                        name={u.displayName}
+                        avatar={u.photoURL}
+                        lastMessage={conv?.lastMessagePreview || ""}
+                        lastMessageTime={conv?.lastMessageAt ? formatTime(conv.lastMessageAt) : ""}
+                        unreadCount={unread}
+                        isActive={activeParticipantId === u.uid}
+                        onClick={() => openChatWith(u.uid)}
+                      />
+                    );
+                  })}
+              </div>
+            )}
           </div>
 
           <div className="flex flex-col min-w-0 overflow-hidden">
