@@ -203,24 +203,29 @@ export function ChatWindow() {
           <div className="flex flex-col border-r bg-muted/20 overflow-hidden">
             <HeaderSettings />
             <div className="flex-1 overflow-y-auto p-2 bg-background/95">
-              {users.map((u) => {
-                const cid = getConvId(user?.uid || "", u.uid);
-                const conv = conversations.find((c) => c.id === cid);
-                const unread = conv?.unreadCount?.[user?.uid || ""] || 0;
-                return (
-                  <ChatItem
-                    key={u.uid}
-                    id={u.uid}
-                    name={u.displayName}
-                    avatar={u.photoURL}
-                    lastMessage={conv?.lastMessagePreview || ""}
-                    lastMessageTime={conv?.lastMessageAt ? formatTime(conv.lastMessageAt) : ""}
-                    unreadCount={unread}
-                    isActive={activeParticipantId === u.uid}
-                    onClick={() => openChatWith(u.uid)}
-                  />
-                );
-              })}
+              {users
+                .filter((u) => {
+                  const cid = getConvId(user?.uid || "", u.uid);
+                  return conversations.some((c) => c.id === cid) || localConvIds.has(cid);
+                })
+                .map((u) => {
+                  const cid = getConvId(user?.uid || "", u.uid); // ← добавь эту строку
+                  const conv = conversations.find((c) => c.id === cid);
+                  const unread = conv?.unreadCount?.[user?.uid || ""] || 0;
+                  return (
+                    <ChatItem
+                      key={u.uid}
+                      id={u.uid}
+                      name={u.displayName}
+                      avatar={u.photoURL}
+                      lastMessage={conv?.lastMessagePreview || ""}
+                      lastMessageTime={conv?.lastMessageAt ? formatTime(conv.lastMessageAt) : ""}
+                      unreadCount={unread}
+                      isActive={activeParticipantId === u.uid}
+                      onClick={() => openChatWith(u.uid)}
+                    />
+                  );
+                })}
             </div>
           </div>
 
