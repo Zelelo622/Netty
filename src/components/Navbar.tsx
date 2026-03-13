@@ -130,17 +130,19 @@ function Navbar() {
 
         <div className="flex items-center gap-x-4">
           <ModeToggle />
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={toggleChat}
-            className={cn(
-              "rounded-full cursor-pointer transition-colors",
-              isOpen && "bg-primary/10 text-primary"
-            )}
-          >
-            <MessageCircle className="h-5 w-5" />
-          </Button>
+          {user && (
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={toggleChat}
+              className={cn(
+                "rounded-full cursor-pointer transition-colors",
+                isOpen && "bg-primary/10 text-primary"
+              )}
+            >
+              <MessageCircle className="h-5 w-5" />
+            </Button>
+          )}
 
           <div className="flex items-center justify-end gap-x-2">
             {loading ? (
