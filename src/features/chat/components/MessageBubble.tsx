@@ -1,20 +1,28 @@
 "use client";
 
 import EmojiPicker, { EmojiClickData, Theme } from "emoji-picker-react";
-import { CheckCheck, Clock } from "lucide-react";
+import { CheckCheck, Clock, Pencil } from "lucide-react";
 import { useState } from "react";
 
-import { ContextMenu, ContextMenuContent, ContextMenuTrigger } from "@/components/ui/context-menu";
+import {
+  ContextMenu,
+  ContextMenuContent,
+  ContextMenuItem,
+  ContextMenuTrigger,
+} from "@/components/ui/context-menu";
 import { UserAvatar } from "@/components/UserAvatar";
 import { cn, formatTime } from "@/lib/utils";
 import { ChatService } from "@/services/chat.service";
 import { IMessage } from "@/types/types";
+
+import { ParseMessageText } from "./ParseMessageText";
 
 interface IMessageBubbleProps {
   message: IMessage;
   currentUserId: string;
   otherAvatar?: string | null;
   convId: string;
+  onEdit: (message: IMessage) => void;
 }
 
 export const MessageBubble = ({
@@ -22,9 +30,11 @@ export const MessageBubble = ({
   currentUserId,
   otherAvatar,
   convId,
+  onEdit,
 }: IMessageBubbleProps) => {
-  const [isOpen, setIsOpen] = useState(false);
+  const [menuKey, setMenuKey] = useState(0);
   const isOwn = message.senderId === currentUserId;
+  const closeMenu = () => setMenuKey((prev) => prev + 1);
 
   const handleEmojiClick = async (emojiData: EmojiClickData | { emoji: string }) => {
     const newEmoji = emojiData.emoji;
@@ -38,7 +48,7 @@ export const MessageBubble = ({
     }
 
     const action = currentReaction === newEmoji ? "remove" : "add";
-    setIsOpen(false);
+    closeMenu();
 
     try {
       await ChatService.toggleReaction(
@@ -72,9 +82,12 @@ export const MessageBubble = ({
   };
 
   return (
-    <div className={cn("flex flex-col mb-2", isOwn ? "items-end" : "items-start")}>
+    <div key={menuKey} className={cn("flex flex-col mb-2", isOwn ? "items-end" : "items-start")}>
       <div
-        className={cn("flex gap-2 max-w-[80%] items-end", isOwn ? "flex-row-reverse" : "flex-row")}
+        className={cn(
+          "flex gap-2 max-w-[80%] items-end overflow-hidden",
+          isOwn ? "flex-row-reverse" : "flex-row"
+        )}
       >
         {!isOwn && (
           <div className="shrink-0">
@@ -82,7 +95,7 @@ export const MessageBubble = ({
           </div>
         )}
 
-        <ContextMenu onOpenChange={setIsOpen}>
+        <ContextMenu>
           <ContextMenuTrigger>
             <div
               className={cn(
@@ -94,26 +107,45 @@ export const MessageBubble = ({
                 message.isFailed && "border border-destructive"
               )}
             >
-              {message.text}
+              <span className="whitespace-pre-wrap wrap-anywhere">
+                {ParseMessageText(message.text)}
+              </span>
               <div className="text-xs opacity-60 mt-0.5 text-right select-none">
                 <div className="flex flex-row-reverse items-center justify-between gap-2">
                   {formatTime(message.createdAt)}
-                  {renderStatus()}
+                  <div className="flex gap-1 items-center">
+                    {renderStatus()}
+                    {message.isEdited && <span>ред.</span>}
+                  </div>
                 </div>
                 {message.isFailed && " · Ошибка"}
               </div>
             </div>
           </ContextMenuTrigger>
 
-          <ContextMenuContent className="p-0 border-none bg-transparent shadow-none">
+          <ContextMenuContent>
             {!message.isPending && (
-              <EmojiPicker
-                open={isOpen}
-                theme={Theme.DARK}
-                onEmojiClick={handleEmojiClick}
-                reactionsDefaultOpen={true}
-                allowExpandReactions={false}
-              />
+              <>
+                {isOwn && (
+                  <ContextMenuItem
+                    onSelect={() => onEdit(message)}
+                    className="flex items-center gap-2 px-3 py-2 cursor-pointer rounded-md text-sm font-medium"
+                  >
+                    <Pencil className="h-4 w-4" />
+                    Редактировать
+                  </ContextMenuItem>
+                )}
+                <div className="pt-1 border-t mt-1">
+                  <EmojiPicker
+                    theme={Theme.DARK}
+                    onEmojiClick={(emojiData) => {
+                      handleEmojiClick(emojiData);
+                    }}
+                    reactionsDefaultOpen={true}
+                    allowExpandReactions={false}
+                  />
+                </div>
+              </>
             )}
           </ContextMenuContent>
         </ContextMenu>

@@ -63,6 +63,7 @@ export interface IMessage {
   reactions?: Record<string, string[]>;
   isPending?: boolean;
   isFailed?: boolean;
+  isEdited?: boolean;
 }
 
 export interface IConversation {

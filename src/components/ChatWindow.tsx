@@ -29,6 +29,7 @@ export function ChatWindow() {
   const [size, setSize] = useState({ width: 780, height: 680 });
   const [isHoveringResize, setIsHoveringResize] = useState(false);
   const [optimisticMessages, setOptimisticMessages] = useState<IMessage[]>([]);
+  const [editingMessage, setEditingMessage] = useState<IMessage | null>(null);
 
   const [isSearching, setIsSearching] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
@@ -164,6 +165,18 @@ export function ChatWindow() {
         });
     },
     [user, activeParticipantId]
+  );
+
+  const handleSendOrEdit = useCallback(
+    async (text: string): Promise<void> => {
+      if (editingMessage) {
+        await ChatService.editMessage(convId!, editingMessage.id, text);
+        setEditingMessage(null);
+        return;
+      }
+      await handleSend(text);
+    },
+    [editingMessage, convId, handleSend]
   );
 
   const handleMarkAllAsRead = useCallback(async () => {
@@ -354,6 +367,7 @@ export function ChatWindow() {
                           currentUserId={user?.uid ?? ""}
                           otherAvatar={activeOtherUser?.photoURL}
                           convId={convId!}
+                          onEdit={(msg) => setEditingMessage(msg)}
                         />
                       </div>
                     );
@@ -364,7 +378,12 @@ export function ChatWindow() {
 
             <div className="bg-background/95 border-t">
               {activeParticipantId && (
-                <InputChat onSend={handleSend} disabled={!activeParticipantId} />
+                <InputChat
+                  onSend={handleSendOrEdit}
+                  disabled={!activeParticipantId}
+                  editingMessage={editingMessage}
+                  onCancelEdit={() => setEditingMessage(null)}
+                />
               )}
             </div>
           </div>

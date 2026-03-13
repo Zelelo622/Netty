@@ -1,20 +1,23 @@
 "use client";
 
 import EmojiPicker, { EmojiClickData, Theme } from "emoji-picker-react";
-import { SendHorizonal, Smile } from "lucide-react";
+import { SendHorizonal, Smile, XIcon } from "lucide-react";
 import { KeyboardEvent, useEffect, useRef, useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
+import { IMessage } from "@/types/types";
 
 interface IInputChatProps {
   onSend: (text: string) => Promise<void>;
   disabled?: boolean;
+  editingMessage?: IMessage | null;
+  onCancelEdit?: () => void;
 }
 
-export const InputChat = ({ onSend, disabled }: IInputChatProps) => {
+export const InputChat = ({ onSend, disabled, editingMessage, onCancelEdit }: IInputChatProps) => {
   const [message, setMessage] = useState("");
   const [isFocused, setIsFocused] = useState(false);
   const [openEmoji, setOpenEmoji] = useState(false);
@@ -25,6 +28,15 @@ export const InputChat = ({ onSend, disabled }: IInputChatProps) => {
       textareaRef.current?.focus();
     }
   }, [disabled]);
+
+  useEffect(() => {
+    if (editingMessage) {
+      setMessage(editingMessage.text);
+      textareaRef.current?.focus();
+    } else {
+      setMessage("");
+    }
+  }, [editingMessage]);
 
   const onEmojiClick = (emojiData: EmojiClickData) => {
     setMessage((prev) => prev + emojiData.emoji);
@@ -56,6 +68,19 @@ export const InputChat = ({ onSend, disabled }: IInputChatProps) => {
 
   return (
     <div className="p-3 pb-4 border-t bg-background/95 backdrop-blur supports-backdrop-filter:bg-background/60">
+      {editingMessage && (
+        <div className="flex items-center justify-between px-2 pb-1 text-xs text-muted-foreground">
+          <span>Редактирование сообщения</span>
+          <Button
+            onClick={onCancelEdit}
+            variant={"ghost"}
+            size={"sm"}
+            className="cursor-pointer hover:bg-accent hover:text-accent-foreground"
+          >
+            <XIcon width={12} height={12} />
+          </Button>
+        </div>
+      )}
       <div
         className={cn(
           "relative rounded-xl border bg-input/30 shadow-sm transition-all",
