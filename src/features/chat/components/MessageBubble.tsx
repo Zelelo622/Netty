@@ -9,6 +9,7 @@ import { UserAvatar } from "@/components/UserAvatar";
 import { cn, formatTime } from "@/lib/utils";
 import { ChatService } from "@/services/chat.service";
 import { IMessage } from "@/types/types";
+import { ParseMessageText } from "./ParseMessageText";
 
 interface IMessageBubbleProps {
   message: IMessage;
@@ -94,7 +95,7 @@ export const MessageBubble = ({
                 message.isFailed && "border border-destructive"
               )}
             >
-              {message.text}
+              <span className="whitespace-pre-wrap">{ParseMessageText(message.text)}</span>
               <div className="text-xs opacity-60 mt-0.5 text-right select-none">
                 <div className="flex flex-row-reverse items-center justify-between gap-2">
                   {formatTime(message.createdAt)}
