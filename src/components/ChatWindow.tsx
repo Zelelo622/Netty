@@ -19,6 +19,7 @@ import { useUserConversations } from "@/hooks/useUserConversations";
 import { formatTime } from "@/lib/utils";
 import { ChatService, getConvId } from "@/services/chat.service";
 import { IMessage } from "@/types/types";
+
 import { Button } from "./ui/button";
 
 export function ChatWindow() {
@@ -165,6 +166,14 @@ export function ChatWindow() {
     [user, activeParticipantId]
   );
 
+  const handleMarkAllAsRead = useCallback(async () => {
+    if (!user) return;
+
+    const unreadConvs = conversations.filter((c) => (c.unreadCount?.[user.uid] || 0) > 0);
+    if (unreadConvs.length === 0) return;
+    await ChatService.markAllAsRead(user.uid, unreadConvs);
+  }, [user, conversations]);
+
   const stopResizing = useCallback(() => {
     isResizing.current = false;
     document.removeEventListener("mousemove", handleMouseMove);
@@ -209,6 +218,7 @@ export function ChatWindow() {
         <div className="grid h-full grid-cols-[280px_1fr] min-w-0 overflow-hidden">
           <div className="flex flex-col border-r bg-muted/20 overflow-hidden">
             <HeaderSettings
+              onMarkReadAllChats={handleMarkAllAsRead}
               onNewChat={() => {
                 setIsSearching(true);
                 setSearchQuery("");
