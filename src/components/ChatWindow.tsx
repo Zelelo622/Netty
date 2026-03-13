@@ -234,7 +234,10 @@ export function ChatWindow() {
                   </Button>
                 </div>
                 <div className="flex-1 overflow-y-auto p-2 bg-background/95">
-                  {filteredUsers.map((u) => (
+                  {(searchQuery.trim() === ""
+                    ? [...users].sort(() => Math.random() - 0.5).slice(0, 3)
+                    : filteredUsers
+                  ).map((u) => (
                     <ChatItem
                       key={u.uid}
                       id={u.uid}
