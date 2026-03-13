@@ -1,8 +1,9 @@
 "use client";
 
+import { useVirtualizer } from "@tanstack/react-virtual";
 import { Timestamp } from "firebase/firestore";
-import { MoveUpLeft } from "lucide-react";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { Loader2, MoveUpLeft } from "lucide-react";
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 
 import { Card } from "@/components/ui/card";
 import { useAuth } from "@/context/AuthContext";
@@ -26,40 +27,102 @@ export function ChatWindow() {
   const [size, setSize] = useState({ width: 780, height: 680 });
   const [isHoveringResize, setIsHoveringResize] = useState(false);
   const [optimisticMessages, setOptimisticMessages] = useState<IMessage[]>([]);
+
   const isResizing = useRef(false);
-  const messagesEndRef = useRef<HTMLDivElement>(null);
-  const convExistsRef = useRef(false);
   const sendQueue = useRef<Promise<void>>(Promise.resolve());
+
+  const [localConvIds, setLocalConvIds] = useState<Set<string>>(() => new Set());
+
+  const messagesContainerRef = useRef<HTMLDivElement>(null);
+  const isNearBottomRef = useRef(true);
+  const prevScrollHeightRef = useRef(0);
+  const isPrependingRef = useRef(false);
+  const didInitialScrollRef = useRef(false);
 
   const convId = user && activeParticipantId ? getConvId(user.uid, activeParticipantId) : null;
 
-  const { messages } = useMessages(convId);
-  const { users } = useAllUsers(user?.uid);
   const { conversations } = useUserConversations(user?.uid);
+  const convExists =
+    conversations.some((c) => c.id === convId) || (!!convId && localConvIds.has(convId));
+  const { messages, loading, loadingMore, hasMore, loadMore } = useMessages(
+    convExists ? convId : null
+  );
+  const { users } = useAllUsers(user?.uid);
   const activeOtherUser = users.find((u) => u.uid === activeParticipantId);
 
+  const realIds = new Set(messages.map((m) => m.id));
+  const visibleMessages: IMessage[] = [
+    ...messages,
+    ...optimisticMessages.filter((m) => !realIds.has(m.id)),
+  ];
+
+  const virtualizer = useVirtualizer({
+    count: visibleMessages.length,
+    getScrollElement: () => messagesContainerRef.current,
+    estimateSize: () => 72,
+    overscan: 10,
+    measureElement: (el) => el.getBoundingClientRect().height,
+  });
+
+  const scrollToBottom = useCallback(() => {
+    const el = messagesContainerRef.current;
+    if (el) el.scrollTop = el.scrollHeight;
+  }, []);
+
   useEffect(() => {
-    convExistsRef.current = false;
     setOptimisticMessages([]);
+    isNearBottomRef.current = true;
+    didInitialScrollRef.current = false;
+    isPrependingRef.current = false;
   }, [activeParticipantId]);
 
   useEffect(() => {
-    setOptimisticMessages([]);
+    if (messages.length > 0) {
+      setOptimisticMessages((prev) => prev.filter((m) => m.isFailed));
+    }
   }, [messages]);
 
-  useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages, optimisticMessages]);
+  useLayoutEffect(() => {
+    if (loading || didInitialScrollRef.current || visibleMessages.length === 0) return;
+    scrollToBottom();
+    didInitialScrollRef.current = true;
+  });
+
+  const prevCountRef = useRef(0);
+  useLayoutEffect(() => {
+    const count = visibleMessages.length;
+    const grew = count > prevCountRef.current;
+    prevCountRef.current = count;
+
+    if (!grew || isPrependingRef.current) return;
+    if (isNearBottomRef.current) scrollToBottom();
+  }, [visibleMessages.length, scrollToBottom]);
+
+  useLayoutEffect(() => {
+    if (!isPrependingRef.current) return;
+    const el = messagesContainerRef.current;
+    if (el) el.scrollTop = el.scrollHeight - prevScrollHeightRef.current;
+    isPrependingRef.current = false;
+  }, [messages.length]);
 
   useEffect(() => {
     if (!convId || !user || messages.length === 0) return;
-
-    const unreadFromOther = messages.filter((m) => m.senderId !== user.uid && m.read === false);
-
-    if (unreadFromOther.length > 0) {
-      ChatService.markAsRead(convId, user.uid);
-    }
+    const unread = messages.filter((m) => m.senderId !== user.uid && !m.read);
+    if (unread.length > 0) ChatService.markAsRead(convId, user.uid);
   }, [messages, convId, user]);
+
+  const handleScroll = useCallback(() => {
+    const el = messagesContainerRef.current;
+    if (!el) return;
+
+    isNearBottomRef.current = el.scrollHeight - el.scrollTop - el.clientHeight < 150;
+
+    if (el.scrollTop < 80 && hasMore && !loadingMore) {
+      prevScrollHeightRef.current = el.scrollHeight;
+      isPrependingRef.current = true;
+      loadMore();
+    }
+  }, [loadMore, loadingMore, hasMore]);
 
   const handleSend = useCallback(
     async (text: string): Promise<void> => {
@@ -75,12 +138,14 @@ export function ChatWindow() {
         isPending: true,
         read: false,
       };
+
+      isNearBottomRef.current = true;
       setOptimisticMessages((prev) => [...prev, optimistic]);
 
       sendQueue.current = sendQueue.current
         .then(async () => {
           await ChatService.getOrCreateConversation(user.uid, activeParticipantId);
-          convExistsRef.current = true;
+          setLocalConvIds((prev) => new Set(prev).add(cid));
           await ChatService.sendMessage(cid, user.uid, activeParticipantId, text);
         })
         .catch((err) => {
@@ -92,12 +157,6 @@ export function ChatWindow() {
     },
     [user, activeParticipantId]
   );
-
-  useEffect(() => {
-    if (messages.length > 0) {
-      convExistsRef.current = true;
-    }
-  }, [messages]);
 
   const stopResizing = useCallback(() => {
     isResizing.current = false;
@@ -125,9 +184,6 @@ export function ChatWindow() {
 
   if (!isOpen) return null;
 
-  const realIds = new Set(messages.map((m) => m.id));
-  const visibleMessages = [...messages, ...optimisticMessages.filter((m) => !realIds.has(m.id))];
-
   return (
     <div
       className="fixed bottom-0 right-0 sm:right-10 z-40 px-4 sm:px-0"
@@ -151,7 +207,6 @@ export function ChatWindow() {
                 const cid = getConvId(user?.uid || "", u.uid);
                 const conv = conversations.find((c) => c.id === cid);
                 const unread = conv?.unreadCount?.[user?.uid || ""] || 0;
-
                 return (
                   <ChatItem
                     key={u.uid}
@@ -171,27 +226,70 @@ export function ChatWindow() {
 
           <div className="flex flex-col min-w-0 overflow-hidden">
             <HeaderChat />
-            <div className="flex-1 overflow-y-auto bg-background/95 px-3 py-2">
+
+            <div
+              ref={messagesContainerRef}
+              onScroll={handleScroll}
+              className="flex-1 overflow-y-auto bg-background/95 px-3 py-2"
+            >
+              {loadingMore && (
+                <div className="flex justify-center py-2">
+                  <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+                </div>
+              )}
+
+              {!hasMore && messages.length > 0 && (
+                <div className="text-center text-xs text-muted-foreground py-2 select-none">
+                  Начало переписки
+                </div>
+              )}
+
               {!activeParticipantId ? (
                 <div className="flex items-center justify-center h-full text-muted-foreground text-sm">
                   Выберите собеседника слева
+                </div>
+              ) : loading ? (
+                <div className="flex items-center justify-center h-full">
+                  <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
                 </div>
               ) : visibleMessages.length === 0 ? (
                 <div className="flex items-center justify-center h-full text-muted-foreground text-sm">
                   Нет сообщений. Напишите первым!
                 </div>
               ) : (
-                visibleMessages.map((msg) => (
-                  <MessageBubble
-                    key={msg.id}
-                    message={msg}
-                    currentUserId={user?.uid ?? ""}
-                    otherAvatar={activeOtherUser?.photoURL}
-                    convId={convId!}
-                  />
-                ))
+                <div
+                  style={{
+                    height: virtualizer.getTotalSize(),
+                    width: "100%",
+                    position: "relative",
+                  }}
+                >
+                  {virtualizer.getVirtualItems().map((virtualRow) => {
+                    const msg = visibleMessages[virtualRow.index];
+                    return (
+                      <div
+                        key={virtualRow.key}
+                        data-index={virtualRow.index}
+                        ref={virtualizer.measureElement}
+                        style={{
+                          position: "absolute",
+                          top: 0,
+                          left: 0,
+                          width: "100%",
+                          transform: `translateY(${virtualRow.start}px)`,
+                        }}
+                      >
+                        <MessageBubble
+                          message={msg}
+                          currentUserId={user?.uid ?? ""}
+                          otherAvatar={activeOtherUser?.photoURL}
+                          convId={convId!}
+                        />
+                      </div>
+                    );
+                  })}
+                </div>
               )}
-              <div ref={messagesEndRef} />
             </div>
 
             <div className="bg-background/95 border-t">
